@@ -1,0 +1,82 @@
+//IE控件
+//使用IE浏览器控件
+
+import com
+io.open(); //打开控制台窗口
+
+//Create an Instance of IE 
+IE=com.CreateObject("InternetExplorer.Application.1") 
+
+//事件应声明为静态全局的table
+DWebBrowserEvents2 = {
+BeforeNavigate2 = function( pDisp, url, Flags, TargetFrameName, PostData, Headers, Cancel ) begin
+io.print("BeforeNavigate2",pDisp, url, Flags, TargetFrameName, PostData, Headers, Cancel )
+end; 
+
+
+CommandStateChange = function() begin
+io.print("CommandStateChange",)
+end; 
+
+DocumentComplete = function( pDisp, url) begin
+io.print("DocumentComplete",pDisp, url)
+end; 
+
+DownloadBegin = function(pDisp, url) begin
+io.print("DownloadBegin",pDisp, url)
+end; 
+
+DownloadComplete = function(pDisp, url) begin
+io.print("DownloadComplete",pDisp, url)
+end; 
+
+FileDownload = function(pDisp, url) begin
+io.print("FileDownload",pDisp, url)
+end; 
+
+NavigateComplete2 = function(pDisp, url) begin
+io.print("NavigateComplete2",pDisp, url)
+end; 
+
+OnVisible = function( Visible ) begin
+io.print("OnVisible",Visible)
+end;
+
+NavigateError = function(pDisp, url) begin
+io.print("NavigateError",pDisp, url)
+end; 
+
+NewWindow3 = function(ppDisp, Cancel,dwFlags,bstrUrlContext, bstrUrl ) begin
+io.print("NewWindow3",Cancel,dwFlags,bstrUrlContext, bstrUrl )
+end; 
+
+NewWindow2 = function( ppDisp, Cancel) begin
+io.print("NewWindow2",ppDisp, Cancel)
+end; 
+}
+
+//com.Connect的第二个接口参数不应当动态创建临时对象，例如调用一个类的构造函数
+res, cookie =com.Connect(IE, DWebBrowserEvents2 )
+
+//Navigate to this Website 
+IE.Navigate2("http://www.baidu.com") 
+
+//set the menu, adddres, and toolbar to off 
+IE.Menubar = false; 
+IE.AddressBar = false; 
+IE.ToolBar = false; 
+
+//[[ Some other settings to play with ]]// 
+IE.Top = 200 
+IE.Left = 200 
+IE.Width=300 
+IE.Height=300 
+IE.FullScreen = false; // KIOSK MODE or not 
+IE.Resizable = true; //Can't resize the window or can 
+// IE.StatusBar = true; //turn the statusbar on 
+// IE.StatusText = "This will be in the statusbar" //set the statusbar text 
+
+//show IE 
+IE.Visible = true
+
+

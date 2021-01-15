@@ -1,0 +1,28 @@
+code = /**   
+	int __align64(unsigned long long a,unsigned int allocationGranularity,int *c,int *offset) __attribute__((dllexport)) {     
+	    *offset =  a % allocationGranularity  ;
+	    a = a - *offset;
+	    *c = ( a >> 32 ) & 0xFFFFFFFF ;
+		return a & 0xFFFFFFFF;
+	}   
+	int __add64(unsigned long long a,unsigned long long b,int *c) __attribute__((dllexport)) {     
+	    a += b;
+	    *c = ( a >> 32 ) & 0xFFFFFFFF ;
+		return a & 0xFFFFFFFF;
+	}  
+**/
+ 
+import tcc; 
+vm = tcc( ); 
+vm.output( "/util.dll", code );
+io.remove("/util.def");
+vm.close(); 
+
+
+//加载生成的DLL
+var dll = raw.loadDll( "/util.dll" );
+__add64 = dll.api( "__add64","INT(int lowSize,int hiSize,int lowAddSize,int hiAddSize,int &hiRet)", "cdecl" ); 
+
+io.open()
+io.print( __add64(1,1,2,1,0) )
+

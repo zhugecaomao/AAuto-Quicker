@@ -1,0 +1,64 @@
+import win.image; 
+namespace win.region;
+
+class bitmap{
+	ctor( hBmp,cTransparentColor=0,cTolerance=0x101010 ){ {
+		var tArg1 = type(hBmp);
+		if( tArg1 == "string" ){
+			this.hRegion = createFromFile(hBmp,cTransparentColor,cTolerance);
+		}
+		elseif( tArg1 == "pointer") {
+			this.hRegion = BitmapToRegion(hBmp,cTransparentColor,cTolerance);
+		} 
+		elseif( tArg1 == "table" && hBmp[["(background)"]]){
+			this.hRegion = BitmapToRegion(hBmp[["(background)"]],cTransparentColor,cTolerance);
+			this.hwnd = hBmp.hwnd;
+		}
+		
+		if( type(this.hRegion) != "pointer" ){
+			error("参数1指定了无效位图",2)
+		}  
+		 
+		..table.add_gc(self,"delete");
+	} };
+	
+	updateWindow = function( hwnd,bRedraw = true){
+		return SetWindowRgn( hwnd : this.hwnd ,this.hRegion,bRedraw);
+	} 
+	
+	delete = function(){
+		if(this.hRegion){
+			::DeleteObject( this.hRegion );
+			this.hRegion = null;
+		}
+	}  
+}
+
+namespace bitmap{
+	var dll = ..raw.loadDll( $"~/lib/win/region/bitmap/.res/c.dll","regionBitmap.dll" );   
+	BitmapToRegion = dll.api( "BitmapToRegion","pointer(POINTER hBmp,int cTransparentColor,int cTolerance)", "cdecl" );   
+	SetWindowRgn = ::User32.api("SetWindowRgn", "bool(addr hWnd, POINTER hRgn, bool bRedraw)");
+
+	createFromFile = function(path,cTransparentColor=0,cTolerance=0x101010){
+		var hBmp = ..win.image.loadImageFromFile(path,false);
+		if( !hBmp )  error("无效的位图文件",2)
+		var hRgn = BitmapToRegion(hBmp,cTransparentColor,cTolerance);
+		::DeleteObject(hBmp);
+		return hRgn;
+	}
+	
+	_meta = {
+		_topointer = function(){
+			return this.hRegion;
+		} 
+	}
+}
+  
+/**intellisense()
+win.region.bitmap = 使用位图创建窗体绘图区域支持库
+win.region.bitmap(.(位图,透明色,容差) = 创建窗体绘图区域\n位图可以是句柄，也可以是位图文件路径\n容差请按B,G,R顺序指定三组六位16进制数\n透明色默认为0即黑色,容差默认为0x101010
+win.region.bitmap(.(窗体,透明色,容差) = 使用窗体的背景图创建绘图区域\n窗体应当是无边框窗口
+win.region.bitmap() = !winRgnBitmap.
+!winRgnBitmap.delete() = 删除对象,\n如果不显示调用该函数,对象不再使用时将自动删除
+!winRgnBitmap.updateWindow(.(窗体句柄,是否重绘) = 设置为窗体的绘图区域,\n如果创建区域时指定了窗体,可以省略参数1,\n参数2为可选参数，默认为true
+end intellisense**/

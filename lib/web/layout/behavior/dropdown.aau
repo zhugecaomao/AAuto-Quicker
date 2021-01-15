@@ -1,0 +1,16 @@
+//dropdown ÏÂÀ­Ñ¡¿ò
+namespace web.layout.behavior.dropdown;
+
+onMouseDown = function (ltTarget,ltEle,x,y,mouseParams) {
+	var elPopup = ltEle.queryElement(".popup,popup"); // either class or element <popup>
+	if( ltTarget.isParent(elPopup) ){
+		return true;
+	}
+	 
+	if( elPopup && ltEle && !ltEle.state.owns_popup  ) { 
+		// you can use :popup and :owns-popup pseudo-classes in CSS now.   
+		elPopup.popupAnchor(ltEle,2); // show it below
+		//elPopup.state.focus = 0; 
+	}
+	return true;
+}

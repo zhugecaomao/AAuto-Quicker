@@ -1,0 +1,62 @@
+//嵌入python语言
+/*
+必须在导入python库以前打开控制台,
+python中的print函数才能支持控制台.
+*/
+io.open()
+
+//导入python支持库
+import py; 
+
+//导入python模块
+var md5 = py.importModule("md5")
+
+//返回模块成员函数,并调用该函数创建python对象
+var md5Key = md5.getPyAttr("new").callPyObject()
+
+//调用update成员函数
+md5Key.getPyAttr("update").callPyFunction("sdfq44er345234")
+
+//调服hexdigest成员函数
+var result = md5Key.getPyAttr("hexdigest").callPyFunction()
+
+//将返回值转换为字符串，并显示在控制台
+io.print( result.parseString() )
+
+//也可以向下面这样简写
+io.print(  md5Key.hexdigest() )
+
+//运行python代码
+py.run("
+print('hello world!') 
+")
+
+pyCode= /**
+def xor():
+	return 123 
+
+if __name__ == "__main__":
+	xor()
+**/
+
+//运行python代码
+py.run( pyCode )
+ 
+__main__ = py.addModule("__main__") //创建模块对象
+xor = __main__.getPyAttr("xor")  //返回函数对象
+var ret = xor.callPyFunction().parseNumber() //调用函数并获取返回值
+
+//显示结果
+io.print( ret )
+
+//也可以象下面这样简写
+io.print( tonumber( xor()  ) )
+ 
+//编译python代码对象
+pyCode =  py.compile("1+2");
+
+//运行代码并返回值
+io.print( pyCode.pyEval().parseNumber() )
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台

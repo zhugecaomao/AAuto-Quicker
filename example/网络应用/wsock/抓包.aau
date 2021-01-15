@@ -1,0 +1,52 @@
+import win.ui;
+/*DSG{{*/
+var winform = win.form(parent=...; right=399;bottom=120;max=false;text="抓包测试程序" )
+winform.add( 
+btnSniff={ bottom=77;text="抓包";left=64;top=37;z=1;right=196;cls="button" };
+btnStop={ disabled=1;bottom=77;right=342;left=210;top=37;z=2;text="停止";cls="button" }
+)
+/*}}*/
+
+winform.btnStop.oncommand = function(id,event){
+	winform.btnStop.disabled = true;
+	winform.btnStop.text = "正在停止..."
+	thread.set("运行指示","给我停" )
+}
+ 
+winform.btnSniff.oncommand = function(id,event){ 
+	winform.btnSniff.disabled = true;
+	winform.btnStop.disabled = false;
+	thread.set("运行指示","给我抓" )
+	
+	win.invoke(
+		function(){
+			import win;
+			import wsock.sniff
+			io.open(); 
+			execute("title 正在抓包") 
+			for(sockdata in wsock.sniff() ){ 
+
+  				if ( sockdata.ok ){
+  					if( sockdata.tcpheader ){ 
+							tinfo = wsock.decodeHttpPack( sockdata.tcpdata ) 
+							if(tinfo.method == "POST" or tinfo.method == "GET"){        
+				 				io.print(tinfo.method , tinfo.url)       
+							}    
+ 				
+   					} 
+  				}
+  				if( thread.get("运行指示") != "给我抓")
+  					break;
+			}
+			
+			execute("title 抓包结束") 
+		} 
+	)
+	
+	winform.btnStop.text = "停止"
+	winform.btnStop.disabled = true;
+	winform.btnSniff.disabled = false;
+}
+
+winform.show() 
+win.loopMessage();

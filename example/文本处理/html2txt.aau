@@ -1,0 +1,10 @@
+//HTML×ªÎÄ±¾
+
+import inet.http;
+var html = inet.http().get("http://www.baidu.com")
+       
+import string.html; 
+txt = string.html.toText(html);
+
+io.open()
+io.print( txt )

@@ -1,0 +1,20 @@
+//三角形
+//三角形//打印三角形九九乘法表
+
+/*****************************
+Author ID: weiidoo
+Time	 : March 10, 2010
+*****************************/
+
+io.open()
+
+for(i=1;9){
+    for(j=1;i){
+    	io.stdout.write(  string.format("%d*%d=%2d  ",i,j,i*j) )
+    }
+    
+    io.print('\n');
+}
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台

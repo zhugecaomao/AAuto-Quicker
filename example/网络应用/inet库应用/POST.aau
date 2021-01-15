@@ -1,0 +1,20 @@
+//HTTP的POST 用法示例 
+import win
+import process;
+import inet.http
+ 
+//声明HTTP对象
+http = inet.http()
+
+//提交数据用法
+var str,err = http.post("http://www.ecranesoft.com/ape/test/post.asp" ,"username=ecranesoft&password=12345234" );
+http.close();//释放资源
+
+if( str ){ 
+	string.save( "/post.txt",str )
+	process.execute(  "/post.txt"    ) 
+}
+//否则输出错误信息
+else{
+ 	 win.msgbox(errmsg)
+}

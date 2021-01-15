@@ -1,0 +1,27 @@
+//入门
+
+import sqlite
+
+//打开数据库连接
+var sqlConnection = sqlite("/testParameters.db")
+
+//exec简化版命名参数
+sqlConnection.exec( "CREATE TABLE IF NOT EXISTS @tablename(title, length, year, starring);",{
+    tablename = "myTableName"
+} ) 
+
+//预处理命名参数：
+sqlConnection.prepare("insert into myTableName values (@title,@length,@year, 'Jodie Foster');" ).step(
+    title = "标题11111";
+    length = 4;
+    year = time.now();	
+ )
+ 
+//迭代方式查询数据 
+io.open();
+for title, length, year, starring in sqlConnection.each("select * from myTableName") {
+    io.print( title, length, year, starring  ) 
+}
+ 
+//格式化参数
+sqlConnection.exec("drop table %s","myTableName" ); 

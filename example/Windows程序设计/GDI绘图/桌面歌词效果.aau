@@ -1,0 +1,118 @@
+
+import win.ui;
+import win.ui.menu;
+import com.picture;
+/*DSG{{*/
+var winform = ..win.form( exmode="toolwindow";right=553;bottom=199;parent=...;text="AAuto Form";border="none";mode="popup" )
+winform.add(  )
+/*}}*/
+
+winform.popmenu = win.ui.popmenu(winform);//创建弹出菜单 
+winform.popmenu.add('退出',function(id){ winform.close() })
+
+winform.wndproc = function(hwnd,message,wParam,lParam){
+
+	select(message) {//判断消息类型
+		case 0x201/*_WM_LBUTTONDOWN 鼠标按下*/{
+			winform.hitCaption()
+		}
+		case 0x204/*_WM_RBUTTONDOWN*/{   
+			winform.popmenu.popup(::LOWORD(lParam), ::HIWORD(lParam));//弹出菜单
+		} 
+	}
+	//无返回值则继续调用默认回调函数
+}//endproc
+
+//------------------------------------------------
+import gdip;
+UpdateLayeredWindow= ::User32.api("UpdateLayeredWindow","int(int hwnd,pointer pDCDst, struct pptDst, struct psize, 
+		pointer pDCSrc, struct pptSrc, INT crKey, struct pblend, INT dwFlags)")
+		
+winform.modifyStyleEx(0,0x80000/*_WS_EX_LAYERED*/) 
+
+drawstring =function( strText,fontsize= 35,fontname="Verdana"  ){
+	var x,y,cx,cy = winform.getPos()
+	
+	hdcTemp = ::GetDC(0);
+	m_hdcMemory = ::CreateCompatibleDC(hdcTemp);
+	hBitMap = ::CreateCompatibleBitmap(hdcTemp,cx,cy);
+	::SelectObject(m_hdcMemory, hBitMap);
+	::ReleaseDC(0, hdcTemp);
+	
+	//图形对象graphics（可以看作是画板）
+	var graphics = gdip.graphics(m_hdcMemory)  
+	//加上抗锯齿功能
+	graphics.smoothingMode = 4/*_GdipSmoothingModeAntiAlias*/;  
+	//创建画笔,画笔pen只能画一个轮廓（画线）
+	var re,Pen = gdip.CreatePen1( 0xFF222222, 2,2/*_GdipUnitPixel*/ );
+	
+	//创建渐变刷子 
+	var re ,Brush = gdip.CreateLineBrush (gdip.POINTF(10,10)/*渐变起始坐标*/
+		, gdip.POINTF(100,100) /*渐变终止坐标*/ , 0xFFFFFF00/*起始颜色*/
+		, 0xFF00FFFF/*结束颜色*/
+		, 2/*_GdipWrapModeTileFlipY*/
+		)
+ 	
+	//创建FontFamily
+	family = gdip.family( fontname ); 
+	//创建stringFormat 
+	strformat = gdip.stringformat ( ); 
+	//设置样式
+	strformat.align = 0/*_GdipStringAlignmentNear*/;
+	
+	
+	//设置文字区域 
+	rclayout = ::RECT( , ,cx,cy);    
+	//创建一个文字路径
+	path = gdip.path( 0/*_GdipFillModeAlternate*/ );  
+	//添加文字到上面创建的路径中
+	path.addstringI(strText, family,1/*_GdipFontStyleBold*/, fontsize, rclayout, strformat);
+	/* ***********************************************
+		* GDI+中一般以I结尾的函数，参数使用int类型，而非I结尾的函数，参数使用float类型 
+		* 这里的rclayout就是普通的int类型参数组成的RECT结构体
+		* ***********************************************
+	*/
+	
+	//fillPath填充路径 
+	graphics.fillPath( Brush, path) 
+	//drawPath描边
+	graphics.drawPath( Pen, path)
+		
+	
+	//删除所有GDI+对象  
+	gdip.DeleteBrush(Brush);
+	gdip.DeletePen(Pen); 
+	strformat.delete();
+	family.delete();
+	path.delete();
+	graphics.delete(); //释放Graphics占用的内存
+	
+	// 用这个GDI 画好的DC代替窗体原来的图形 
+	ptWinPos = ::POINT(x,y);
+	sizeWindow = ::POINT(cx,cy );
+	ptSrc = ::POINT();
+	
+	var BLENDFUNCTION = class {
+	BYTE BlendOp;
+	BYTE BlendFlags;
+	BYTE SourceConstantAlpha;
+	BYTE AlphaFormat;
+	}
+	
+	Blend=BLENDFUNCTION();
+	Blend.SourceConstantAlpha = 255;
+	Blend.AlphaFormat = 1;
+	 
+	bRet = UpdateLayeredWindow(winform.hwnd, ,ptWinPos, sizeWindow, m_hdcMemory, ptSrc, 0, Blend, 0x00000002/*ULW_ALPHA*/);
+	
+	DeleteObject(hBitMap);
+	DeleteDC(m_hdcMemory);
+	
+}
+
+drawstring("ECranesoft.com ",55/*大小*/ )
+//------------------------------------------------
+winform.show(true) 
+win.loopMessage();
+
+

@@ -1,0 +1,10 @@
+//获取所有IE窗口
+
+import web.shell
+
+io.open()
+
+for(i,wb in web.shell.each() ){ 
+	io.print( wb.location );
+} 
+ 

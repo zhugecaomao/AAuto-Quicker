@@ -1,0 +1,23 @@
+//custom 自定义控件演示
+namespace win.ui.ctrl; 
+class custom { 
+	ctor(parent,tParam){
+/*DSG{{*/
+this = ..win.form( exmode="none";mode="child";bottom=87;parent=parent;right=233;tParam=tParam;border="none" )
+/*}}*/
+
+	}
+	onCreate = function(){
+		//创建窗口后触发此函数 
+	} 
+	/*
+	_onDestroy = function(){ 
+		//销毁窗口前触发此函数  
+	}
+	*/
+}
+
+/*intellisense(win.ui.ctrl)
+custom = 自定义控件演示类
+custom() = !winform.
+end intellisense*/

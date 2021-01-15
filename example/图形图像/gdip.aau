@@ -1,0 +1,285 @@
+//GDI+绘图演示
+ 
+import win.ui;
+import win.ui.menu;
+import com.picture;
+/*DSG{{*/
+var winform = ..win.form( bottom=424;parent=...;right=566;text="AAuto Form" )
+winform.add( 
+button2={ bottom=416;text="抓屏存为图片";left=369;top=383;z=6;right=517;cls="button" };
+btnImage={ bottom=416;text="GDI+ 图片";left=48;top=383;z=4;right=196;cls="button" };
+button={ bottom=377;text="GDI+ 绘图测试";left=47;top=344;z=1;right=195;cls="button" };
+btnDrawString={ bottom=377;text="GDI+ 输出文字";left=207;top=344;z=2;right=355;cls="button" };
+btnPathText={ bottom=377;text="GDI+ 路径文字";left=368;top=344;z=3;right=516;cls="button" };
+btnBmp={ bottom=416;text="位图修改";left=207;top=383;z=5;right=355;cls="button" }
+)
+/*}}*/
+
+import gdip;//导入GDI+库 
+
+winform.button2.oncommand = function(id,event){
+ 
+ 	//返回IPicture对象
+    var ipic = com.picture.snap()//抓屏  
+
+	//转换为GDI+图像
+	var bmp=gdip.bitmap( ipic )
+	bmp.rotateFlip(6/*_GdipRotateNoneFlipY*/)
+	//保存为各种格式的图像文件
+	bmp.save("\抓屏测试.png") 
+	bmp.save("\抓屏测试20.jpg",20) //jpg可指定质量,较低的质量文件较小
+	bmp.save("\抓屏测试90.jpg",90) //较高的质量则更清晰
+    
+    //创建画板 
+	var graphics = gdip.graphics(  winform ) 
+	bmp.rotateFlip(6/*_GdipRotateNoneFlipY*/)
+	//绘图
+    graphics.drawImageRect(  bmp, 20,20,bmp.width/2,bmp.height/2)  //指定输出大小 
+  
+  	//bitmap,image,graphics都支持自动释放
+    //bmp.dispose();
+    //graphics.delete(); 
+ 	
+}
+
+
+winform.btnBmp.oncommand = function(id,event){ 
+     
+    //从文件创建位图
+	var bmp = gdip.bitmap ( "\.gdip.jpg"  )  
+    
+    //获取大小
+    宽 = bmp.width
+    高 = bmp.height;
+	
+	 
+    //获取位图数据
+    var bmpdata = bmp.lockdata();
+    			
+ 
+ 	//修改图像内存数据
+    for(h=1;bmp.height ){
+    	for(w=1;bmp.width){  
+    		bmpdata.bits.array[h].array[w] = 0xFFFF0000;
+    	} 
+    }
+     
+  
+    //解除内存锁定、刷新的位图数据
+    bmp.unlockdata(bmpdata);
+    
+    //图形对象graphics（可以看作是画板）
+	var graphics = gdip.graphics(  winform ) 
+    graphics.drawImageRect(  bmp, 20,20, 100, 200)  //指定输出大小100*200
+ 
+}//endproc
+
+
+ 
+winform.btnImage.oncommand = function(id,event){
+	  
+	
+	//从文件载入图片 gdip.CreateBitmapFromFile 与下面的用法基本相同
+	img = gdip.image ( "\.gdip.jpg" )  
+    width = img.width;
+    height = img.height;
+	img.dispose();//释放图片
+  
+ 	
+ 	//从字符串直接载入图片  gdip.LoadBitmapFromString 的用法与下面的相同
+ 	img = gdip.image($"\.gdip.jpg" )   
+    
+    //图形对象graphics（可以看作是画板）
+	var graphics = gdip.graphics(  winform ) 
+	//var graphics = gdip.graphics( img )//也可以使用这个函数直接在图片上创建画板 
+	//graphics.clear(0xFFFFFFFF); //用指定的颜色清空画板  
+	
+	//旋转画布 
+	graphics.rotate( 10, 1/*_GdipMatrixOrderAppend*/ ) 
+	//将画布向右，向下平移10px,50px
+	graphics.translate(  10, 50, 1/*_GdipMatrixOrderAppend*/ )
+
+	//设置一块剪辑区域(限制绘图区块)
+	graphics.setClipRectI(  10, 20, 100, 100, 0/*_GdipCombineModeReplace*/ );
+	graphics.resetClip() //取消剪辑 
+ 
+    graphics.drawImage( img, 0, 0) //普通画图片，不需要指定大小，画的图似有变形，不推荐使用 
+    graphics.drawImageRectI( img, 20,20, 100, 200)  //指定输出大小100*200 
+	graphics.drawImageRectRectI( img, 0, 0, 50, 50,/*前面为输出区块，后面是从原图截取的区块*/  0,  0, 300, 300 )
+
+	/* ***********************************************
+	 * GDI+中一般以I结尾的函数，参数使用int类型，而非I结尾的函数，参数使用float类型 
+	 * ***********************************************  
+	*/ 
+	var re,textureBrush = gdip.CreateTexture(img, 1/*_GdipWrapModeTileFlipX*/ )
+	graphics.fillRectangle( textureBrush, 200, 200, 100, 100)  
+	gdip.DeleteBrush(textureBrush); 
+    
+    //防止图片盖住按钮
+    winform.btnPathText.redraw();
+    winform.btnImage.redraw();
+    winform.btnDrawString.redraw()
+    winform.button.redraw(); 
+}//endproc
+
+
+winform.btnPathText.oncommand = function(id,event){ 
+
+	//图形对象graphics（可以看作是画板）
+ 	var Graphics = gdip.graphics(winform) 
+ 	
+ 	//加上抗锯齿功能
+ 	Graphics.smoothingMode = 4/*_GdipSmoothingModeAntiAlias*/ ; 
+	
+	//创建画笔,画笔pen只能画一个轮廓（画线）
+	var re,Pen = gdip.CreatePen1( 0xFF222222, 2,2/*_GdipUnitPixel*/ );
+	
+	//创建刷子,画刷可以对一个东西进行填充（刷子）。
+	var re,Brush = gdip.CreateSolidFill(0xFFDEDEDE);
+	  
+	 
+	//创建FontFamily
+	family = gdip.family( "Verdana"  ); 
+	
+	//创建stringFormat 
+	strformat = gdip.stringformat ( ); 
+	//设置样式
+	strformat.align = 0/*_GdipStringAlignmentNear*/;  
+	 
+	//设置文字区域
+	rclayout = ::RECT(10,10,500,150); 
+	
+	//创建一个文字路径
+	path = gdip.path( 0/*_GdipFillModeAlternate*/ ); 
+
+	//添加文字到上面创建的路径中
+	path.addstringI( "AAuto Quicker", family, 1/*_GdipFontStyleBold*/, 55, rclayout, strformat);
+	
+ 	/* ***********************************************
+	 * GDI+中一般以I结尾的函数，参数使用int类型，而非I结尾的函数，参数使用float类型 
+	 * 这里的rclayout就是普通的int类型参数组成的RECT结构体
+	 * ***********************************************
+	*/
+	
+ 	//fillPath填充路径 
+	Graphics.fillPath( Brush, path)
+	 
+	//drawPath描边
+	Graphics.drawPath( Pen, path)
+	 
+ 
+	//删除所有GDI+对象  
+	gdip.DeleteBrush(Brush);
+	gdip.DeletePen(Pen);
+	 
+	strformat.delete();
+	family.delete();
+	path.delete(); 
+	
+}//endproc
+
+
+winform.btnDrawString.oncommand = function(id,event){
+	//图形对象graphics（可以看作是画板）
+	var graphics = gdip.graphics(  winform ) 
+	
+	//创建刷子
+	var re,Brush = gdip.CreateSolidFill(0xFFFF0000);
+	
+	//创建FontFamily 
+	var family = gdip.family("宋体");
+	
+	//创建stringFormat 
+	var strformat = gdip.stringformat ( ); 
+	//设置样式
+	strformat.align = 0/*_GdipStringAlignmentNear*/;
+	
+	//创建Font
+	var curFont = family.createFont(  15,2/*_GdipFontStyleItalic*/, 2/*_GdipUnitPixel*/)
+	
+	//设置文字抗据齿
+	graphics.textRenderingHint = 3/*_GdipTextRenderingHintAntiAliasGridFit*/;
+
+	//设置文字区域
+	rclayout = gdip.RECTF(); 
+	rclayout.left = 15
+	rclayout.top = 15
+	rclayout.right = 500 //在这里指的是宽度
+	rclayout.bottom = 150 //在这里指的是高度
+	 
+	graphics.drawString( "Hellow world! 这是我们第一个GDI+文字~!!"  , curFont, rclayout, strformat,Brush);
+ 	/* ***********************************************
+	 * GDI+中一般以I结尾的函数，参数使用int类型，而非I结尾的函数，参数使用float类型 
+	 * 这里的rclayout就是float类型参数组成的RECTF结构体
+	 * ***********************************************
+	*/
+	
+	//删除所有GDI+对象  
+	gdip.DeleteFont(curFont);
+	gdip.DeleteBrush(Brush);
+	
+	strformat.delete();
+	family.delete(); 
+
+}//endproc
+
+
+
+ 
+winform.button.oncommand = function(id,event){
+	//图形对象graphics（可以看作是画板）
+	var graphics = gdip.graphics(  winform )  
+ 
+	//创建画笔,画笔pen只能画一个轮廓（画线）
+	var re,Pen = gdip.CreatePen1( 0xFFFF0000, 1, 2/*_GdipUnitPixel*/ );
+
+	//画一条线 - GdipDraw开头的函数基本都是描边，需要画笔(Pen)
+	graphics.drawLineI( Pen, 10, 10, 200, 100).drawRectangleI( Pen, 30, 30, 100, 100)
+
+	//画矩形  - GdipDraw开头的函数基本都是描边，需要画笔(Pen)
+	//graphics.drawRectangleI( Pen, 30, 30, 100, 100);
+
+	//创建一个蓝色，透明度为0xAA的刷子  
+	var re,Brush = gdip.CreateSolidFill(0xAA0000FF);
+
+	//用刷子填充矩形内部  -GdipFill头的函数基本都是填充，需要刷子(Brush)
+	graphics.fillRectangleI( Brush, 30, 30, 100, 100 )
+	
+	/* ***********************************************
+	 * Draw开头的函数基本都是描边，需要画笔(Pen)
+	 * Fill头的函数基本都是填充，需要刷子(Brush),其实这个名词有点让人误解，在PS里面有个油漆桶、或者说是喷枪就是这个意思。 
+	 * GDI+提供了SolidBrush（实色刷）、HatchBrush（阴影刷）、TextureBrush（纹理刷）、LinearGradientBrush（渐变刷）和PathGradientBrush（路径刷）等五种画刷
+	 * ***********************************************
+	*/
+	
+	//创建渐变刷子
+	var p1 = gdip.POINTF();
+	var p2 = gdip.POINTF();
+	p1.x = 10
+	p1.y = 10
+	p2.x = 100
+	p2.y = 100
+	var re ,LineBrush = gdip.CreateLineBrush (p1/*渐变起始坐标*/, p2 /*渐变终止坐标*/ , 0xFF0000FF/*起始颜色*/, 0xFFFF0000/*结束颜色*/, 2/*_GdipWrapModeTileFlipY*/ )
+ 
+ 	//为了圆形画的平滑自然，加上抗锯齿功能
+ 	graphics.smoothingMode = 4/*_GdipSmoothingModeAntiAlias*/ ; 
+
+	//画圆形、或椭圆
+	graphics.fillEllipseI(  Brush, 150/*x坐标*/, 50/*y坐标*/,150/*宽*/, 120/*高*/);
+	
+	//用渐变色刷子填充矩形内部
+	graphics.fillRectangleI( LineBrush, 100, 100, 100, 100)
+	 
+ 
+ 	//删除创建的GDI对象
+ 	gdip.DeletePen(Pen)
+ 	gdip.DeleteBrush(Brush)
+ 	gdip.DeleteBrush(LineBrush) 
+	
+}//endproc
+
+  
+winform.show(true) 
+win.loopMessage(); 
+
+return winform;

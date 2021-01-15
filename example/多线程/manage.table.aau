@@ -1,0 +1,75 @@
+//多线程范例
+//by cbtan http://www.aau.cn/thread-3115-1-1.html
+import win.ui;
+/*DSG{{*/
+var winform = win.form(parent=...; text="AAuto Form";right=432;bottom=57 )
+winform.add( 
+btnRemove10={ bottom=38;right=376;left=299;top=10;font=LOGFONT( name="宋体";h=-12 );z=3;text="移除 10 个";cls="button" };
+btnRemoveOne={ bottom=40;right=280;left=203;top=12;font=LOGFONT( name="宋体";h=-12 );z=1;text="移除 1 个";cls="button" };
+btnSuspend={ bottom=40;text="停止填充";left=102;top=10;font=LOGFONT( name="宋体";h=-12 );z=4;right=166;cls="button" };
+btnResume={ bottom=41;text="继续填充";left=21;top=11;font=LOGFONT( name="宋体";h=-12 );z=2;right=87;cls="button" }
+)
+/*}}*/
+
+io.open(); 
+import thread.manage 
+var manage = thread.manage()
+
+manage.create( 
+	function(...) {
+		import win;
+        import thread.table 
+        tab=thread.table("tab") 
+        
+        while( win.delay(1) ){
+        	for(i=1;100;1){  
+        	
+            	while( tab.count()>300  ){ //限制个数
+                	io.print("填充 300个ID 完毕，在等待消除ID。。。。") 
+                	if( !win.delay(1000) )
+            			return;
+            	} 
+            	tab.push(i)  
+            	if(!win.delay(1))
+            		return;
+        	} 
+        }
+        io.print("线程已终止")
+	} 
+) 
+
+import thread.table
+tab=thread.table("tab",true)
+
+//移除10个
+winform.btnRemove10.oncommand = function(id,event){
+    for(i=1;10;1){
+        tab.remove()    
+    }
+    io.print("现在有 "+tab.count()+ " 个")
+}
+
+//移除1个
+winform.btnRemoveOne.oncommand = function(id,event){
+    tab.remove()
+    io.print("现在有 "+tab.count()+ " 个")
+}
+
+//暂停线程
+winform.btnSuspend.oncommand = function(id,event){ 
+    manage.suspend()
+} 
+
+//继续线程
+winform.btnResume.oncommand = function(id,event){
+    manage.resume()
+}
+
+winform.show(); 
+win.loopMessage();
+ 
+//安全终止线程
+manage.quitMessage()
+manage.waitClose() 
+
+

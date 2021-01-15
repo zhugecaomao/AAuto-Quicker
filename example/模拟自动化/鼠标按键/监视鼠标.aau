@@ -1,0 +1,51 @@
+
+//打开控制台窗口
+io.open() 
+
+//导入HOOK库
+import  mouse.hook 
+io.print("正在监视按键,按鼠标右键退出!")
+
+//创建录制钩子
+hk = mouse.hook();
+
+//录制回调函数
+hk.proc = function(msg,x,y,mouseData,injected,flags,timeStamp,extraInfo){
+	if( injected ) return; //模拟鼠标不处理
+	
+	if( msg == 0x205/*_WM_RBUTTONUP*/ ){
+    	win.quitMessage(); 
+    }
+    	
+    select(msg) {
+    	case 0x201/*_WM_LBUTTONDOWN*/{
+    	    io.print("左键按下",x,y)
+    	}
+    	case 0x202/*_WM_LBUTTONUP*/{
+    	    io.print("左键弹起",x,y)
+    	}
+    	case 0x204/*_WM_RBUTTONDOWN*/{
+    	    io.print("右键按下",x,y)
+    	}
+    	case 0x205/*_WM_RBUTTONUP*/{
+    	    io.print("右键弹起",x,y)
+    	}
+        case 0x207/*_WM_MBUTTONDOWN*/{
+    	    io.print("中键按下",x,y)
+    	}
+    	case 0x208/*_WM_MBUTTONUP*/{
+    	    io.print("中键弹起",x,y)
+    	}   
+    }   
+}
+
+//录制需要消消息循环
+import win;
+win.loopMessage()
+
+//一定要关闭钩子
+hk.close(); 
+ 
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+ 

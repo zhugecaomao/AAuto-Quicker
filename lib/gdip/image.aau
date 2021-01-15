@@ -1,0 +1,107 @@
+//image 图像对象 
+namespace gdip 
+
+//创建类
+class image {
+	ctor(arg,...){
+		if(type(arg) == type.string){
+			var len = #arg; 
+			if(len<= 0x104/*_MAX_PATH*/ ){
+				if(!len)error("参数不能是空字符串",2);
+				this.path = ..io.exist( arg) 
+				if( this.path ){
+					 this.pImage = gdip.assert( gdip.LoadImageFromFile (..string.toUnicode( this.path  ) )  )    
+				} 
+			}
+			if(!this.pImage)
+				this.pImage = gdip.assert( gdip.loadImageFromString (arg )  )   
+			
+		}
+		
+		if(!this.pImage)
+			error("参数必须是字符串(图片文件路径或内容)",2)
+			
+		..table.add_gc(this,"dispose"); 
+	} 
+	@_metaProperty//元表指向属性表
+}
+
+namespace image{
+import util.metaProperty;//导入属性表支持库
+
+gdip = ..gdip; 
+box = function(p){
+	return ..table.add_gc( {
+		pImage = p; 
+		@_metaProperty
+	},"dispose" );	 
+}
+
+_metaProperty = util.metaProperty(
+	//从图像创建画布
+	graphics =  {
+		_get = function(){ 
+			return owner.getGraphics(); 
+		}  	
+	};  
+    getGraphics = function(){ 
+		return gdip.graphics.fromImage(owner); 
+	}; 
+	width = {
+		_get = function(){ 
+			return gdip.assert(  gdip.GetImageWidth(owner[["pImage"]], 0)) ; 
+		}  	
+	}; 
+	
+	height = {
+		_get = function(){ 
+			return gdip.assert( gdip.GetImageHeight(owner[["pImage"]], 0)) ; 
+		}  	
+	}; 
+	
+	save = function(path,quality){
+		gdip.checkError(
+			gdip.SaveImage( owner[["pImage"]],path : this.path,quality ) 
+			,2
+		);
+	}
+	
+	getThumbnail = function(w,h){
+		if(w<1)w = owner.width * w;
+		if(h<1)h = owner.height * h;
+		var hBmp = gdip.assert( gdip.GetImageThumbnail(owner[["pImage"]], w,h) );
+		return hBmp? box(hBmp)
+	}
+	
+	dispose = function(){
+		if( owner[["pImage"]] ){
+			gdip.DisposeImage(owner[["pImage"]])
+			owner[["pImage"]] = null;//让其他的函数都用不了
+		}
+	};
+	
+	rotateFlip = function(refType){
+		gdip.ImageRotateFlip(owner[["pImage"]],refType)
+	};
+	
+	//自动转换为API指针
+	_topointer = function(){
+		return owner[["pImage"]];
+	}
+)
+ 
+}
+ 
+/**intellisense()
+gdip.image("__/*请输入文件路径\n或图片数据*/") = 创建GDI+L图片对象
+!gdipimage.width = 宽度
+!gdipimage.getGraphics()  = 从图像创建画布\n!gdipgraphics.
+!gdipimage.height = 高度
+!gdipimage.getThumbnail(.(宽度,高度) = 获取缩略图,\n返回 gdip.image 对象.\n宽度,高度指定新的像素大小,也可以用小于1大于0的小数指定缩放百分比.
+!gdipimage.getThumbnail() = !gdipimage.
+!gdipimage.rotateFlip(_GdipRotate__/*指定翻转选项*/) = 翻转图片
+!gdipimage.save("__/*请输入文件路径*/") = 保存图像\n使用参数指定的文件路径或加载图片时的路径\n根据后缀名自动设定格式
+!gdipimage.save("__/*请输入文件路径*/",80) = 保存图像\n使用参数指定的文件路径或加载图片时的路径\n根据后缀名自动设定格式\njpg文件可使用第二个参数指定图像质量
+!gdipimage.dispose() = 释放图像\n此对象支持自动释放,不必手工调用此函数
+?gdip.image = !gdipimage.
+end intellisense**/

@@ -1,0 +1,10 @@
+import process
+import com.picture;
+
+var image = com.picture; 
+var pic = com.picture.snap()//抓屏
+
+pic.Save( "/抓屏.jpg" )
+
+//打开浏览器,选定该文件
+process.explore_select("/抓屏.jpg") 

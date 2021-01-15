@@ -1,0 +1,46 @@
+//滚动条、滑尺控件、微调按钮
+import win.ui;
+/*DSG{{*/
+var winform = win.form(parent=...; bottom=203;max=false;text="滚动条、滑尺控件、微调按钮";right=438 )
+winform.add( 
+trackbar={ dl=1;bottom=69;max=100;text="trackbar";left=135;top=39;z=1;db=1;min=1;right=375;cls="trackbar" };
+spin={ hroz=1;dl=1;bottom=162;max=100;right=120;left=100;min=1;z=5;db=1;text="<>";top=137;cls="spin" };
+editTrackbar={ dl=1;bottom=66;text="1";readonly=1;multiline=1;top=41;right=119;z=3;db=1;left=46;edge=1;cls="edit" };
+editSpin={ dl=1;bottom=161;right=100;left=67;multiline=1;top=138;z=6;db=1;text="1";edge=1;cls="edit" };
+scrollbar={ dl=1;bottom=118;max=100;horz=1;left=141;top=88;text="";z=2;db=1;right=375;min=1;cls="scrollbar" };
+editScrollbar={ dl=1;bottom=114;text="1";readonly=1;multiline=1;top=89;right=119;z=4;db=1;left=46;edge=1;cls="edit" }
+)
+/*}}*/
+
+//大整数应显式指定
+winform.trackbar.max = 65500;
+
+winform.trackbar.oncommand = function(id,event,pos){
+	//拖动滑块时触发此函数,注意这里多了一个表示刻度的pos参数
+	if( pos ){
+		//如果用户放开鼠标，pos可能为0
+		winform.editTrackbar.text = pos 
+	} 
+}
+ 
+winform.scrollbar.setRange(1,100)
+winform.scrollbar.oncommand = function(id,event,pos){
+	//拖动滑块时触发此函数,注意这里多了一个表示刻度的pos参数 
+	if( pos ){
+		//如果用户放开鼠标，pos可能为0
+		winform.editScrollbar.text = pos 
+		winform.scrollbar.pos = pos; //滚动条要存储新刻度
+	} 
+}
+
+winform.spin.oncommand = function(id,event,pos){
+	//拖动滑块时触发此函数,注意这里多了一个表示刻度的pos参数
+	if( pos ){
+		//如果用户放开鼠标，pos可能为0
+		winform.editSpin.text = pos 
+	} 
+}
+//可以使用一句代码替换上面的函数 winform.spin.buddy = winform.editSpin 
+
+winform.show() 
+win.loopMessage();

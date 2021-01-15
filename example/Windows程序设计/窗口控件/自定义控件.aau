@@ -1,0 +1,14 @@
+import win.ui;
+import win.ui.menu;
+import com.picture;
+import win.ui.ctrl.custom
+/*DSG{{*/
+var winform = win.form( min=1;bottom=249;max=1;text="AAuto Form";right=349 )
+winform.add( 
+custom={ bottom=228;text="custom";left=89;z=0;top=102;transparent=1;right=331;edge=1;cls="custom" }
+)
+/*}}*/
+
+winform.show(true) 
+win.loopMessage();
+return winform;

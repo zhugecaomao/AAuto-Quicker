@@ -1,0 +1,24 @@
+//中文字符串专用函数库
+
+io.open();//打开控制台
+
+//导入中文字符串处理专用类
+import string.mbcs
+
+//创建一个中文字符串对象
+str = string.mbcs("请输入一行文本，然后回车")
+
+//这个字符串与AAuto内置的字符串不同,可以直接读写每个索引位置的值
+str[2] = "abc哈哈"
+
+io.print( #str,str )
+ 
+//重新计算字符串长度
+str.reset()
+
+io.print( #str,str )
+
+io.print( str.left(3) );
+ 
+execute("pause") //按任意键继续
+io.close();//关闭控制台

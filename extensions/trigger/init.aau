@@ -1,0 +1,40 @@
+//IDE初始化触发器
+//下面的代码在快手开发环境初始完成以后触发
+sleep(1500);
+
+import ide;
+import inet.whttp;
+import console;
+
+//ide.showDesktopAlert("每日提示");
+var strVersion = inet.whttp().get("http://update.aau.cn/aauto/update/version.txt"); 
+if( ! #strVersion ) return;
+
+if( ( ide.getConfig("version") != strVersion)  && ( ide.getConfig("ignore_update") != strVersion) ){
+	console.log("
+	检测到快手(AAuto Quicker)最新版本：" + strVersion)
+	execute("title  检测到快手(AAuto Quicker)最新版本")
+	console.log(" 
+	本工具将自动同步所有文件到服务器最新版本,
+	如果您修改了标准库或快手的任何文件,请注意事先备份。
+	自动更新以后如果快手不能正常运行，请到 www.aau.cn 下载完整版本即可.
+	
+	检测并修复所有文件到服务器版本请按键盘上任意键, 
+	退出请按ESC");
+	if( console.getch() == 0x1B/*_VK_ESC*/ ){
+		ide.setConfig("ignore_update",strVersion);
+		var strConfig = ..string.load("~\config\USE.CFG");
+		if( strConfig ){
+			..string.save("~\config\USE.CFG",string.format('%s\r\nignore_update=%s',strConfig,strVersion ) )
+		}
+		
+		io.close();
+		return;
+	}
+	var update = ..fiber.create( 
+		function(){
+			loadcode("~\tools\update.aau")("自动更新")();
+		},"~\tools\"
+	); 
+	fiber.resume(update)
+}

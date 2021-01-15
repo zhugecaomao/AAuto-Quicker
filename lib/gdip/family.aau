@@ -1,0 +1,46 @@
+//family 字体家族 
+namespace gdip ;
+ 
+//创建类
+class family {
+	ctor(name,collection=0){
+		if(type(name) == type.string){ 
+			 this.pFamily = gdip.assert(  gdip.CreateFontFamilyFromName ( ..string.toUnicode(name),collection)   )    
+		}
+		
+		if(!this.pFamily)
+			error("参数错误",2) 
+	}
+
+	@_metaProperty//元表指向属性表
+}
+
+namespace family{
+
+	gdip = ..gdip;
+	
+	import util.metaProperty;//导入属性表支持库
+	_metaProperty = util.metaProperty(
+	
+	 	createFont = function( emSize,style=0/*_GdipFontStyleRegular*/,unit=2/*_GdipUnitPixel*/ ){
+			return gdip.assert(  gdip.CreateFont(owner[["pFamily"]],emSize,style,unit) ); 
+		}
+	 	
+		delete = function(){
+			gdip.DeleteFontFamily(owner[["pFamily"]])
+			owner[["pFamily"]] = null;//让其他的函数都用不了
+		}
+		
+		//自动转换为API指针
+		_topointer = function(){
+			return owner[["pFamily"]];
+		}
+	)   
+}
+ 
+/**intellisense()
+gdip.family("__/*请输入文件路径\n或图片数据*/") = 创建字体家族对象 
+!gdipfamily.createFont(15,_GdipFontStyle__) = 创建字体,参数一指定大小,\n参数二指定样式\n可选参数三指定单位,默认值为_GdipUnitPixel
+!gdipfamily.delete() = 删除字体家族对象
+?gdip.family = !gdipfamily.
+end intellisense**/

@@ -1,0 +1,56 @@
+//出牌
+//原文：http://www.ecranesoft.com/bbs/showtopic-7935.aspx
+import win;
+io.open()
+
+card_drawn ={} //标记要发出去的牌为true
+cards_rem = 52;//标记还剩多少未发出
+suits = {"红桃"; "方块"; "黑桃"; "梅花"};  //花色
+ranks = {"A"; "2"; "3"; "4"; "5"; //点数
+        "6"; "7"; "8"; "9"; "10"; 
+        "J"; "Q"; "K"};
+                        
+
+//跳过已发出的牌
+function next_card( n) {
+    while (n && card_drawn[n])  
+        n--;  
+    while (card_drawn[n]) 
+        n++;  
+    return n;
+}
+
+
+
+//发一张牌的函数
+function draw_a_card() {  
+    if ( ! cards_rem  ) { //若发牌数超过52张，重置cards_rem全局变量，card_drawn[]数组元素
+        io.print( "Reshuffling." );
+        cards_rem = 52; card_drawn = {}
+    }
+
+    var n = math.random(1,cards_rem);    //根据cards_rem的值获取一个随机数
+    var card = next_card(n);    //跳过已发过的牌， 查找第一张可用的牌
+    cards_rem--;
+    
+    var r = card % 13 + 1;//r = 0 ~ 12随机数
+    var s = math.floor( card / 13 ) + 1; //s = 0 ~ 3随机数 
+    io.print(  ranks[r] , suits[s]  ) ;
+}
+
+
+
+//发牌程序 
+math.randomize()  //设置随机数种子值
+
+while (1) {
+    io.print( "请输入出牌数目 (输入0退出程序): " ); 
+    var n = io.stdin.read("%d") 
+    if (!n)  break;
+        
+    for(i=1;n) draw_a_card(); 
+    
+} 
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台

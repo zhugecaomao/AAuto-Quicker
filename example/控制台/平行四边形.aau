@@ -1,0 +1,36 @@
+//平行四边形
+//平行四边形//横5竖8的平行四边形
+
+/*****************************
+Author ID: weiidoo
+Time	 : March 10, 2010
+*****************************/
+
+
+//印横5竖8的平行四边形一
+io.open();
+
+for(i=1;5){
+
+	for(j=1;5-i){
+		io.stdout.write( string.format(" ") );
+	}
+
+	io.stdout.write( string.format( "********"+'\n' ) );
+}
+
+io.print('\n');
+
+//印横5竖8的平行四边形二
+for(i=1;5){
+
+	for(j=1;i){
+		io.stdout.write( string.format(" "));
+  	}
+
+	io.stdout.write( string.format("********"+'\n'));
+}
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+

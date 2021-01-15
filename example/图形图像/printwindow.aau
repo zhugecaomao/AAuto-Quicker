@@ -1,0 +1,58 @@
+//后台抓图
+//作者:lujjjh 
+
+import win.ui;
+import winex;
+import win.graphics;
+/*DSG{{*/
+var winform = win.form(parent=...; bottom=446;right=570;border="resizable";text="AAuto 后台截图演示" )
+winform.add( 
+cbxWindowList={ dr=1;dl=1;vscroll=1;bottom=28;right=560;left=16;dt=1;
+items={  };font=LOGFONT( name="宋体";h=-12 );text="combobox";z=1;top=8;mode="dropdownlist";edge=1;cls="combobox" };
+picturebox={ dr=1;dl=1;notify=1;text="picturebox";left=16;dt=1;top=32;font=LOGFONT( name="宋体";h=-12 );bottom=432;z=2;db=1;right=560;transparent=1;cls="picturebox" }
+)
+/*}}*/
+
+// 程序初始化
+(function () {
+    // 列出所有顶级窗口
+    winform.cbxWindowList.clear();
+    winex.enumTop(
+        function (hwnd) {
+            if( ! win.isVisible(hwnd)
+                || win.isIconic(hwnd) )
+                return;
+                
+            var title = win.getText(hwnd);
+            if (#title && title!="Program Manager") {
+                winform.cbxWindowList.add(title);
+                ::SendMessageInt(winform.cbxWindowList.hwnd, 0x151/*_CB_SETITEMDATA*/, winform.cbxWindowList.count - 1, hwnd);
+            }
+        }
+    );
+    
+    // 初始化 canvas
+    canvas = win.graphics.canvas();
+    canvas.fromWindow(winform.picturebox);
+})();
+
+winform.picturebox.wndproc = function (hwnd, message, wParam, lParam) {
+    if (message == 0xF/*_WM_PAINT*/) {
+        var hwnd = ::SendMessageInt(winform.cbxWindowList.hwnd, 0x150/*_CB_GETITEMDATA*/, winform.cbxWindowList.selIndex - 1, 0);
+        canvas.beginPaint();
+        canvas.printWindow(hwnd);
+        canvas.endPaint();
+        return 1;
+    }
+}
+
+winform.cbxWindowList.oncommand = function(id,event){
+    if (event == 0x9/*_CBN_SELENDOK*/)
+        winform.picturebox.redraw();
+}
+
+winform.show();
+win.loopMessage();
+
+canvas.destroy();
+

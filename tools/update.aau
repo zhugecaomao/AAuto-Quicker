@@ -1,0 +1,273 @@
+//检测更新/修复文件
+import fsys;
+import console;
+import process; 
+import ide;
+import win;
+
+var autoUpdate = ...;
+if( !autoUpdate ){
+	console.log("
+	本工具将自动同步所有文件到服务器最新版本,
+	如果您修改了标准库或快手的任何文件,请注意事先备份。
+	自动更新以后如果快手不能正常运行，请到 www.aau.cn 下载完整版本即可.
+	
+	检测并修复所有文件到服务器版本请按键盘上任意键, 
+	退出请按ESC");
+	if( console.getch() == 0x1B/*_VK_ESC*/ ){
+		io.close();
+		return;
+	}
+}
+
+io.stdout.write('\n正在下载更新数据......')
+
+import inet.whttp;
+var http = inet.whttp();
+
+var updateData = http.get("http://update.aau.cn/aauto/update/update.gz")
+if(!updateData){
+	io.stdout.write('\r下载更新配置文件失败！\n');
+	return;
+}
+
+import zlib;
+var updateData = zlib.gzUncompress(updateData); 
+if(!updateData){
+	io.stdout.write('\r解压更新配置文件失败！\n');
+	return;
+}
+
+var updateInfo;
+try{
+	updateInfo = eval( updateData )
+}
+if( !updateInfo ){
+	io.stdout.write('\r更新配置文件错误！\n');
+	return;
+}
+ 
+io.stdout.write('\r正在校验文件\n'); 
+import inet.httpFile;
+
+var countUpdatedFile = 0;
+var buffer = raw.malloc( 1024 * 1024);
+downloadFile = function(subPath,localPath,url){
+	var gzPath = localPath + ".gz"
+	fsys.createParentDir(gzPath)
+	var remoteFile = inet.httpFile(url + ".gz" , gzPath ) 
+	remoteFile.onReciveBegin = function(statusCode,contentLength,fileSize){
+		if( statusCode == 206/*断点续传*/ ){
+			console.log("正在断点续传")
+		}
+		elseif(fileSize){
+			console.log("正在重新下载")
+		}
+		console.log("未下载长度",contentLength,"已下载长度",fileSize, "HTTP状态码", statusCode )
+	}
+	
+	remoteFile.onRecive = function(str,size,contentLength){
+		console.log("总长度",contentLength , "下载", size )
+	}
+	
+	//下载文件
+	var ok,fileSize,err = remoteFile.download() 
+	if( ok ){
+		remoteFile.removeDownloadFile() 
+		var gzFile = zlib.gzFile(gzPath,"rb")
+		  
+		if( string.cmp("AAuto Quicker.exe",subPath) == 0 ){
+			localPath = io.fullpath( "~\AAuto Update.exe" )
+		}
+	 
+		var file,err = io.open(localPath,"w+b");
+		if(!file){
+			io.print("更新文件遇到错误",err )
+			io.print("更新文件路径",localPath)
+			return;
+		} 
+		var readSize = gzFile.readBuffer(buffer); 
+		while(readSize){
+			 file.writeBuffer(buffer,readSize);
+			 readSize = gzFile.readBuffer(buffer);
+		} 
+		gzFile.close();
+		file.close();
+		
+		fsys.delete(gzPath)
+		countUpdatedFile++;
+	}
+	else {
+		..console.log( fileSize,err  )
+	}	
+}
+
+var localDir = io._exedir;
+var localPath;
+var file; 
+
+checkUpdate = function(path,info){
+	localPath = io.fullpath( fsys.joinpath(localDir,path) )
+	file = io.open(localPath,"rbS") //S 顺序读取优化
+	if( file ){
+		if( ( string.crc32( file.read(-1) ) == info.crc32 ) && ( file.size() = info.size ) ){
+			file.close();
+			return;
+		}
+		file.close()
+	} 
+	 
+	console.log("正在更新文件",path)
+	downloadFile( path,localPath, inet.url.joinpath(updateInfo.url,path))	
+}
+  
+for(path,info in updateInfo.files ){
+	if( string.endWith(path,"update.aau",true) ){
+		checkUpdate(path,info)
+	} 
+}
+
+var count = 1;
+for(path,info in updateInfo.files ){ 
+	count++;
+	io.stdout.write('\r已检测 ' + count + " 个文件" 
+		+ " ,已更新 " + countUpdatedFile +' 个文件');
+	checkUpdate(path,info);
+}
+
+fsys.enum( "~/", "*#Src.aau",
+	function(dir,filename,fullpath,findData){ 
+		if(filename){ 
+           io.remove(fullpath)
+           io.print("已删除冲突文件",fullpath)
+		} 
+	} 
+); 
+
+console.log('\n正在检测扩展库版本') 
+var libVers = ide.getExtLibs(); 
+for(libName,info in libVers){
+	console.log("正在检测扩展库",libName )
+	try{
+		ide.importFile( libName,info.version,libName + "扩展库版本已更新，您需要下载并更新到新版本吗？" )
+	}
+	catch(e){
+		io.print( e )
+	}
+} 
+
+updateExePath = fsys.joinpath(io._exedir,"\AAuto Update.exe");
+
+if( io.exist(updateExePath) ){
+	if( ! win.msgboxTest("更新程序需要关闭快手重新启动,是否继续?","快手(AAuto Quicker) - 自动更新") ){
+		io.rename(updateExePath,fsys.joinpath(io._exedir,"AAuto Quicker.exe.重命名") ){
+			console.log("请退出快手,将'AAuto Quicker.exe.重命名'重命名并覆盖'AAuto Quicker.exe'");
+			console.pause(true);
+			return;
+		}
+	}
+	 
+	var update = function(){
+		import fsys;
+		import process;
+		import console;
+		import win;
+		
+		var prcs = process.find("AAuto Quicker.exe")
+		if( prcs ){
+			..io.open();
+			..io.stdout.write("等待所有快手(AAuto Quicker.exe)进程关闭...");
+				
+			win.wait(
+				function(){
+					if( prcs ){
+						prcs.free();
+					}
+					..io.stdout.write(".");
+					prcs = process.find("AAuto Quicker.exe");
+					if( !prcs ){
+						return true;
+					} 
+					
+				}, ,10000
+			); 
+			..io.print();
+			
+			prcs = process.find("AAuto Quicker.exe");
+			while(prcs){
+				prcs.terminate();
+				prcs.free()
+				sleep(1000);
+				prcs = process.find("AAuto Quicker.exe");
+			};
+			sleep(1000);
+		}
+		
+		var quickerExePath = "~/AAuto Quicker.exe";
+		fsys.copy(io._exepath, quickerExePath);
+		
+		var restart = function(){  
+			import win;
+			import console;
+			import process;
+			import fsys;
+			
+			console.log('请稍候,正在重启快手') 
+			
+			var prcs;
+			win.wait(
+				function(){
+					if( prcs ){
+						prcs.free();
+					}
+					prcs = process.find("AAuto Update.exe");
+					if( !prcs ){
+						return true;
+					} 
+					
+				}, ,10000
+			); 
+			
+			prcs = process.find("AAuto Update.exe");
+			while(prcs){
+				prcs.terminate();
+				prcs.free()
+				sleep(1000)
+				prcs = process.find("AAuto Update.exe");
+			}; 
+			sleep(2000) 
+			
+			var updateExePath = "~\AAuto Update.exe"
+			var quickerExePath = "~\AAuto Quicker.exe" 
+			
+			console.log('更新完成')
+			fsys.delete(updateExePath) 
+			process.execute( quickerExePath  ); 
+		} 
+		
+		(function(exePath,func){
+			var tempPath = io.tmpname() + ".aau";
+			string.save( tempPath,dumpcode(func) ) 
+			process.execute( exePath,tempPath );  
+		})( quickerExePath,restart); 
+		return; 
+	} 
+	
+	ide.saveAll();
+	
+	(function(exePath,func){
+		var tempPath = io.tmpname() + ".aau";
+		string.save( tempPath,dumpcode(func) ) 
+		process.execute( exePath,tempPath );  
+	})(updateExePath,update);
+	
+	var hwndIde = ide.getMainHwnd();
+	win.setForeground(hwndIde)
+	::PostMessage(hwndIde,0x10/*_WM_CLOSE*/,0,0); 
+	return;
+}  
+
+io.remove("~\example\C语言\addLib.aau")
+ 
+console.log('\n已完成所有操作,\n快手主窗口上的版本号将会在重启以后更新!\n扩展库请手动删除即可自动更新!');
+console.pause(true);

@@ -1,0 +1,281 @@
+//.. 控制台
+namespace console;
+
+getWindow = ::Kernel32.api( "GetConsoleWindow", "int()"); 
+ReadConsoleOutputCharacter = ::Kernel32.api( "ReadConsoleOutputCharacter", "int(pointer hConsole,str& character,INT length,INT readCoord,INT& charsRead)");
+GetStdHandle = ::Kernel32.api( "GetStdHandle", "pointer(INT nStdHandle)");
+GetNumberOfConsoleInputEvents = ::Kernel32.api( "GetNumberOfConsoleInputEvents", "bool(pointer hConsoleInput,INT & lpcNumberOfEvents)");
+SetConsoleTextAttribute = Kernel32.api("SetConsoleTextAttribute","bool(pointer hOutput,WORD attr)" );
+getCodePage = Kernel32.api("GetConsoleCP","INT()" );
+setCodePage = Kernel32.api("SetConsoleCP","booll(INT wCodePageID)" );  
+ReadConsoleInput = ::Kernel32.api( "ReadConsoleInput", "bool(pointer hConsoleInput,struct& lpBuffer,INT nLength,INT & lpNumberOfEventsRead)");
+ 
+class INPUT_RECORD{
+    WORD eventType;
+    union event = {
+        struct keyEvent = {
+    		int bKeyDown;
+    		WORD wRepeatCount;
+    		WORD wVirtualKeyCode;
+    		WORD wVirtualScanCode;
+    		union uChar = {
+        		WORD unicodeChar;
+        		BYTE asciiChar;
+    		} ;
+    		INT dwControlKeyState;
+    		isShiftPressed = function(){
+    			return owner.dwControlKeyState & 0x10 
+    		};  
+    		isScrLkOn = function(){
+    			return owner.dwControlKeyState & 0x40 
+    		};
+    		isRightCtrlPressed = function(){
+    			return owner.dwControlKeyState & 0x4 
+    		};
+    		isRightAltPressed = function(){
+    			return owner.dwControlKeyState & 0x1 
+    		};
+    		isLeftCtrlPressed = function(){
+    			return owner.dwControlKeyState & 0x8 
+    		};
+    		isLeftAltPressed = function(){
+    			return owner.dwControlKeyState & 0x2 
+    		};
+    		isNumLkOn = function(){
+    			return owner.dwControlKeyState & 0x20 
+    		}; 
+    		isCapsLkOn = function(){
+    			return owner.dwControlKeyState & 0x80 
+    		}; 
+    		isEnhanced = function(){
+    			return owner.dwControlKeyState & 0x100 
+    		};
+		}
+        struct mouseEvent = {
+    		struct dwMousePosition = {word x;word y}
+    		INT dwButtonState;
+    		INT dwControlKeyState;
+    		INT dwEventFlags;
+		}
+        struct windowBufferSizeEvent={
+    		struct dwSize = {word x;word y}
+		}
+        struct menuEvent={
+    		INT dwCommandId;
+		}
+        struct focusEvent={
+    		bool bSetFocus;
+		}
+    } 
+}
+ 
+kbHit = function(){
+	var ret,nums = GetNumberOfConsoleInputEvents(GetStdHandle(-10/*_STD_INPUT_HANDLE*/),0)
+	return ret ? nums : 0;
+}
+
+kbRead = function(wait){
+	var input,ke;
+	if(!wait){
+		input = readInput(1,0x1/*_KEY_EVENT*/);
+		if(#input){
+			return input[1].keyEvent; 
+		}
+	}
+	else {
+		while( getInputHandle() ){ 
+			sleep(100);
+			if( kbHit() ){
+				input = readInput(1,0x1/*_KEY_EVENT*/);
+				if(!#input) continue;
+				ke = input[1].keyEvent;
+				if( ke.bKeyDown) return ke;
+			};
+		}
+	} 
+}
+
+getch = function(){ 
+	var chr;
+    do{ 
+    	chr = kbRead(true).uChar.asciiChar;
+    }while(!chr);
+    
+    if( chr & 0x80 ) 
+    	return chr,kbRead(true).uChar.asciiChar;
+    	
+    return chr;
+} 
+  
+getche = function(mask){
+	var c = ..string.pack( getch() );
+	..io.stdout.write( c == '\r'?'\n':(mask:c) );
+	return c;
+}
+
+getPassword = function(mask="*"){
+    
+    var s = {};
+    var c = getche(mask)
+    while( c != '\r' ){
+        ..table.push( s,c);
+        c = getche( mask )
+    } 
+    return ..string.join(s)
+}
+
+pause = function(close){
+	log("请按任意键继续");kbRead(true);
+	if(close)..io.close();
+}
+
+mapEventType2FieldName = {
+	[0x10/*_FOCUS_EVENT*/] = "focusEvent";
+	[0x1/*_KEY_EVENT*/] = "keyEvent";
+	[0x2/*_MOUSE_EVENT*/] = "mouseEvent";
+	[0x8/*_MENU_EVENT*/] = "menuEvent";
+	[0x4/*_WINDOW_BUFFER_SIZE_EVENT*/] = "windowBufferSizeEvent";
+}
+ 
+readInput = function(len=1,eventType){
+	if( len < 1)return;
+	var buf = ..raw.toarray( len,"struct","array" );
+	buf.array = { INPUT_RECORD() }
+	var ok,buf,len = ReadConsoleInput( GetStdHandle(-10/*_STD_INPUT_HANDLE*/),buf,len,len); 
+	
+	if( ok && len){ 
+		var ret = {}
+		for(k,input in buf.array){
+			if(input.eventType){
+				if( eventType && eventType!= input.eventType )
+					continue;
+					
+				var name = mapEventType2FieldName[input.eventType]
+				if(name){
+					..table.push(ret,{[name] = input.event[name];eventType=input.eventType;eventName = name } )
+				}
+			}
+		} 
+		return ret;
+	}
+} 
+
+var isVisible = ::User32.api("IsWindowVisible","bool(addr hwnd)");
+
+open = function(){
+	var hwnd = getWindow();
+	if( (!hwnd) || !isVisible(hwnd) )
+		return ..io.open();
+}
+ 
+log = function(...){
+	open();
+	..io.print(...);
+} 
+
+printf = function(f,...){
+	log( ..string.format(f,...) )
+}
+
+getOutPutHandle = function(){
+	return GetStdHandle(-11/*_STD_OUTPUT_HANDLE*/)
+}
+
+getInputHandle = function(){
+	return GetStdHandle(-10/*_STD_INPUT_HANDLE*/)
+}
+
+getErrorHandle = function(){
+	return GetStdHandle(-12/*_STD_ERROR_HANDLE*/)
+}
+ 
+setTextAttribute = function(attr){
+	SetConsoleTextAttribute(getOutPutHandle(),attr);
+} 
+ 
+readOutputCharacter = function(){
+	var ok,str = ReadConsoleOutputCharacter( getOutPutHandle(),1000,1000,0,0)
+	return ..string.trim(str);
+}
+ 
+varDump = function(...){
+    var args = {...};
+    for(i=1;#args;1){
+    	var arg = args[i];
+    	var t = type(arg);
+    	log("parameter:",i);
+    	log("type:",t);
+    	if( t != type.table ){
+    		log("value:",arg,'\n');
+    	}
+    	else {
+    		log("length:",#arg);
+    		log("value: {");
+    		for(k,v in arg){
+            	..io.stdout.write('    ["', k,'"] = ',type(v)==type.table?..table.tostring(v):tostring(v) ,'\n');          
+            } 
+            log("}");
+    	}  
+    } 
+}
+
+setTitle = ::Kernel32.api( "SetConsoleTitle", "bool(str title)");
+GetConsoleTitle = ::Kernel32.api( "GetConsoleTitle", "INT(str& buf,INT size)");
+
+getTitle = function(){
+	var len,title = GetConsoleTitle(1000,1000);
+	return title; 
+}
+
+getText = ..io.getText;
+close = ..io.close;
+
+/**intellisense(console)
+open() = 打开控制台窗口,\n如果控制台窗口已打开,该函数不进行任何操作
+printf("%s__", ) = 输出格式化字符串，\n格式化语法与string.format相同
+log("__") = 在控制台输出信息,支持多参数\n该函数可自动打开控制台窗口,而无需事先调用io.open();
+kbHit() = 检测键盘有没有输入
+kbRead() = 用户按键、或松开按键返回keyEvent对象,否则返回空\n!console_kbevent.
+kbRead(true) = 等待用户按任意键并返回keyEvent对象(不包含释放按键事件)
+getch() = 读取输入字节码,中文字返回两个字节码\n控制台不回显字符
+getche() = 读取输入字符\n控制台回显字符
+getPassword() = 读取密码\n可选使用参数一指定控制台回显掩码,默认显示星号
+getWindow() =  返回控制台窗口句柄\n使用此函数可判断当前是否已打开控制台窗口;
+getOutPutHandle() = 标准输出句柄
+getInputHandle() = 标准输入句柄
+getErrorHandle() = 错误输出句柄
+getCodePage() = 获取代码页
+setCodePage(65001) = 设置代码页
+readOutputCharacter() = 读取标准输出缓冲区文本
+setTextAttribute(0xF2__) = 一位表示背景色,第二位表示前景色\n0=黑色 1=蓝色  2=绿色  3=湖蓝色  4=红色  5=紫色 6=黄色  7=白色 8=灰色  \n9=淡蓝色  A=淡绿色 B=淡浅绿色  C=淡红色  D=淡紫色 E=淡黄色  F=亮白色\n设置整个窗口的背景色请使用 execute("color F0") 
+varDump(__) = 此函数显示一个或多个参数的类型与值,\ntable对象将递归展开值.
+getText() = 读取用户输入,\n可选在参数中指定缓冲区大小
+close() = 关闭控制台
+pause() = 暂停,\n按任意键继续
+pause(true) = 暂停,\n按任意键关闭
+setTitle("__") = 设置控制台标题
+getTitle() = 获取控制台标题
+end intellisense**/ 
+
+/**intellisense()
+console = 控制台扩展函数库
+!console_kbevent.bKeyDown = 按键是否释放
+!console_kbevent.wRepeatCount = 重复次数
+!console_kbevent.wVirtualKeyCode = 虚拟键码
+!console_kbevent.wVirtualScanCode = 扫描码
+!console_kbevent.uChar.unicodeChar = Unicode字节码
+!console_kbevent.uChar.asciiChar = ASCII字节码
+!console_kbevent.uChar.dwControlKeyState = 控制键状态码
+!console_kbevent.isShiftPressed = 是否按下SHIFT键
+!console_kbevent.isScrLkOn = 是否打开ScrLk键 
+!console_kbevent.isRightCtrlPressed = 是否按下右CTRL键
+!console_kbevent.isRightAltPressed = 是否按下右ALT键
+!console_kbevent.isLeftCtrlPressed = 是否按下左CTRL键
+!console_kbevent.isLeftAltPressed = 是否按下左ALT键
+!console_kbevent.isNumLkOn = 是否打开NumLk键
+!console_kbevent.isCapsLkOn = 是否打开大写
+!console_kbevent.isEnhanced = 是否扩展键
+end intellisense**/
+
+ 
+

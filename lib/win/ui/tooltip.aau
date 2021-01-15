@@ -1,0 +1,42 @@
+//tooltip 提示控件
+namespace win.ui;
+
+class tooltip{
+	ctor(winform){
+		if( ! winform ){ 
+			error("第一个构造参数必须指定有效窗口",2) 
+		} 
+		this.parent = winform;
+		this.hParent = winform[["hwnd"]] : winform;
+	}
+	create = function (tParam) {
+		var style = 0x80000000/*_WS_POPUP*/ | 0x1 /*_TTS_ALWAYSTIP*/;
+		if( tParam[["style"]] ) style = style | tParam[["style"]]; 
+		this.hwnd = ::CreateWindowEx(tParam[["exstyle"]] or 0, "tooltips_class32", , 
+			style,
+			0, 0, 0, 0, this.hParent, 0 );
+	}
+	addr hwnd;
+}
+
+namespace tooltip {
+
+	class TOOLINFO {
+ 		INT cbSize;
+ 		INT uFlags;
+ 		int hwnd;
+ 		INT uId;
+ 		struct rect = ::RECT();
+ 		int hinst;
+ 		string lpszText;
+ 		int lParam;
+	}
+}
+
+
+/**intellisense()
+win.ui.tooltip = 提示控件
+win.ui.tooltip() = !win_ui_tooltip.
+win.ui.tooltip(.(winform) = 创建提示控件对象
+!win_ui_tooltip.create() = 创建提示窗口
+end intellisense**/

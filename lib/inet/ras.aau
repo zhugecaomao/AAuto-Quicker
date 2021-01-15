@@ -1,0 +1,149 @@
+//ras 拔号连接
+namespace inet.ras;
+ 
+RASDIALPARAMS = class{
+	INT size = 1060;
+	BYTE entryName[257];
+	BYTE phoneNumber[129];
+	BYTE callbackNumber[129];
+	BYTE user[257];
+	BYTE password[257];
+	BYTE domain[16];
+	INT subEntry;
+	INT callbackId;
+};
+
+var RASEAPINFO = class{
+    INT sizeofEapInfo;
+    POINTER eapInfo;
+}; 
+RASDIALEXTENSIONS = class{
+	INT size = 28;
+	INT options;
+	int hwndParent;
+	int reserved;
+	int reserved1;
+	struct eapInfo = RASEAPINFO(); 
+};
+
+RASCONNSTATUS = class{
+    INT size = 288;
+    int connstate;
+    INT err;
+    BYTE deviceType[17];
+    BYTE deviceName[129];
+    BYTE phoneNumber[129]; 
+};
+
+var RASCONN = class {
+	INT dwSize = 0x19C;
+	pointer hConn;
+	BYTE entryName[257];
+	BYTE deviceType[17];
+	BYTE deviceName[129];
+	BYTE byte[1]
+}
+
+dll = ..raw.loadDll("RASAPI32.DLL")
+RasDial =  dll.api("RasDialA","INT(struct rsextensions,string,struct raslparams,INT,int hwndNotifier,pointer & rasConn )");
+RasHangUp =  dll.api("RasHangUpA","INT(pointer rasConn)");
+RasGetConnectStatus =  dll.api("RasGetConnectStatusA","INT(pointer rasConn,struct &connStatus)"); 
+RasGetErrorString =  dll.api("RasGetErrorStringA","INT(INT errValue,str& msg,INT size)");
+RasEnumEntries =  dll.api("RasEnumEntriesA","INT(str reserved,str phonebook,struct& entryname,INT& cbsize,INT& count)");
+RasEnumConnections = dll.api("RasEnumConnectionsA","int(pointer lpRasCon,int& lpcb,int& lpnc)") 
+
+getConnection = function(){
+	var lpRasCon = ..raw.malloc(0x19C,RASCONN());
+	var ret,cbSize,nc = RasEnumConnections(lpRasCon,0x19C,0)
+	if(ret==603){ 
+		lpRasCon = ..raw.malloc(cbSize,RASCONN());
+		ret,cbSize,nc = RasEnumConnections(lpRasCon,cbSize,0)
+	}
+	 
+	if(ret==0){ 
+		var conn = ..raw.convert(lpRasCon,RASCONN() ); 
+		if( conn.hConn ) return conn;
+	}
+	return null,ret;
+}
+rasEnumConnections =  getConnection;
+  
+lasterr = function(hr){
+	var hr,msg = RasGetErrorString(hr,200,200) 
+	if(!hr)
+		return msg;
+}
+
+//可使用arg.hwnd指定回调窗口
+dial = function(arg){ 
+	if(! arg.entryName){
+		var entries = getEntries(); 
+		arg.entryName = ..string.str(entries[1].entryName);
+	}
+	params = RASDIALPARAMS()
+	for(k,v in arg){ 
+		params[k] = v;
+	}
+	var ret,hConn = RasDial( {},null,params,0xFFFFFFF,arg.hwnd:0); 
+	if( ret) 
+		return null,lasterr(ret);
+		
+	return hConn;
+}
+
+hangUp = function(conn){
+	var ret = RasHangUp(conn)
+	if( ret) 
+		return null,lasterr(ret);
+	return true;
+}
+
+status = function(conn){
+	var stat = RASCONNSTATUS();
+	var ret = RasGetConnectStatus(conn,stat)
+	if( ret) 
+		return null,lasterr(ret);
+	return stat;	
+}
+
+RASENTRYNAME = class{
+    INT size =  532;
+    BYTE  entryName[257]; 
+    INT flags;
+    BYTE  phonebookPath[261];  
+}; 
+
+phoneEntries = { 
+	struct entryName[10] = { RASENTRYNAME() }
+}  
+
+getEntries = function(){
+	var ret, , ,count =  RasEnumEntries( , ,phoneEntries,..raw.sizeof(phoneEntries),0)
+	if(!ret){
+		..table.pop(phoneEntries.entryName,10-count)
+		return phoneEntries.entryName; 
+	}
+	else
+		return null,lasterr(ret);
+}
+ 
+var dll = ..raw.loadDll("sensapi.dll")
+IsNetworkAlive = dll.api("IsNetworkAlive","INT(INT& flags)" ) 
+isAlive = function(){
+	var ok,flag = IsNetworkAlive(2)
+	if(ok)
+		return flag & 2,flag & 1;
+}
+
+/**intellisense(inet.ras)
+dial = @conn,msg = inet.ras.dial( \n	entryName =  "拔号连接名";\n	user =  "拔号用户名";\n	password = "拔号密码"\n)
+getEntries() = 返回所有拔号连接
+status(__/*拔号连接*/) = 返回拔号连接状态
+hangUp(__/*拔号连接*/) = 挂断
+isAlive() = 返回两个值: 是否存在远程连接,是否存在本地连接
+getConnection() = 获取当前拔号连接,失败返回空,错误代码\n!rasconn.
+end intellisense**/
+
+/**intellisense(!rasconn)
+hConn = 连接句柄
+end intellisense**/

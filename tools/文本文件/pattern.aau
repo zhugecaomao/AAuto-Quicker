@@ -1,0 +1,586 @@
+//模式匹配工具
+//模式匹配工具//模式匹配辅助工具
+import win.ui; 
+import win.ui.menu;
+import com.picture; 
+import fsys.dlg;
+import win.clip;
+/*DSG{{*/
+var winform = ..win.form( bottom=584;parent=...;right=840;border="resizable";text="模式匹配辅助工具";exmode="";style=0;cls="AFORM" )
+winform.add( 
+txtSource={ ah=1;vscroll=1;right=566;left=18;dt=1;db=1;cls="richedit";bottom=572;text="请输入测试文本...";multiline=1;top=172;aw=1;dl=1;hscroll=1;edge=1;z=35 };
+chkMatchGlobal={ dl=1;checked=1;bottom=76;right=650;left=574;dt=1;top=60;z=29;text="全局匹配";tabstop=1;cls="checkbox";hide=1 };
+button8={ dl=1;bottom=46;align="";text="串结束＄";left=96;dt=1;top=22;tabstop=1;right=168;z=5;cls="button" };
+chkMatch={ right=464;dl=1;bottom=76;text="匹 配";left=416;dt=1;top=60;tabstop=1;transparent=1;z=17;cls="radiobutton" };
+button={ dl=1;bottom=46;align="";text="转义符 \";left=339;dt=1;top=22;tabstop=1;right=411;z=7;cls="button" };
+groupbox={ right=829;dl=1;bottom=120;text="匹配模式:";left=9;dt=1;top=6;transparent=1;tabstop=1;z=1;aw=1;edge=1;cls="groupbox" };
+button18={ dl=1;bottom=76;align="";text="I D";left=227;dt=1;top=52;tabstop=1;right=275;z=8;cls="button" };
+txtPath={ bottom=162;right=440;text="选择浏览读取要匹配的文本...";left=120;dt=1;top=138;multiline=1;tabstop=1;z=9;aw=1;edge=1;cls="edit" };
+lstMatch={ dr=1;ah=1;bgcolor=16777215;vscroll=1;right=823;left=585;dt=1;db=1;cls="listbox";z=33;bottom=572;
+items={ "这里显示模式匹配结果:" };aw=1;top=138;hscroll=1;edge=1;tabstop=1 };
+chkReplace={ right=544;dl=1;bottom=76;text="替 换";left=488;dt=1;top=60;tabstop=1;transparent=1;z=10;cls="radiobutton" };
+button13={ dl=1;bottom=46;align="";text="字符类▼";left=423;dt=1;top=22;tabstop=1;right=495;z=11;cls="button" };
+btnSave={ disabled=1;bottom=105;align="";text="保存代码";left=598;dt=1;top=81;z=12;right=662;tabstop=1;cls="button" };
+button19={ dl=1;bottom=76;align="";text="更多▼";left=288;dt=1;top=52;tabstop=1;right=336;z=13;cls="button" };
+button3={ disabled=1;bottom=105;align="";text="复制代码";left=522;dt=1;top=81;z=14;right=590;tabstop=1;cls="button" };
+button6={ dl=1;bottom=46;align="";text="字符串 <>";left=663;dt=1;top=22;tabstop=1;right=735;z=15;cls="button" };
+groupbox2={ dr=1;ah=1;right=830;left=579;dt=1;db=1;cls="groupbox";bottom=578;text="匹配结果:";transparent=1;top=123;aw=1;z=2;edge=1;tabstop=1 };
+txtRep={ dl=1;bottom=81;right=656;text="请输入替换内容";left=552;dt=1;top=59;multiline=1;z=16;tabstop=1;cls="edit";edge=1;hide=1 };
+groupbox3={ ah=1;right=575;left=9;dt=1;db=1;cls="groupbox";bottom=579;aw=1;text="测试文本:";transparent=1;top=123;z=3;dl=1;edge=1;tabstop=1 };
+txtPattern={ bottom=105;text="请输入模式表达式...";left=57;dt=1;top=81;aw=1;tabstop=1;right=425;z=34;edge=1;cls="edit" };
+txtBrowser={ bottom=160;align="";right=505;left=449;dt=1;top=136;aw=1;text="浏览...";z=19;tabstop=1;cls="button" };
+button2={ bottom=104;align="";right=512;left=440;dt=1;top=83;tabstop=1;text="测试模式";z=18;cls="button" };
+chkFind={ dl=1;checked=1;bottom=76;text="查 找";left=352;dt=1;top=60;transparent=1;z=20;right=416;tabstop=1;cls="radiobutton" };
+txtRepCount={ dl=1;bottom=81;right=817;text="默认替换全部";left=737;dt=1;top=58;multiline=1;z=22;tabstop=1;cls="edit";edge=1;hide=1 };
+button10={ dl=1;bottom=46;align="";text="边界 ![]";left=176;dt=1;top=22;tabstop=1;right=248;z=28;cls="button" };
+button12={ dl=1;bottom=46;align="";text="补 集 [^]";left=584;dt=1;top=22;tabstop=1;right=656;z=24;cls="button" };
+button17={ dl=1;bottom=76;align="";text="网 址";left=169;dt=1;top=52;tabstop=1;right=217;z=23;cls="button" };
+button14={ dl=1;bottom=76;align="";text="数字▼";left=17;dt=1;top=52;tabstop=1;right=78;z=26;cls="button" };
+txtResult={ tabstop=1;vscroll=1;bottom=569;right=815;left=585;multiline=1;top=140;text="显示模式替换结果...";z=21;cls="edit";hscroll=1;edge=1;hide=1 };
+button11={ dl=1;bottom=46;align="";text="字符集 []";left=503;dt=1;top=22;tabstop=1;right=575;z=27;cls="button" };
+button15={ dl=1;bottom=77;align="";text="字符串▼";left=89;dt=1;top=51;tabstop=1;right=152;z=6;cls="button" };
+button16={ dl=1;bottom=46;align="";text="修饰符 ▼";left=745;dt=1;top=22;tabstop=1;right=825;z=4;cls="button" };
+button7={ dl=1;bottom=46;align="";text="对称 %";left=257;dt=1;top=22;tabstop=1;right=329;z=30;cls="button" };
+button9={ dl=1;bottom=46;align="";text="串结开始 ^";left=17;dt=1;top=22;tabstop=1;right=89;z=31;cls="button" };
+lbReplace={ dl=1;bottom=76;align="";text="替换次数:";left=673;dt=1;top=60;right=729;z=32;transparent=1;tabstop=1;cls="static";hide=1 };
+static={ bottom=159;align="";text="文件路径：";left=47;dt=1;top=143;transparent=1;right=114;tabstop=1;z=25;cls="static" }
+)
+/*}}*/
+
+winform.txtSource.limit = 6500000;  
+
+winform.lstMatch.oncommand = function(id,event){
+     if( evnet = ::_LBN_SELCANCEL ){
+	 	var index = winform.lstMatch.selIndex;
+	 	var strSource = winform.txtSource.text;
+	 	strSource = string.replace(strSource,'\r\n','\n');
+	 	
+     	var pos, pos2 = 1, 1
+     	for(i=0;index;1){
+        	pos, pos2 = string.find(strSource,winform.txtPattern.text,pos2+1 );
+        	if( !pos )return;
+    	}
+    	if( !pos or (pos2 != 1) ){
+    	    var strtest = string.left( strSource,pos-1);
+    	    //中文字在richedit按字符计算为一个字符，在非两个字节
+    	    for str in string.gmatch(strtest,'(<\xA1-\xF7\xA1-\xFE>)') { 
+   			pos--;
+   			pos2--; 
+			}
+			strtest = string.sub( strSource,pos,pos2);
+    	    for str in string.gmatch(strtest,'(<\xA1-\xF7\xA1-\xFE>)') {  
+   			pos2--; 
+			}
+    		winform.txtSource.setsel( pos-1, pos2);
+    		var line = winform.txtSource.lineFromChar( pos );  
+    		winform.txtSource.scrollCaret();
+    	}
+	}
+	//无返回值则继续调用默认回调函数
+}
+ 
+
+winform.button15.oncommand = function(hwnd,event){
+	winform.txtPattern.text = "";
+	var popmenu = win.ui.popmenu(winform); 
+	popmenu.add('对称双引号',insertExpressionMenu( '%""'));
+	popmenu.add('对称单引号',insertExpressionMenu( "%''"));
+	popmenu.add('英文字母串',insertExpressionMenu( "^[A-Za-z]+$"));
+	popmenu.add('大写英文串',insertExpressionMenu( "^[A-Z]+$"));
+	popmenu.add('小写英文串',insertExpressionMenu( "^[a-z]+$"));
+	popmenu.add('数字和字母串',insertExpressionMenu( "^[A-Za-z0-9]+$"));
+	popmenu.add('数字、字母或下划线串',insertExpressionMenu( "^\w+$") );
+	popmenu.add('邮箱地址',insertExpressionMenu( "\w+[\w\-\.]+\w@\w+[\w\-]*\w\.[\w\-\.]*\w{2,}") );
+	//添加按钮弹出菜单
+	popmenu.popup(winform.button15.right - 80 ,winform.button15.bottom);
+}
+
+winform.button14.oncommand = function(hwnd,event){
+	winform.txtPattern.text = "";
+	var popmenu = win.ui.popmenu(winform);
+	popmenu.add('匹配正整数',insertExpressionMenu( "^[1-9]\d*$"));
+	popmenu.add('匹配负整数',insertExpressionMenu( "^\-[1-9]\d*$"));
+	popmenu.add('匹配整数',insertExpressionMenu( "^\-?[1-9]\d*$"));
+	popmenu.add('匹配非负整数',insertExpressionMenu( "^[1-9]\d*$"));
+	popmenu.add('匹配非正整数',insertExpressionMenu( "^\-[1-9]\d*$"));
+	popmenu.add('匹配正浮点数',insertExpressionMenu( "^\d*\.\d*") );
+	popmenu.add('匹配负浮点数',insertExpressionMenu( "^\-^\d*\.\d*$") );
+	popmenu.add('匹配浮点数',insertExpressionMenu( "^\-?^\d*\.\d*$") );
+	//添加按钮弹出菜单
+	popmenu.popup(winform.button14.right - 80 ,winform.button14.bottom);
+}
+
+winform.button19.oncommand = function(hwnd,event){  
+	winform.txtPattern.text = "";
+	var popmenu = win.ui.popmenu(winform);
+	popmenu.add('PASCAL语句块',insertExpressionMenu( "%<\Wbegin\W><\Wend\W>?"));
+	popmenu.add('IP',insertExpressionMenu( "\d+\.\d+\.\d+\.\d+"));
+	popmenu.add('QQ号',insertExpressionMenu( "[1-9][0-9]{4,15}"));
+	popmenu.add('中文',insertExpressionMenu( "(<\xA1-\xF7\xA1-\xFE>+)"));
+	popmenu.add('空行',insertExpressionMenu( "\n\s*[\r\n]"));
+	popmenu.add('邮编',insertExpressionMenu( "[1-9]\d{5}![\d]"));
+	popmenu.add('HTML',insertExpressionMenu( "(\<(\S*?)[^>]*\>(.*?)\</\2\>)"));
+	popmenu.add('超链接',insertExpressionMenu( "(\s+href\s*=\s*([""'])[^""']+\2)" ) );
+	popmenu.add('身份证号',insertExpressionMenu( "\d{15,18}") );
+	//添加按钮弹出菜单
+	popmenu.popup(winform.button19.right - 45 ,winform.button19.bottom);
+}
+
+winform.button18.oncommand = function(hwnd,event){
+	winform.txtPattern.text = "";
+	insertExpression( "^[a-zA-Z][a-zA-Z0-9_]{4,15}$" );
+}
+
+winform.button17.oncommand = function(hwnd,event){
+	winform.txtPattern.text = "";
+	insertExpression( "[a-zA-z]+://[^\s]*" );
+}
+
+winform.button12.oncommand = function(hwnd,event){
+	insertExpression( "[^]" );
+}
+
+winform.button11.oncommand = function(hwnd,event){
+	insertExpression( "[]" );
+}
+
+winform.button10.oncommand = function(hwnd,event){
+	insertExpression( "![]" );
+}
+
+winform.button9.oncommand = function(hwnd,event){
+	insertExpression( "^" );
+}
+
+winform.button8.oncommand = function(hwnd,event){
+	insertExpression( "$" );
+}
+
+winform.button7.oncommand = function(hwnd,event){
+	insertExpression( "%" );
+}
+
+winform.button6.oncommand = function(hwnd,event){
+	insertExpression( "<>" );
+}
+
+insertExpression =  function( strInsert, cursorPos = 0 ){
+	//恢复编辑框字体为正常属性
+	winform.txtPattern.setFont( h = 12;name="黑体" );
+   	winform.txtPattern.color = ::RGB(0,0,0);
+	winform.txtPattern.redraw();
+
+	if( winform.txtPattern.text == "请输入模式表达式..." ){
+    		winform.txtPattern.text = "";
+    	}
+    var strExpression = winform.txtPattern.text;
+  
+    var strLastchar = string.right(strExpression,1);
+    var strfirstchar = string.left( strInsert,1);
+       
+    if( strfirstchar=="<" or strfirstchar=="[" or strfirstchar=="!")
+       strExpression += strInsert;
+    else if( strLastchar == ']') {
+    	strExpression = string.trimright( strExpression ,']');
+    	strExpression += (strInsert +']');
+    }
+    else if( strLastchar == '>' ){
+    	strExpression = string.left( strExpression,#strExpression-1)
+    	strExpression += (strInsert +'>');
+    }
+    else
+    	strExpression += strInsert;
+    
+	winform.txtPattern.text = strExpression;
+}
+
+insertExpressionMenu = function( strInsert, cursorPos = 0 ){
+    	return function(){
+    				insertExpression( strInsert, cursorPos );
+    			} 
+}
+
+winform.button.oncommand = function(hwnd,event){
+	insertExpression( "\");
+}
+
+
+winform.button16.oncommand = function(hwnd,event){
+	var popmenu = win.ui.popmenu(winform); 
+	popmenu.add('P?  匹配p模式零或一次',insertExpressionMenu( "?"));
+	popmenu.add() 
+	popmenu.add('P+  长匹配P模式一次或多次',insertExpressionMenu( "+"));
+	popmenu.add('P+?  短匹配P模式一次或多次',insertExpressionMenu( "+?"));
+	popmenu.add()
+	popmenu.add('P*  长匹配P模式零次以上',insertExpressionMenu( "*"));
+	popmenu.add('P*?  短匹配P模式零次以上',insertExpressionMenu( "*?"));
+	popmenu.add()
+	popmenu.add('P{n,m}  匹配p最少n最多m次',insertExpressionMenu( "{n,m}") );
+	popmenu.add()
+	popmenu.add('P1|P2 匹配P1或P2其中之一',insertExpressionMenu( "|")); 
+	//添加按钮弹出菜单
+	popmenu.popup(winform.button16.right - 80 ,winform.button16.bottom);
+}
+
+winform.button13.oncommand = function(hwnd,event){
+	var popmenu1 = win.ui.popmenu(winform);begin
+	popmenu1.add('. 任意字符',insertExpressionMenu( ".") );
+	popmenu1.add('\\a 字母',insertExpressionMenu( "\a"));
+	popmenu1.add('\\c 控制字符',insertExpressionMenu( "\c"));
+	popmenu1.add('\\d 数字',insertExpressionMenu( "\d"));
+	popmenu1.add('\\i 是否ASCII字符',insertExpressionMenu( "\i"));
+	popmenu1.add('\\l 小写字母',insertExpressionMenu( "\l"));
+	popmenu1.add('\\p 标点字符',insertExpressionMenu( "\p"));
+	popmenu1.add('\\s 空白符',insertExpressionMenu( "\s"));
+	popmenu1.add('\\u 大写字母',insertExpressionMenu( "\u"));
+	popmenu1.add('\\w 字母和数字',insertExpressionMenu( "\w"));
+	popmenu1.add('\\x 十六进制数字',insertExpressionMenu( "\x"));
+	popmenu1.add('\\n 换行符',insertExpressionMenu( "\n"));
+	popmenu1.add('\\r 回车符',insertExpressionMenu( "\r"));
+	popmenu1.add('\\f 换页符',insertExpressionMenu( "\f"));
+	popmenu1.add('\\v 匹配一个垂直制表符 ',insertExpressionMenu( "\v"));
+	popmenu1.add('\\z\\0 字节码为0的字符',insertExpressionMenu( "\z"));
+	popmenu1.add('注：大写表示小写集合的补集',function(){});
+end;//添加按钮弹出菜单
+
+	popmenu1.popup(winform.button13.right - 70 ,winform.button13.bottom);
+	
+}
+
+
+winform.btnSave.oncommand = function(hwnd,event){
+	var strPath = winform.txtPath.text;
+	var strBuffer;
+	
+	if( not winform.txtResult.hide ){
+		strBuffer = winform.txtResult.text;
+	}
+	else{
+    	var tab = winform.lstMatch.items; 
+		strBuffer = string.join( tab, ';\r\n');
+	}
+	
+	if( strPath != ""){
+		var filename = fsys.dlg.save( "文本文件|*.txt|所有文件|*.*||" ,"保存模式测试结果", strPath);
+		if(filename){
+	   	string.save(filename, strBuffer );
+		}
+	}
+}
+
+//动态显示或隐藏控件
+winform.chkFind.oncommand = function(hwnd,event){
+	winform.chkMatchGlobal.hide = true;
+	winform.txtRep.hide = true;
+	winform.txtRepCount.hide = true;
+	winform.lbReplace.hide = true;
+	winform.txtResult.hide = true;
+	winform.lstMatch.hide = false;;
+	winform.redraw( );
+}
+
+winform.chkReplace.oncommand = function(hwnd,event){
+	winform.chkMatchGlobal.hide = true;
+	winform.txtRep.hide = false;;
+	winform.txtRepCount.hide = false;;
+	winform.lbReplace.hide = false;;
+	winform.txtResult.hide = false;;
+	winform.lstMatch.hide = true;
+	winform.redraw();
+}
+
+winform.chkMatch.oncommand = function(hwnd,event){
+	winform.chkMatchGlobal.hide = false;;
+	winform.txtRep.hide = true;
+	winform.txtRepCount.hide = true;
+	winform.lbReplace.hide = true;
+	winform.txtResult.hide = true;
+	winform.lstMatch.hide = false;;
+	winform.redraw();
+}
+
+winform.button3.oncommand = function(hwnd,event){    //将内容复制到剪贴板
+	win.clip.write( winform.editAAutoCode   );
+}
+
+//编辑框初始文字为灰色,鼠标单击之后恢复正常
+winform.txtResult.oncommand = function(hwnd,event){
+	if( winform.txtResult.text == "显示模式匹配结果..."){
+		winform.txtResult.text = "";
+		winform.txtResult.color = 0;
+		winform.txtResult.redraw();
+	}
+}
+  
+winform.txtRepCount.oncommand = function(hwnd,event){
+	if( winform.txtRepCount.text == "默认替换全部"){
+		winform.txtRepCount.text = "";
+		winform.txtRepCount.color = 0;
+		winform.txtRepCount.redraw();
+	}
+}
+
+winform.txtRep.oncommand = function(hwnd,event){
+	if( winform.txtRep.text == "请输入替换内容"){
+		winform.txtRep.text = "";
+		winform.txtRep.color = 0;
+		winform.txtRep.redraw();
+	}
+}
+
+winform.txtPattern.oncommand = function(hwnd,event){
+	if( winform.txtPattern.text == "请输入模式表达式..."){
+		winform.txtPattern.text = "";
+		winform.txtPattern.color = 0;
+		winform.txtPattern.redraw();
+	}
+}
+
+winform.txtPath.oncommand = function(hwnd,event){
+	if( winform.txtPath.text == "选择浏览读取要匹配的文本..."){
+		winform.txtPath.text = "";
+		winform.txtPath.color = 0;
+		winform.txtPath.redraw();
+	}
+}
+
+winform.txtSource.oncommand = function(hwnd,event){
+	if( winform.txtSource.text == "请输入测试文本..."){
+		winform.txtSource.text = "";
+		winform.txtSource.color = 0;
+		winform.txtSource.redraw();
+	}
+	
+}
+
+winform.txtBrowser.oncommand = function(hwnd,event){
+	var strTemp = winform.txtPath.text;
+	var strfile = fsys.dlg.open( "文本文件|*.txt|所有文件|*.*||", "选择要匹配的文本文件" ); 
+	if(strfile){
+		assert( string.load( strfile ) );
+		winform.txtSource.text = string.load( strfile );
+        winform.txtPath.text = strfile;
+        
+        //恢复编辑框字体为正常属性
+		winform.txtPath.setFont( h = 12;name="黑体" );;
+   		winform.txtPath.color = ::RGB(0,0,0);
+   		winform.txtPath.redraw();
+   		
+   		winform.txtSource.setFont( h = 12;name="黑体" );;;
+   		winform.txtSource.color = ::RGB(0,0,0);
+   		winform.txtSource.redraw();
+    }
+}
+
+
+//创建弹出菜单
+var popmenu = win.ui.popmenu(winform);
+popmenu.add('关于 本工具(&A)',function(){ win.msgbox( '  模式匹配辅助工具 1.0.0.1021    \nCopyright (c) ECranesoft Lab 2010 \n','This tool is created by  AAuto !' ) });
+popmenu.add('访问AAuto官方论坛(&B)',function(){ ::ShellExecute(0, "", "http://www.ecranesoft.com/bbs", "", "", 0)})
+popmenu.add();
+popmenu.add('退出(&E)',function(){ winform.close() })
+
+Hook = function(str,regex){
+   var items = {}
+   string.replace(str,regex,function( ... ){
+       var matchs = {...};
+       table.push( items, table.tostring(matchs) );
+   } );
+   
+   if( #items ==0  ){
+    	winform.lstMatch.items = {"匹配结果为空..."};
+    	return ; 
+   }
+   
+   winform.lstMatch.items = items;
+   
+   return items; 
+}
+
+
+patternReplace = function( strTestText,regexExpression ,regexExpressionTemplate,replaceText,replacecount ){
+		var strReplaceCode;
+			//这样书写写是为了生成的代码的格式比较工整
+		strAAutoCode =
+/************************** 
+var strTestText = /*************
+%s
+*************/;
+var regexExpression = %s ;
+var replaceText = "%s";
+**************************/
+     
+		if( replacecount == "默认替换全部" ){
+			strtemp = string.replace( strTestText, regexExpression, replaceText );
+			strReplaceCode = "strReplaceResult = string.replace( strTestText, regexExpression, replaceText);"
+			strAAutoCode = string.format(strAAutoCode+strReplaceCode , strTestText, regexExpressionTemplate  ,replaceText );
+		}
+		else if( tonumber( replacecount )  ){
+			strtemp = string.replace( strTestText,regexExpression,replaceText,replacecount);
+			strReplaceCode = /*****var replacecount = "%s";
+									strReplaceResult = string.replace( strTestText,regexExpression,replaceText,replacecount);
+									*****/
+			strAAutoCode = string.format( strAAutoCode+strReplaceCode , strTestText,regexExpressionTemplate  ,replaceText, replacecount )
+		}
+		else{
+			strtemp = "错误,请输入替换次数,必须为正整数!"
+			strAAutoCode = "错误,请输入替换次数,必须为正整数!"
+			
+			return strtemp, strAAutoCode ;
+		}
+		
+		return strtemp, strAAutoCode;
+	}
+	
+	
+patternMatch = function( strTestText, regexExpression,regexExpressionTemplate ){
+	
+ 		var strMatchCode;
+ 		//这样书写写是为了生成的代码的格式比较工整
+		strAAutoCode =
+/************************** 
+var strTestText = /*************
+%s
+*************/;
+var regexExpression =  %s ;
+**************************/
+		//清空所有列表项
+     	winform.lstMatch.clear();
+     	
+		if( winform.chkMatchGlobal.checked == true ){
+		Hook(strTestText, regexExpression );
+		strtemp = string.gmatch( strTestText, regexExpression );	
+		strMatchCode = /*****for strGmatchResult in string.gmatch( strTestText, regexExpression ){
+//strGmatchResult为匹配的结果
+}
+*****/
+		}
+		else{
+			strtemp = string.match( strTestText, regexExpression );
+			var items = {}
+       		table.push( items, strtemp);
+			winform.lstMatch.items = items;
+			
+			strMatchCode = "strMatchResult = string.match( strTestText, regexExpression );"
+		}
+		
+		strAAutoCode = string.format(strAAutoCode+strMatchCode , strTestText, regexExpressionTemplate );
+		
+		return strAAutoCode; 
+	}
+	
+	
+patternFind = function( strTestText, regexExpression ,regexExpressionTemplate){
+	
+ 		//这样书写写是为了生成的代码的格式比较工整
+		strAAutoCode =
+/************************** 
+var strTestText = /*************
+%s
+*************/; 
+var regexExpression =  %s ;
+i,j = string.find( strTestText,  regexExpression );
+
+//使用模式匹配查找字符串并返回起始位置(i),结束位置(j);
+**************************/
+	i,j = string.find( strTestText, regexExpression );  //使用模式匹配查找字符串并返回起始位置(i),结束位置(j);
+	if( i ){
+		strtemp1 = string.format('串起始位置i="%d":', i);
+		strtemp2 = string.format('串结束位置j="%d":', j);
+		//同时间将找到的串标记为选中状态
+		winform.txtSource.setsel( i-1, j );
+	}
+	else{
+		strtemp1 = "没找到相应串!";
+		strtemp2 = strtemp1;
+	}
+	//清空所有列表项
+    winform.lstMatch.clear();
+	var items = {}
+    table.push( items, strtemp2);
+    table.push( items, strtemp1);
+	winform.lstMatch.items = items;
+	
+	strAAutoCode = string.format( strAAutoCode, strTestText, regexExpressionTemplate );
+	return  strAAutoCode; 
+	}
+
+
+winform.button2.oncommand = function(hwnd,event){
+	//win.msgbox( winform.button2.text );
+	//处理模式匹配过程
+	var strtemp,strAAutoCode = "请输入模式测试内容", "匹配内容和匹配式内容为空，生成代码失败!";
+	var regexExpression,strTestText = winform.txtPattern.text,winform.txtSource.text;
+	var patternType = ( winform.chkFind.checked ? winform.chkFind.id) or ( winform.chkMatch.checked ? winform.chkMatch.id) or ( winform.chkReplace.checked ? winform.chkReplace.id );
+	var replaceText, replacecount = winform.txtRep.text,   winform.txtRepCount.text ;
+ 
+    var regexExpressionTemplate = '"' + regexExpression +  '"';
+	if( ..string.find(regexExpression,"@\x") ){
+	     regexExpressionTemplate = "'" + regexExpression +  "'" 
+	     var f =  loadcode("return '" + regexExpression ++ "'")
+	     regexExpression = f(); 
+	}
+	else if( ..string.find(regexExpression,'["\']') ){
+	         regexExpressionTemplate = "//" + regexExpression ; 
+	}
+	
+ 
+	select(patternType) {
+	
+		case winform.chkFind.id					//模式查找功能
+		{
+			if( strTestText != "" and regexExpression != "" ){
+			strAAutoCode = patternFind( strTestText, regexExpression ,regexExpressionTemplate)
+			}
+			else{
+			strAAutoCode = "请输入要查找的目标内容和匹配式";
+			}		
+		}
+		case  winform.chkMatch.id       		 //模式匹配功能
+		{
+			strAAutoCode = patternMatch( strTestText, regexExpression ,regexExpressionTemplate);
+			
+		}
+		case  winform.chkReplace.id			//模式替换功能
+		{	
+			if( strTestText != "" and regexExpression != "" ){
+				strtemp, strAAutoCode = patternReplace( strTestText, regexExpression,regexExpressionTemplate, replaceText, replacecount );
+				winform.txtResult.text = strtemp;
+			}
+			else{
+				strAAutoCode = "错误,请输入要查找的目标内容和匹配式";
+				winform.txtResult.text = "错误,请输入需要替换的目标文本!"
+			}
+			
+		}
+	} 
+	 
+	winform.lstMatch.setFont( h = 12;name="黑体" );;
+   	winform.lstMatch.color = ::RGB(0,0,0);
+   	winform.lstMatch.redraw();
+ 
+   		
+   	winform.txtResult.setFont( h = 12;name="黑体" );;
+   	winform.txtResult.setFont( h = 12;name="黑体" );
+   	winform.txtResult.redraw();
+
+	//显示自动生成的代码
+	strAAutoCode = string.replace( strAAutoCode, '\n', '\r\n' );
+	winform.editAAutoCode  = strAAutoCode;
+	
+	//启用复制代码和保存结果按钮
+	winform.button3.disabled = false;
+	winform.btnSave.disabled = false;
+}
+
+
+winform.wndproc = function(hwnd,message,wParam,lParam){
+	select(message) {  
+		case 0x205/*_WM_RBUTTONUP*/ {
+			popmenu.popup(::LOWORD(lParam), ::HIWORD(lParam));//弹出菜单
+		} 
+	}
+}
+ 
+winform.show(true) 
+win.loopMessage( winform );

@@ -1,0 +1,65 @@
+//修复开发环境
+//也可将本程序编译为aau文件,在关闭快手以后双击运行.
+ 
+repairIde = function(){
+	import fsys;
+	import process;
+	import win.reg;
+	import winex;
+
+	win.delay(3000);
+	
+	var hwndIde = winex.find( "Afx\:\d+","AAuto Quicker")
+	if(hwndIde){　 
+		win.delay(3000);
+	}
+	
+	var cfgFile = fsys.joinpath( io._exedir,"\Config\USE.CFG")
+	if( io.exist(cfgFile) )
+		io.remove(cfgFile)
+    
+    reg = win.reg("HKEY_CURRENT_USER\Software") 
+    reg.delKeyTree("ECranesoft")
+    reg.close();
+    
+    var regClasses = win.reg("HKEY_CURRENT_USER\Software\Classes",true)
+	if( regClasses ){
+		regClasses.delKeyTree("AAuto.Launcher.Project")
+		regClasses.delKeyTree("AAutoQuicker.Launcher.Project")
+		regClasses.delKeyTree("AAuto.Code.File")
+		regClasses.delKeyTree(".aau")
+		regClasses.delKeyTree(".aproj") 
+	} 
+      	
+    var hwndIde = winex.find( "Afx\:\d+","AAuto Quicker")
+	if(hwndIde){　
+		 win.msgboxTimeout("修复开发环境失败,请先关闭快手!","快手 - 修复工具",3000)
+	}
+	else{
+    	process.execute( io._exepath )
+    	win.msgboxTimeout("修复开发环境成功!","快手 - 修复工具",3000)
+    }
+};
+ 
+import fsys;
+import winex;
+import process;
+
+try{
+	import ide;	
+	var hwndIde = ide.getMainHwnd();
+	if(! win.msgboxTest("运行修复工具必须关闭快手开发环境, 是否继续? ","快手 - 修复工具") ){
+		return;
+	}
+	var tempPath = io.tmpname() + ".aau";
+	string.save( tempPath,dumpcode(repairIde) )
+	process.execute( io._exepath,tempPath );
+	
+	win.setForeground(hwndIde)
+	::SendMessage(hwndIde,0x10/*_WM_CLOSE*/);
+}
+catch(e){
+	repairIde(); 
+	
+}
+ 

@@ -1,0 +1,59 @@
+//uploadData 上传表单数据包
+
+import fsys.mime;
+namespace web;
+  
+var addfield = function(formdata,boundary,name,value){
+	var str = ..string.format( '--%s\r\n
+Content-Disposition: form-data; name="%s"\r\n
+\r\n
+%s\r\n', boundary,name,value)
+	..table.push( formdata,str ); 
+}
+
+..math.randomize() 
+
+class uploadData {
+	ctor( field,fname, file,mime ){
+		var formdata = {}
+		var boundary = ..string.random( ..math.random(15,25) );
+		var fileData = ..string.load(file);
+		
+		if(!mime){
+			mime = ..fsys.mime.fromFile(file); 
+		}
+		
+		var nv;
+		if(!fileData)
+			error("读取文件失败!",2)
+
+		if( #field ){
+			var tfield = ..string.split(field,"&")
+			for(i=1;#tfield;1){
+				nv = ..string.split(tfield[i],"=");
+				addfield( formdata,boundary,nv[1],nv[2] );
+			}
+		}
+		
+		var tpath = ..io.splitpath(file); 
+		
+		..table.push( formdata
+			, ..string.format( '--%s\r\n
+Content-Disposition: form-data; name="%s"; filename="%s"\r\n
+Content-Type: %s\r\n
+\r\n
+%s\r\n
+--%s--\r\n',boundary,fname,tpath.file,mime,fileData,boundary)
+		);
+		
+		this.data = ..string.join( formdata );
+		this.header = ..string.format('\r\nContent-Type: multipart/form-data; boundary=%s\r\n',boundary )   
+	} 
+}
+
+/**intellisense()
+web.uploadData("","","\__/*上传文件路径*/") = 创建上传表单数据\n参数一以&分隔多个键值对字段值\n参数二指定上传文件字段名\n参数三指定上传文件
+!uploadData.data = 上传表示数据
+!uploadData.header = 上传HTTP请求头
+?web.uploadData = !uploadData.
+end intellisense**/

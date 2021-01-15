@@ -1,0 +1,37 @@
+//api ¹«ÓÃº¯Êý
+
+namespace key.api;
+
+/*
+
+::KEYBDINPUT = class {
+    WORD    wVk;
+    WORD    wScan;
+    INT   dwFlags;
+    INT   time;
+    INT dwExtraInfo;
+}  
+
+::HARDWAREINPUT = class{
+    INT   uMsg;
+    WORD    wParamL;
+    WORD    wParamH;
+} 
+
+::INPUT = class {
+    INT   type; 
+    union input = { 
+        struct  ki = KEYBDINPUT();
+        struct  hi = HARDWAREINPUT();
+    };
+} 
+*/
+ 
+::GetAsyncKeyState  = ::User32.api("GetAsyncKeyState","word( int )" );
+::GetKeyState = User32.api("GetKeyState","word( int )" );
+
+ /**intellisense()
+_INPUT_MOUSE=@0/*_INPUT_MOUSE*/
+_INPUT_KEYBOARD=@1/*_INPUT_KEYBOARD*/
+_INPUT_HARDWARE=@2/*_INPUT_HARDWARE*/
+end intellisense**/

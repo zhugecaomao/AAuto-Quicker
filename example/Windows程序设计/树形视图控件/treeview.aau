@@ -1,0 +1,54 @@
+//树形控件简单演示
+
+import win.ui;
+/*DSG{{*/
+var winform = win.form( bottom=249;parent=...;right=349;text="AAuto Form" )
+winform.add( 
+treeview={ asel=false;bgcolor=15793151;bottom=230;infoTip=1;right=326;left=22;top=17;z=1;edge=1;cls="treeview" }
+)
+/*}}*/
+
+import mouse
+import win.ui.menu
+winform.treeview.onnotify = function(id,code,ptr){
+ 
+	if( code == 0xFFFFFE6E/*_TVN_SELCHANGED*/ ){
+		var nm = winform.treeview.getTreeNotifyMessage(code,ptr)
+		if( nm ){
+			 winform.text = winform.treeview.getItemText(nm.itemNew.hItem);
+		}
+	}
+	elseif(code = 0xFFFFFFFB/*_NM_RCLICK*/){
+		var x,y = mouse.getPos()
+		var hItem,tvht = winform.treeview.hitTest(x,y,true);
+		var menu = win.ui.popmenu(winform)
+		menu.add("删除",
+			function(){
+				winform.treeview.delItem(hItem)
+			}
+		)
+		menu.popup(x,y,true);
+	}
+	
+	 
+}
+
+var hitem = winform.treeview.insertItem( text="程序目录" );
+var hSubItem = winform.treeview.insertItem( { text="子目录" },hitem/*父节点*/);
+	
+hitem = winform.treeview.insertItem( { 
+		text = "children数组指定子节点"; 
+		children = { 
+			{ text = "子节点"  };
+			{ text = "子节点2" };
+			{ text = "子节点3";
+			  children = {
+			  	"a";"b";"c";{ text = "d" } 
+			  }
+			};
+		}
+} ) 
+ 
+
+winform.show() 
+win.loopMessage();

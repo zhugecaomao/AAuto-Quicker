@@ -1,0 +1,146 @@
+//desktop 虚拟桌面
+/************************************
+Author      : wudijushi
+Date        : 2011.02.28
+************************************/
+import process;
+namespace win.util;
+
+class desktop {
+    ctor(){  
+        this.desktop = getDesktops(); 
+        this.defaultDesktop = ..table.clone(this.desktop) 
+        this.explorer = {}
+        this.firstDesk = GetThreadDesktop(..thread.getId()); 
+        this.currentDesk = this.firstDesk 
+    } 
+    
+    create=function(name){
+    	if(type(name)!=type.string)
+    		error("参数必须是字符串",2) 
+    	
+    	if(this.desktop[name])
+    		error("桌面已存在",2)
+    	 
+        var hdesk = OpenDesktop( name,0,false,0x1FF/*_DESKTOP_ALL*/)
+        if(!hdesk){
+        	hdesk = CreateDesktop(
+　　　　　　　　　　　 name,
+　　　　　　　　　　　 null,
+　　　　　　　　　　　 null,
+　　　　　　　　　　　 0x1 /*_DF_ALLOWOTHERACCOUNTHOOK*/,
+　　　　　　　　　　　 0x10000000/*_GENERIC_ALL*/,
+　　　　　　　　　　　 {}); 
+		}
+		
+		this.desktop[name] = hdesk
+		this.lastDesk = hdesk;
+		
+		if(!hdesk)
+			error("创建虚拟桌面失败:" + ..lasterr() ,2)
+		 
+        this.execute( name, "explorer"); 
+    }
+    
+    ["execute"] = function(name,filepath){
+    	var si = ..process.STARTUPINFO() ;
+        si.desktop = name  
+        this.explorer[name] = ..process("explorer","",si); 
+        if(!this.explorer[name])
+			error("启动程序到虚拟桌面失败:" + ..lasterr() ,2) 
+    }
+    
+    
+    switch=function( name ){
+    	 
+    	if( !name ){ 
+    		if( this.preDesk ? this.currentDesk != this.preDesk ){
+    			newDesk = this.preDesk 
+    		}
+    		elseif( this.lastDesk ? this.currentDesk != this.lastDesk){
+    			newDesk = this.lastDesk ; 
+    		}
+    		elseif( this.firstDesk ? this.currentDesk != this.firstDesk){
+    			newDesk = this.firstDesk  
+    		}
+    		else {
+    			newDesk = this.desktop["Default"]  
+    		}  
+    	}
+    	else {
+    		newDesk = this.desktop[name]   
+    	}
+    	
+    	if(! newDesk )
+    		error("请先创建虚拟桌面",2)
+   
+   		if( this.currentDesk == newDesk )
+   			error("不能切换到当前桌面",2)
+   			
+    	this.preDesk = this.currentDesk	
+    	this.currentDesk = newDesk;
+    	SwitchDesktop(newDesk);   
+    }
+    
+    close=function(){ 
+    	SwitchDesktop(this.firstDesk );
+        for(name,hdesk in this.desktop){  
+        	 if( this.explorer[name] && this.explorer[name].handle ){
+        	 	this.explorer[name].terminate()
+        	 	this.explorer[name].free() 
+        	 }
+        	 if( ! this.defaultDesktop[name] )
+        	 	CloseDesktop(hdesk);  
+        }    
+    } 
+}
+
+namespace desktop{
+    
+    getDesktops=function(){
+        var desktops = {};
+        var EnumDesktopsproc =function(lpszDesktop, lParam){
+            desktops[lpszDesktop] = OpenDesktop(lpszDesktop,0,false,0x1FF/*_DESKTOP_ALL*/)
+            return true; 
+        }
+        
+        pEnumdeskProc = ..raw.tostdcall(EnumDesktopsproc,"bool(string lpszDesktop,string lParam )" ); 
+        EnumDesktops(GetProcessWindowStation(), pEnumdeskProc ,0); 
+        pEnumdeskProc = null;
+        
+        return desktops; 
+    }
+    
+    GetProcessWindowStation :=::User32.api( "GetProcessWindowStation", "int()");
+    EnumDesktops =::User32.api( "EnumDesktops", "bool(int hwinsta, POINTER lpEnumFunc ,int lParam)");
+    OpenDesktop = ::User32.api("OpenDesktopA","int(string lpszDesktop,int flags,bool fInherit,int dwDesiredAccess)")
+    CreateDesktop =::User32.api( "CreateDesktop", "int(string lpszDesktop, string lpszDevice, pointer pDevmode,INT dwFlags,INT dwDesiredAccess, struct & lpsa)");
+    SwitchDesktop =::User32.api( "SwitchDesktop", "bool(INT hDesktop)");
+    GetThreadDesktop =::User32.api( "GetThreadDesktop", "INT(INT threadId)");
+    CloseDesktop =::User32.api( "CloseDesktop", "bool(INT hDesktop)");
+    
+}
+
+/**intellisense()
+win.util.desktop() = 虚拟桌面类
+!virDesktop.create("desktop__") = 创建新桌面\n参数指定桌面名字
+!virDesktop.switch(__) = 切换到指定名字的桌面,如果无参数则切换到前一桌面
+!virDesktop.close() = 关闭创建的桌面
+win.util.desktop.getDesktops() = 枚举所有桌面，返回table
+?win.util.desktop = !virDesktop.
+end intellisense**/
+
+/**intellisense()
+_DF_ALLOWOTHERACCOUNTHOOK = @0x1 /*_DF_ALLOWOTHERACCOUNTHOOK*/
+ 
+_DESKTOP_CREATEMENU=@0x4/*_DESKTOP_CREATEMENU*/
+_DESKTOP_CREATEWINDOW=@0x2/*_DESKTOP_CREATEWINDOW*/
+_DESKTOP_ENUMERATE=@0x40/*_DESKTOP_ENUMERATE*/
+_DESKTOP_HOOKCONTROL=@0x8/*_DESKTOP_HOOKCONTROL*/
+_DESKTOP_JOURNALPLAYBACK=@0x20/*_DESKTOP_JOURNALPLAYBACK*/
+_DESKTOP_JOURNALRECORD=@0x10/*_DESKTOP_JOURNALRECORD*/
+_DESKTOP_READOBJECTS=@0x1/*_DESKTOP_READOBJECTS*/
+_DESKTOP_SWITCHDESKTOP=@0x100/*_DESKTOP_SWITCHDESKTOP*/
+_DESKTOP_WRITEOBJECTS=@0x80/*_DESKTOP_WRITEOBJECTS*/
+_DESKTOP_ALL=@0x1FF/*_DESKTOP_ALL*/
+end intellisense**/

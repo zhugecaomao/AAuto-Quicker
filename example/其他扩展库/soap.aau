@@ -1,0 +1,21 @@
+//Web Service
+io.open()
+
+//导入MSSOAP支持库
+import com.soap
+
+//创建SOAP客户端
+seviceClient = com.soap.client() 
+
+//指定WSDL服务说明
+seviceClient.MsSoapInit("http://fy.webxml.com.cn/webservices/EnglishChinese.asmx?WSDL")
+
+//调用远程Web服务提供的函数
+var trans = seviceClient.TranslatorString("你好") 
+
+//显示返回值
+io.print(  trans[1],trans[4] )
+
+//按任意键继续
+execute("pause") 
+io.close(); 

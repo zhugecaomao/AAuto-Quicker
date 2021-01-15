@@ -1,0 +1,76 @@
+//mutex 线程互斥量
+namespace process;
+
+class mutex {
+	ctor( uniqueName,inheritHandle ){
+	
+		assert(type(uniqueName)== type.string,"参数一必须是字符串")
+		if(type(inheritHandle===null) )inheritHandle=0x1/*_TRUE*/; 
+		
+		//检查互斥体
+		this.handle  =  OpenMutex( 0x000F0000|0x00100000|0x0001 /* MUTANT_ALL_ACCESS*/,inheritHandle,uniqueName);  
+		if(this.handle ) {
+    		this.conflict = "互斥体已存在" 
+    	}
+		else{
+			//创建互斥体 
+			this.handle  =  CreateMutex(null,inheritHandle,uniqueName); 
+		} 
+	};
+	
+	close = function(){  
+		//The system closes the handle automatically when the process terminates. 
+		//The mutex object is destroyed when its last handle has been closed.
+		..raw.closehandle(this.handle)
+	} 
+	@_metaProperty
+}
+
+
+namespace mutex{
+	import util.metaProperty
+	
+	_metaProperty = util.metaProperty(
+	
+		_topointer = function(){
+			return owner.handle;
+		} 
+		release = function(count=1){
+			return ReleaseMutex( owner.handle )
+		} 
+		wait = function(timeout){
+			return ..thread.wait(owner.handle,timeout)
+		}   
+		waitOne = function(timeout){
+			return ..thread.waitOne(owner.handle,timeout)
+		}  
+	)
+	
+	//声明API
+	OpenMutex = ::Kernel32.api("OpenMutexA","pointer(
+	INT dwDesiredAccess,
+	int bInheritHandle,
+	string lpName)"
+	);
+	
+	
+	//声明API
+	CreateMutex = ::Kernel32.api("CreateMutexA","pointer(pointer lpMutexAttributes,
+	int bInitialOwner,
+	string lpName)"
+	);
+	 
+	ReleaseMutex= ::Kernel32.api("ReleaseMutex","int(
+  	pointer handle
+	)"); 
+}
+ 
+/**intellisense() 
+process.mutex("互斥体唯一名称") = @mutex=process.mutex("__/*输入唯一标识字符串\n建议使用GUID生成Globally Unique Identifier(全球唯一标识符) */")\nif( mutex.conflict ){\n	io.print("互斥体已存在",mutex.handle)\n}\nmutex.close();
+!mutex.close()=关闭互斥体句柄\n该函数并不关闭互斥体创建的内核对象\n当所有引用内核对象的对象关闭,内核对象自动释放
+!mutex.conflict = 如果互斥体已存在,此属性为真值\n否则为空值
+!mutex.release() =  线程在处理完共享资源后,\n应在离开时调用此函数释放互斥体所有权
+!mutex.wait() = 等待并获取互斥体独占所有权,\n可选增加一个参数指定超时,以毫秒为单位\n注意此函数应与release()函数配对使用\n在UI线程中应使用非阻塞的waitOne()函数替代
+!mutex.waitOne() = 等待并获取互斥体独占所有权,\n可选增加一个参数指定超时,以毫秒为单位\n注意此函数应与release()函数配对使用
+?process.mutex=!mutex.
+end intellisense**/

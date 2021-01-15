@@ -1,0 +1,199 @@
+//httpFile 下载文件
+namespace inet
+
+class httpFile {
+
+     ctor( url,path,resumeFile ){
+     	this.url = url; 
+		if(!resumeFile){ 
+			resumeFile  = path + ".dowload"
+		};
+		
+		var readBuffer;
+     }
+     
+     removeDownloadFile = function(){
+     	..io.remove(resumeFile)
+     } 
+     
+     download = function( headers,referer,accept,flags,postData){
+     	this.modified = false;  
+		method = postData?"POST":"GET"
+		
+		this.file = ..io.open(path,"a+b" )
+		if(!this.file)
+			return null,'创建文件失败,请指定正确的存储路径';
+			
+		this.file.seek("end")
+		var fileSize = this.file.seek();
+		var rangeInfoOld;
+		
+		var http = self.http(,"");
+		if(!http.beginRequest(this.url,method,referer,accept,flags) ){
+			this.file.close();
+			http.close();
+			return null,"请求失败";
+		}
+		http.writeHeader(headers)
+		
+		if( fileSize > 0 ) {
+    		if( ..io.exist(resumeFile,4) ) {
+    			var content = ..string.load( resumeFile );
+    			if( content ){
+     				rangeInfoOld = eval( content ) ;
+     				//if( rangeInfoOld.acceptRanges ? ..string.cmp( rangeInfoOld.acceptRanges,"bytes" ) == 0 ) {
+     				http.writeHeaderRange(rangeInfoOld,fileSize) 
+     				//}
+     			}
+    		}
+		}  
+		 
+		var ok; 
+		ok,err,errCode  = http.send(postData)  
+		if(!ok){
+			this.file.close();
+			http.close();
+			return null,err,errCode
+		} 
+		this.statusCode = err;
+		this.contentLength = errCode;
+			
+		//保存一次断点续传配置
+		var rangeInfoNew = http.readHeaderRange() 
+
+		if( this.statusCode == 200 ){
+			//如果需要重新下载,存储相关信息,清除原来的文件 
+			if( fileSize>0 && rangeInfoOld ){ 
+				if(/* ! this.contentLength || */( ( rangeInfoNew.eTag == rangeInfoOld.eTag)
+					&& ( rangeInfoNew.lastModified == rangeInfoOld.lastModified )
+					 && ( this.contentLength == fileSize) ) ){ 
+					http.close()
+					this.file.close()  
+     				return true,"已下载完成, 无须重新下载!",fileSize
+     			}
+			}
+			
+			this.modified = true;
+			if(fileSize!=0){
+				this.file.close();
+				this.file = ..io.open(path,"w+b" ) 
+			}
+			rangeInfoNew.contentLength = this.contentLength
+			fileSize = 0;
+		} 
+		elseif( this.statusCode == 206 ) { 
+			rangeInfoNew.contentLength = this.contentLength + fileSize
+		}
+		elseif( this.statusCode == 412 ){
+			this.file.close();
+			http.close();
+			this.removeDownloadFile();
+			this.modified = true;
+			return this.download( headers,referer,accept,flags,postData); 
+		} 
+		elseif( this.statusCode == 416 ){
+			this.file.close();
+     		http.close() 
+			if( fileSize>0 && rangeInfoOld ){ 
+				return true,"已下载完成, 无须重新下载!",fileSize
+     		}
+     		return null,"下载遇到错误, HTTP状态码:" + this.statusCode;
+		} 
+		else {
+			this.file.close();
+			http.close() 
+			return null,"下载遇到错误, HTTP状态码:" + this.statusCode;
+		}
+		
+		..string.save(resumeFile,..table.tostring(rangeInfoNew) ) 
+		 
+		if( this.onReciveBegin ){
+    		var ret = this.onReciveBegin( this.statusCode,this.contentLength,fileSize  )
+    		if( ( ret!==null) && ( !ret ) ){ 
+    			this.file.close();
+    			http.close();
+    			return null,"下载已取消";
+    		}
+    	}
+    		
+		//开始下载 
+    	if(this.onRecive){	 
+    		var total = this.contentLength;
+    		var bufferSize = this.bufferSize;
+    		if( ( !bufferSize) || ( bufferSize <= 0 ) ){
+    			if( http === ..inet.whttp ){
+    				bufferSize = 1024 * 1024;//1MB
+    			}
+    			else {
+    				bufferSize = 1024 * 10;//10KB
+    			}
+    		}
+    		
+    		if( #readBuffer < bufferSize ){
+    			readBuffer = ..raw.malloc( bufferSize );
+    		}
+    		
+			for( readSize in http.eachReadBuffer(readBuffer,bufferSize) ){ 
+				this.file.writeBuffer(readBuffer,readSize)
+				if( this.onRecive( readBuffer,readSize,total ) === false ){
+					this.file.flush();
+    				this.file.close();
+    				http.close(); 
+    				return false;
+    			}
+			}
+		}
+		else { 
+			for(str,size in http.eachRead() ){ 
+				this.file.write(str)
+			}  
+		} 
+
+		this.file.flush();
+		this.file.close();
+		http.close(); 
+		 
+		return true,,this.contentLength;
+     }
+      
+     isModified = function(){
+		 
+		this.onReciveBegin = function(statusCode,contentLength,fileSize){
+			return false;
+		}  
+		var complete,fileSize,err = this.download();
+		
+		return !( complete && ( !this.modified ) );	
+     }
+     
+}   
+
+namespace httpFile{
+	http = ..inet.whttp or ..inet.http;
+	if(!http){
+		error('请在导入inet.file以前\n导入 inet.whttp 或 inet.http\n将会优先使用 inet.whttp',2)
+	}
+}
+
+/**intellisense()
+inet.httpFile.http = 获取或指定使用的http类\n可指定为inet.http或inet.whttp
+inet.httpFile = 下载文件,支持断点续传\n请事先导入 inet.whttp 或 inet.http,\n将会优先使用 inet.whttp
+inet.httpFile(.(URL,本地存储路径,配置文件路径) = 如果不指定配置文件路径\n则配置文件路径为 本地存储路径 + ".download" 
+inet.httpFile() = !inet_file.
+?inet.file() = !inet_file.
+!inet_file.download(.(HTTP头,引用网址,accept,flags,postData) = 下载文件,所有参数都是可选参数.\n下载成功返回true,失败返回false 
+!inet_file.statusCode = HTTP状态码
+!inet_file.bufferSize = 缓冲区大小\n使用inet.whttp 默认为1MB\n使用 inet.http 默认为10KB
+!inet_file.contentLength = 文件长度\n如果文件长度为零,并且modified属性为false,表示不需要重新下载
+!inet_file.onRecive = @.onRecive = function(buffer,readSize,contentLength,fileSize){
+	
+}
+!inet_file.onReciveBegin = @.onReciveBegin = function(statusCode,contentLength){
+	if( statusCode == 206/*断点续传*/ ){
+		 __
+	}
+}
+!inet_file.modified = 服务器上的文件是否已被修改,\n该属性仅在调用 download() 下载以后有效
+!inet_file.removeDownloadFile() = 移除断点续传配置文件
+!inet_file.isModified() = 检测已下载的文件在服务器上是否已被修改,\n 该函数会调用 download() 进行测试(不会启动下载)
+end intellisense**/

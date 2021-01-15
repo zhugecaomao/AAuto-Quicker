@@ -1,0 +1,183 @@
+//语法高亮控件
+//作者 lujjjh http://www.aau.cn/thread-2243-1-1.html
+
+import win.ui;
+import win.ui.ctrl.scintilla;
+/*DSG{{*/
+var winform = win.form( right=518;bottom=391;parent=...;text="MadCSS";border="resizable" )
+winform.add( 
+scintilla={ dr=1;dl=1;bottom=376;right=504;left=16;dt=1;top=16;transparent=1;db=1;z=1;edge=1;cls="scintilla" }
+)
+/*}}*/
+ 
+// 设置页代码
+winform.scintilla.codepage = 936;
+// 设置制表符宽度
+winform.scintilla.tabWidth = 4;
+// 用空格代替制表符
+winform.scintilla.useTabs = false;
+// 设置词法解析器
+winform.scintilla.lexerLanguage = "css";
+// 设置风格位
+winform.scintilla.styleBits = winform.scintilla.styleBitsNeeded;
+// 设置边栏
+winform.scintilla.setMarginType(0, 1/*_SC_MARGIN_NUMBER*/);
+winform.scintilla.setMarginWidth(0, 50);
+winform.scintilla.setMarginType(1, 0/*_SC_MARGIN_SYMBOL*/);
+winform.scintilla.setMarginCursor(1, 2/*_SC_CURSORARROW*/);
+winform.scintilla.sendEditor(2244/*_SCI_SETMARGINMASKN*/, 1, 0xFE000000/*_SC_MASK_FOLDERS*/);
+winform.scintilla.setMarginWidth(1, 20);
+winform.scintilla.setMarginSensitive(1, true);
+// 设置折叠样式
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 30/*_SC_MARKNUM_FOLDER*/, 18/*_SC_MARK_CIRCLEPLUS*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 31/*_SC_MARKNUM_FOLDEROPEN*/, 20/*_SC_MARK_CIRCLEMINUS*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 25/*_SC_MARKNUM_FOLDEREND*/, 19/*_SC_MARK_CIRCLEPLUSCONNECTED*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 26/*_SC_MARKNUM_FOLDEROPENMID*/, 21/*_SC_MARK_CIRCLEMINUSCONNECTED*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 27/*_SC_MARKNUM_FOLDERMIDTAIL*/, 17/*_SC_MARK_TCORNERCURVE*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 29/*_SC_MARKNUM_FOLDERSUB*/, 9/*_SC_MARK_VLINE*/);
+winform.scintilla.sendEditor(2040/*_SCI_MARKERDEFINE*/, 28/*_SC_MARKNUM_FOLDERTAIL*/, 16/*_SC_MARK_LCORNERCURVE*/);
+winform.scintilla.sendEditor(2042/*_SCI_MARKERSETBACK*/, 29/*_SC_MARKNUM_FOLDERSUB*/, 0xa0a0a0);
+winform.scintilla.sendEditor(2042/*_SCI_MARKERSETBACK*/, 27/*_SC_MARKNUM_FOLDERMIDTAIL*/, 0xa0a0a0);
+winform.scintilla.sendEditor(2042/*_SCI_MARKERSETBACK*/, 28/*_SC_MARKNUM_FOLDERTAIL*/, 0xa0a0a0);
+winform.scintilla.sendEditor(2233/*_SCI_SETFOLDFLAGS*/, 0x0004/*_SC_FOLDFLAG_LINEBEFORE_CONTRACTED*/ | 0x0010/*_SC_FOLDFLAG_LINEAFTER_CONTRACTED*/, 0); //如果折叠就在折叠行的上下各画一条横线
+// 设置自动折叠
+winform.scintilla.sendEditor(4004/*_SCI_SETPROPERTY*/, "fold", "1");
+// 设置风格样式
+winform.scintilla.setStyle(32/*_STYLE_DEFAULT*/,  "宋体", 10, false, false, false); // 设置编辑器默认样式，之后所有的样式都基于这个
+winform.scintilla.styleClearAll(); // 重置其他所有样式，使它们与 _STYLE_DEFAULT 相同
+winform.scintilla.setStyle(1/*_SCE_CSS_TAG*/, { fore = 0xff0000 }); // 标签，第二个参数可以是一个 table
+winform.scintilla.setStyle(2/*_SCE_CSS_CLASS*/, { fore = 0xff0000 }); // 类
+winform.scintilla.setStyle(3/*_SCE_CSS_PSEUDOCLASS*/, { fore = 0xff0000 }); // 伪类
+winform.scintilla.setStyle(4/*_SCE_CSS_UNKNOWN_PSEUDOCLASS*/, { fore = 0x666666 }); // 未知的伪类
+winform.scintilla.setStyle(5/*_SCE_CSS_OPERATOR*/, { fore = 0xff0000 }); // 分隔符
+winform.scintilla.setStyle(6/*_SCE_CSS_IDENTIFIER*/, { fore = 0xff00ff }); // 标识符
+winform.scintilla.setStyle(7/*_SCE_CSS_UNKNOWN_IDENTIFIER*/, { fore = 0x666666 }); // 未知标识符
+
+winform.scintilla.setKeywords(0, "background background-attachment background-color background-image background-position
+background-repeat color direction line-height letter-spacing text-align text-decoration text-indent text-shadow
+text-transform unicode-bidi white-space word-spacing font font-family font-size font-size-adjust font-stretch
+font-style font-variant font-weight list-style list-style-image list-style-position list-style-type marker-offset
+border-collapse border-spacing caption-side empty-cells table-layout outline outline-color outline-style outline-width
+padding padding-bottom padding-left padding-right padding-top border border-style border-width border-color border-bottom
+border-bottom-color border-bottom-style border-bottom-width border-left border-left-color border-left-style
+border-left-width border-right border-right-color border-right-style border-right-width border-top border-top-color 
+border-top-style border-top-width margin margin-bottom margin-left margin-right margin-top position top right bottom left
+overflow clip vertical-align z-index clear display float"); // 标识符
+winform.scintilla.setKeywords(1, "active focus hover link visited first-child lang"); // 伪类
+winform.scintilla.setKeywords(6, "first-letter first-line before after"); // 伪元素
+
+winform.scintilla.setStyle(8/*_SCE_CSS_VALUE*/, { fore = 0x333333 }); // 值
+winform.scintilla.setStyle(9/*_SCE_CSS_COMMENT*/, { fore = 0x008800 }); // 注释
+winform.scintilla.setStyle(10/*_SCE_CSS_ID*/, { fore = 0xff0000 }); // ID
+winform.scintilla.setStyle(11/*_SCE_CSS_IMPORTANT*/, { fore = 0xff0000 }); // important
+winform.scintilla.setStyle(12/*_SCE_CSS_DIRECTIVE*/, { fore = 0x000088 }); // import
+winform.scintilla.setStyle(13/*_SCE_CSS_DOUBLESTRING*/, { fore = 0x000088 }); // 双引号中文本
+winform.scintilla.setStyle(14/*_SCE_CSS_SINGLESTRING*/, { fore = 0x000088 }); // 单引号中文本
+winform.scintilla.setStyle(15/*_SCE_CSS_IDENTIFIER2*/, { fore = 0xff00ff }); // 标识符2
+winform.scintilla.setStyle(16/*_SCE_CSS_ATTRIBUTE*/, { fore = 0x000088 }); // 属性
+winform.scintilla.setStyle(17/*_SCE_CSS_IDENTIFIER3*/, { fore = 0xff00ff }); // 标识符3
+winform.scintilla.setStyle(18/*_SCE_CSS_PSEUDOELEMENT*/, { fore = 0xff0000 }); // 伪元素
+winform.scintilla.setStyle(19/*_SCE_CSS_EXTENDED_IDENTIFIER*/, { fore = 0xff00ff }); // 扩展的标识符
+winform.scintilla.setStyle(20/*_SCE_CSS_EXTENDED_PSEUDOCLASS*/, { fore = 0xff0000 }); // 扩展的伪类
+winform.scintilla.setStyle(21/*_SCE_CSS_EXTENDED_PSEUDOELEMENT*/, { fore = 0xff0000 }); // 扩展的伪元素
+winform.scintilla.setStyle(22/*_SCE_CSS_MEDIA*/, { fore = 0xff0000 }); // Media
+
+winform.scintilla.text = /**
+@import url("idonny/css-styles/menu.css"); 
+
+body {
+    margin: 9px!important;
+    margin: 8px;
+    padding: 0;
+    font: 12px/1.3 "微软雅黑", Verdana;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* 伪类 */
+a:hover, a:visited {
+    color: #fff;
+}
+
+/* 属性 */
+input[type=text] {
+    float: left;
+}
+
+/* 伪元素 */
+p:first-line {
+    color: #ff0000;
+}
+
+/* Media */
+@media print {
+    p:first-line {
+        color: #000;
+    }
+}
+**/;
+
+var lastCh;
+winform.scintilla.onnotify = function(id,code,ptr){
+	var notify = winform.scintilla.SCNotification();
+	raw.convert(ptr, notify);
+	
+	select (notify.nmhdr.code) {
+		case 2010/*_SCN_MARGINCLICK*/ {
+			var line = winform.scintilla.lineFromPosition(notify.position);
+			winform.scintilla.sendEditor(2231/*_SCI_TOGGLEFOLD*/, line);
+		}
+		// 以下处理自动缩进
+		case 2001/*_SCN_CHARADDED*/ {
+			lastCh = notify.ch;
+		}
+		case 2007/*_SCN_UPDATEUI*/ {
+			if (lastCh) {
+				var pos = winform.scintilla.currentPos;
+				var line = winform.scintilla.lineFromPosition(pos);
+				// 如果最后输入的字符是 }
+				if (lastCh == '}'#) {
+					var ch = winform.scintilla.getCharAt(pos - 2);
+					if (ch == ' '# || ch == '\t'#) {
+						var wordStartPos = winform.scintilla.sendEditor(2266/*_SCI_WORDSTARTPOSITION*/, pos - 1);
+						var posLine = winform.scintilla.positionFromLine(line);
+						if (wordStartPos == posLine) {
+							var othpos = winform.scintilla.sendEditor(2353/*_SCI_BRACEMATCH*/, pos - 1); //得到对应的左括号所在的位置
+                    		var othline = winform.scintilla.lineFromPosition(othpos);  //左括号所在行
+                    		var nIndent = winform.scintilla.sendEditor(2127/*_SCI_GETLINEINDENTATION*/, othline);//左括号所在行的缩进值
+                    		// 替换右括号前面的空白字符，使之与左括号缩进一致
+                    		winform.scintilla.targetStart = wordStartPos;
+                    		winform.scintilla.targetEnd = pos - 1;
+                    		winform.scintilla.sendEditor(2194/*_SCI_REPLACETARGET*/, nIndent, string.repeat(1024, " "));
+						}
+					}
+				}
+				// 如果最后输入的字符是回车
+				if (lastCh == '\n'#) {
+					if(line > 0) {
+                    	// 得到上一行缩进设置
+                    	var nIndent = winform.scintilla.sendEditor(2127/*_SCI_GETLINEINDENTATION*/, line - 1);
+                    	// 查找上一行最后一个有效字符（非空白字符）
+                    	var nPrevLinePos = winform.scintilla.sendEditor(2167/*_SCI_POSITIONFROMLINE*/, line - 1);
+                    	var c = ' '#;
+                    	for (p = pos - 3; nPrevLinePos; -1) {
+                    		c = winform.scintilla.getCharAt(p);
+                    		if (c != ' '# && c != '\t'#)
+                    			break;
+                    	}
+                    	// 如果是左括号，就多缩进四格
+                    	if(c == '{'#)
+                    		nIndent += 4;
+                    	winform.scintilla.selText = string.repeat(nIndent, " ");
+                	}
+				}
+				lastCh = 0;
+			}
+		}
+	}
+}
+
+winform.show();
+win.loopMessage();

@@ -1,0 +1,108 @@
+//version 版本信息
+namespace fsys;
+
+class version{
+	ctor( str ){ {
+		var ver = ..string.split(str:"",".,");
+		this.major = tonumber(ver[1]) : 0;
+		this.minor = tonumber(ver[2]) : 0;
+		this.build = tonumber(ver[3]) : 0;
+		this.revision = tonumber(ver[4]) : 0; 
+	} };  
+	valid = function(){
+		with(this){
+			return major || minor || build || revision;
+		}
+	} 
+	@_meta;
+}
+
+namespace version{ 
+	_meta = {
+		_tostring = function(){
+			return ..string.format("%d.%d.%d.%d",owner.major,owner.minor,owner.build,owner.revision)
+		}
+		_eq = function(b){
+			return  owner.major == b.major && owner.minor == b.minor
+				&& owner.build == b.build && owner.revision == b.revision
+		} 
+		_lt = function(b){
+			if( owner == b) return false;
+			if( owner.major > b.major )return false;
+			if( owner.minor < b.minor )return true;
+			if( owner.minor > b.minor )return false;
+			if( owner.build < b.build )return true;
+			if( owner.build > b.build )return false;
+			if( owner.revision < b.revision )return true;
+			if( owner.revision > b.revision )return false;
+			return false;
+		}
+		_le = function(b){ 
+			return owner < b || owner == b;	
+		}
+	}
+	
+	var dll = ..raw.loadDll("Version.dll") 
+	GetFileVersionInfoSize = dll.api("GetFileVersionInfoSizeA","int(string filename,int& handle)")
+	GetFileVersionInfo = dll.api("GetFileVersionInfoA","int(string filename,int handle,int len,string& data)");
+	VerQueryValue = dll.api("VerQueryValue","int(STRING pBlock,string subBlock,pointer &buffer,int& len)") 
+	
+	//声明结构体
+	class TRANSLATE {
+    	WORD language;
+    	WORD codePage; 
+	}  
+	
+	var queryStringInfo = function(verInfo,translation,key){
+    	var ok,pBuf,len = VerQueryValue(verInfo
+        	, ..string.format("\StringFileInfo\%04X%04X\%s",translation.language,translation.codePage,key)
+        	, ,0
+        	); 
+    	if(ok){
+        	return (..raw.str( pBuf ) );
+    	}	
+	} 
+	
+	getInfo = function(path){ 
+ 	
+		var verSize=GetFileVersionInfoSize(path,0); 
+		var re,verInfo =GetFileVersionInfo(path,0,verSize,verSize)
+		if(!verInfo)return;
+		
+		var ok,pBuf,len = VerQueryValue(verInfo, "\VarFileInfo\Translation", ,0)  
+		if( ok ) {	
+			var translation = ..raw.convert(pBuf,TRANSLATE() ); 
+			return{
+				productVersion = ..fsys.version( queryStringInfo(verInfo,translation,"ProductVersion") );
+				fileVersion = ..fsys.version( queryStringInfo(verInfo,translation,"FileVersion") );
+				fileDescription = queryStringInfo(verInfo,translation,"FileDescription");
+				originalFileName = queryStringInfo(verInfo,translation,"OriginalFileName"); 
+				internalName = queryStringInfo(verInfo,translation,"InternalName");
+				companyName = queryStringInfo(verInfo,translation,"CompanyName");
+				language = translation.translation;
+				codePage = translation.codePage;
+			}
+		}
+	}
+} 
+
+/**intellisense()
+fsys.version("0->0->0->0") = 创建版本对象,参数可以为空\n支持大于、小于、相等比较
+fsys.version() = !fsys_version.
+!fsys_version.major = 主版本号
+!fsys_version.minor = 次版本号
+!fsys_version.build = 内部版本号
+!fsys_version.revision = 修订号
+!fsys_version.valid() = 版本号是否有效
+
+fsys.version.getInfo(__/*执行文件路径*/) = 返回返本信息
+fsys.version.getInfo() =  !fsys_version_info. 
+!fsys_version_info.productVersion = !fsys_version.
+!fsys_version_info.fileVersion = !fsys_version.
+!fsys_version_info.fileDescription = 文件描述
+!fsys_version_info.originalFileName = 原始文件名
+!fsys_version_info.internalName = 内部名;
+!fsys_version_info.companyName = 公司名;
+!fsys_version_info.language = 语言代码
+!fsys_version_info.codePage = 代码页
+end intellisense**/

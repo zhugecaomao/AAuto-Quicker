@@ -1,0 +1,1115 @@
+//默认库(..win.form)
+import gdi; 
+namespace win;   
+
+class form {  
+ 
+	ctor( tParam ) begin   
+	    this.hInstance = _HINSTANSE; 
+	    this._mapCommandProc = { freeId = tParam.freeId : 5000 };
+        this._ctrlId = {};//控件ID映射关系
+        this._ctrlHwnd = {};//控件句柄映射关系  
+        this._ctrlAutoResize = {};//自动调整位置 
+	    this._tTimeProc = {};
+	    this._tTimeTicks = { allocId = 1;freeId={} }; 
+	    this.isDialogMessage = ..win.isDialogMessage;
+	    
+	    if( tParam.left === null)
+			tParam.left = -1;
+		if( tParam.top === null)
+			tParam.top = -1; 
+		
+		var x = tParam.left ;
+		var y = tParam.top ; 
+		var cx,cy = 0,0;
+		if( tParam.right &&  tParam.bottom ){
+			cx = tParam.right - x;
+			cy = tParam.bottom - y;   
+			this._defClientRect = ::RECT( 0, 0, cx, cy);
+		}  
+		
+		//不允许自定义控件重写的属性,请写在这段代码前面，例如cls
+		if( tParam.tParam ){
+			for(k,v in tParam.tParam){ 
+				if(tParam[k]===null){ 
+					tParam[k] = v; 
+				}
+			} 
+		}
+		else {
+			tParam.id = 0;
+		}
+		tParam.exstyle := 0 
+		tParam.style := 0
+		 
+		select( tParam.exmode ) { 
+			case "toolwindow" { 
+				tParam.exstyle |= 0x80/*_WS_EX_TOOLWINDOW*/;
+			}
+			case "none" {
+				tParam.exstyle |= 0;
+			} 
+			else {
+				tParam.exstyle |= 0x40000/*_WS_EX_APPWINDOW*/;
+			};
+		}
+		
+		if(tParam.acceptfiles) 
+		    tParam.exstyle |= 0x10/*_WS_EX_ACCEPTFILES*/
+		    
+		if(tParam.frame)
+		    tParam.exstyle |= 0x1/*_WS_EX_DLGMODALFRAME*/
+		    
+		if(tParam.cp)
+		    tParam.exstyle |= 0x10000/*_WS_EX_CONTROLPARENT*/ 
+        
+        if(tParam.topmost) 
+        	tParam.exstyle |= 0x8/*_WS_EX_TOPMOST*/
+	
+		select( tParam.mode ) { 
+			case "child" {
+				tParam.style |= 0x40000000/*_WS_CHILD*/  
+			}
+			case "popup" {
+				tParam.style |= 0x80000000/*_WS_POPUP*/ ; 
+			}  
+			else  {
+				tParam.style |= 0x0/*_WS_OVERLAPPED*/;
+			}
+		
+		}  
+		
+		if(! (#(tParam.text)) ){
+        	tParam.title = false;
+        }
+        
+        if(tParam.title === false ) 
+        	tParam.style := 0x80000000/*_WS_POPUP*/
+     
+        var cyborder = ::GetSystemMetrics( 0x6/*_SM_CYBORDER*/ );
+		var cxborder = ::GetSystemMetrics( 0x5/*_SM_CXBORDER*/ );
+		var cycaption = ::GetSystemMetrics( 0x4/*_SM_CYCAPTION*/  ) ;
+        var deltitle =  ~0xC00000/*_WS_CAPTION*/;
+		select( tParam.border ) { 
+			case "dialog frame"{
+				tParam.style |= 0x400000/*_WS_DLGFRAME*/;
+				deltitle = ~0x800000/*_WS_BORDER*/; 
+			}
+			case "thin" {
+				tParam.style |= 0x800000/*_WS_BORDER*/;
+				deltitle = ~0x400000/*_WS_DLGFRAME*/; 
+			}
+			case "none" {
+				//无边框窗口
+				//取消默认的 0x0/*_WS_OVERLAPPED* 样式
+				tParam.style :=   0x80000000/*_WS_POPUP*/
+				tParam.style &= ~ 0x800000/*_WS_BORDER*/;
+				
+				tParam.title = false;
+			} 
+			else {
+				tParam.style |= 0x40000/*_WS_SIZEBOX*/; 
+			}
+		} 
+		
+		if(tParam.title===false) {
+			tParam.style &= deltitle //避免去掉标题栏时覆盖了边框设置
+        	cycaption = 0; //如果没有标题栏,则要去掉标题栏的高度 
+        }	
+        else{ 
+        	tParam.style |= 0xC00000/*_WS_CAPTION*/ 
+        }  
+
+        if(tParam.max!==false) 
+        	tParam.style |= 0x10000/*_WS_MAXIMIZEBOX*/ 
+        else
+        	tParam.style &= ~0x10000/*_WS_MAXIMIZEBOX*/ 
+        	
+        if(tParam.min!==false) 
+        	tParam.style |= 0x20000/*_WS_MINIMIZEBOX*/ 
+        else
+        	tParam.style &= ~0x20000/*_WS_MINIMIZEBOX*/ 
+        	
+        	
+        if(tParam.sysmenu!==false) {
+        	tParam.style |= 0x80000/*_WS_SYSMENU*/
+        }
+        else {
+        	tParam.style &= ~0x80000/*_WS_SYSMENU*/
+        } 
+        
+        if( tParam.maxmize  ){
+    		tParam.style |= 0x1000000/*_WS_MAXIMIZE*/;
+    	}
+    	if( tParam.minmize  ){
+    		tParam.style |= 0x20000000/*_WS_MINIMIZE*/
+    	}  
+        this@ = _metaProperty; 
+	 
+	    if( tParam[["hwnd"]] ){
+	    	this.hwnd = tParam[["hwnd"]] 
+	    	if(!this._defClientRect){ 
+	    		this._defClientRect = ..win.getClientRect(tParam.hwnd) ; 
+	    	};
+	    	
+	    	this._defWindowProc = function(hwnd, message, wParam , lParam){
+	    		return ::CallWindowProc(this._wndproc_c_prev, hwnd, message, wParam , lParam);
+	    	}   
+	    }
+	    else{   
+			if( ! tParam.className ){
+				tParam.cls := "AAU_FORM" 
+				tParam.className = ..string.format("%s[TID:%d]",tParam.cls , ..thread.getId() ) 
+				
+				var wc  = ::WNDCLASSEX(); 
+				if(not ::GetClassInfoEx(this.hInstance,tParam.className,wc) ) { 
+					wc  = ::WNDCLASSEX(); 
+					wc.hInstance= _HINSTANSE ; 
+					wc.lpszClassName = tParam.className; 
+					wc.hIcon = ::LoadIcon(this.hInstance, topointer(130) );
+					wc.hIconSm = ::LoadIcon(this.hInstance, topointer(130) );
+					wc.hCursor = ::LoadCursor(null, topointer(0x7F00/*_IDC_ARROW*/) );
+					wc.hbrBackground =  topointer(0xF/*_COLOR_BTNFACE*/ + 1) //::GetStockObject(_HOLLOW_BRUSH); 
+					wc.lpfnWndProc = ::DefWindowProc;  
+		 		
+					assert(  ::RegisterClassEx( wc) ,   ..lasterr()  ) 
+				}
+				this._defWindowProc = ::DefWindowProc;
+			}
+			else {
+				if( tParam.cls ){
+					var wc  = ::WNDCLASSEX();  
+					var className = ..string.format("%s[TID:%d]",tParam.cls , ..thread.getId() ) 
+					if ( ! ::GetClassInfoEx(_HINSTANCE, className, wc)) {
+						if( GetClassInfoEx(_HINSTANCE, tParam.className, wc) ){
+							wc.lpszClassName = className;
+							if( ::RegisterClassEx(wc) ){
+								tParam.className = className;
+							}
+						}
+					}	 
+				}
+				
+				this._defWindowProc = function(hwnd, message, wParam , lParam){
+	    			return ::CallWindowProc(this._wndproc_c_prev, hwnd, message, wParam , lParam);
+	    		}  
+			}
+		 	 
+        	this.image = tParam.image;
+			if( ( type( tParam.parent) == "table" )   ){
+				this.parent = tParam.parent;
+				tParam.parent = tParam.parent.hwnd; 
+			} 
+			
+			if( type( tParam.parent ) != "number" )
+		    	tParam.parent = 0;  
+	 		 
+			var rcWnd = ::RECT(x, y, x+cx , y+cy );
+			AdjustWindowRectEx(rcWnd, tParam.style, 0, tParam.exstyle); //client to window
+			cx = rcWnd.right - rcWnd.left;
+			cy = rcWnd.bottom - rcWnd.top;
+			
+			if(x<0){
+				var sx = ::GetSystemMetrics(0x10/*_SM_CXFULLSCREEN*/) ;
+				if(sx>cx){
+					if(x==-1)
+						x = (sx-cx)/2;
+					else 
+						x = (sx-cx)+x+2
+				}
+				else
+					x = 0; 
+			} 
+			if(y<0){
+				var sy = ::GetSystemMetrics(0x11/*_SM_CYFULLSCREEN*/) + ::GetSystemMetrics(0x4/*_SM_CYCAPTION窗口标题的高度*/);
+				if(sy>cy){
+					if(y==-1)
+						y = (sy-cy)/2;
+					else 
+						y = (sy-cy) + y+2
+				}
+				else
+					y = 0; 
+			}   
+			this.hwnd = ::CreateWindowEx(tParam.exstyle,tParam.className,tParam.text,tParam.style ,
+				x,y,cx,cy,tParam.parent,tParam.id/*menu*/, _HINSTANSE );
+			
+			if(!this.hwnd)
+				return null,"CreateWindowEx failed!";
+				
+			this.setFont( LOGFONT() );//设置字体 
+		}
+		
+		this[["scroll"]] = tParam.scroll;
+		//不要清除设置图片时设定的默认背景色
+		if( tParam.bgcolor !== null )
+        	this[["bgcolor"]] = tParam.bgcolor;
+        
+        var wndproc =  function( hwnd, message, wParam , lParam) {    
+			if( this[["wndproc__"]] ) { 
+				var result = this.wndproc__(  hwnd,  message, wParam , lParam );
+				if( (result !== null) && ( message!=0x2/*_WM_DESTROY*/) )//用非恒等式来排除0,false等逻辑假的值
+			      	return result;
+			}
+			var proc = _defaultProc[message]
+			if( proc ){
+				var result = proc(this,hwnd,message,wParam,lParam)
+				if( result !== null )
+					return result;
+			}	
+		  	
+			return  this._defWindowProc(hwnd,message,wParam,lParam);
+		};	
+		this._wndproc_c = ..raw.tostdcall( wndproc,"addr(addr,INT,ADDR,addr)",this/*设为owner对象*/)   
+		this._wndproc_c_prev = ::SetWindowPointer(this.hwnd,0xFFFFFFFC/*_GWL_WNDPROC*/, this._wndproc_c);    
+        _forms[this.hwnd] = this;
+        
+		..win.resetMessage();//移除_WM_QUIT消息,重置消息循环
+	end; 
+} 
+
+namespace ui { 
+
+	NMHDR = class {
+		addr hwndFrom;
+		ADDR idFrom;
+		INT code;
+	}	
+} 
+var ui_nmhdr = ui.NMHDR; 
+
+_form = form;
+namespace form{ 
+	
+	/*intellisense(win.form)*/
+	RegisterHotKey = ::User32.api("RegisterHotKey","bool(addr hwnd,int id,int fsModifiers,int vk)")
+	UnregisterHotKey = ::User32.api("UnregisterHotKey","bool(addr hwnd,int id)")
+	SetTimer = ::User32.api("SetTimer","INT(int hWnd,INT nIDEvent,INT uElapse,pointer lpTimerFunc)");
+	KillTimer = ::User32.api("KillTimer","int(int hWnd,INT nIDEvent)");
+	SetLayeredWindowAttributes = ::User32.api("SetLayeredWindowAttributes","int(int hwnd,int crKey,BYTE bAlpha,INT dwFlags)"); 
+	AdjustWindowRectEx = ::User32.api("AdjustWindowRectEx", "int(struct& rect, INT style, bool menu, INT exStyle)"); 
+	/*end intellisense*/ 
+	
+
+	
+	//先声明前面的API
+	import ..win.ui.ctrl; 
+	var ctrl_factory = ..win.ui.ctrl.factory
+ 
+	//记录所有win.form对象,创建则添加此表,销毁则从表中移除 
+	_forms = {}  
+	getForm = function(hwnd){
+		var winform = _forms[hwnd];
+		while(!winform){
+			hwnd = ..win.getParent(hwnd);
+			if(!hwnd) 
+				return null; 
+			winform =  _forms[hwnd]; 
+		} 
+		
+		return winform
+	}; 
+ 	
+ 	/*默认消息处理函数defaultProc{{*/
+    _defaultProc = { 
+       [ 0x113/*_WM_TIMER*/ ] = function(this,hwnd, message, wParam, lParam){
+       		var proc = this._tTimeProc[wParam];
+       		if( proc ){
+       			var ret = proc(hwnd,message,wParam,this._tTimeTicks[wParam] ) 
+       			if( (ret !== null) && ( ret!== true ) ){  
+       				var tick = tonumber(ret)  
+       				if( !tick ){ 
+       					this.killtimer(wParam)//移除此定时器
+       				}
+       				else { 
+						this.settimer(wParam,tick)//重新设定时间间隔
+       				}
+       			}
+       		}
+       }
+       [ 0x4A/*_WM_COPYDATA*/ ] = function( this,hwnd,message,wParam,lParam ){
+        	if(lParam && this.onCopyData ){
+        		lParam = topointer(lParam);
+            	var data = ..raw.convert(lParam,{ADDR dwData;INT cbData;pointer lpData});
+            	var s,n = data.lpData,data.dwData;
+            	if( s ){
+                	s = ..raw.tostring(s,1,data.cbData);
+                	if( n == 0xffffffff && s[1] == '{'# ){
+                		s = eval( s );
+                	}
+            	}
+            	return this.onCopyData( s,n );
+        	}
+       }
+       [0x4CC/*_WM_THREAD_COMMAND*/] = function( this,hwnd,message,wParam,lParam ){
+       		if( this.__onThreadCommand )  return  this.__onThreadCommand(wParam); 
+       }
+ 	   [0x14/*_WM_ERASEBKGND*/] = function(this,hwnd, message, wParam, lParam){
+ 	   		 
+ 	   		if( this.onEraseBkgnd !== null ){
+ 	   			var ret = this.onEraseBkgnd(hwnd, message, wParam, lParam);
+ 	   			if( ret !== null ) return ret;
+ 	   		};
+ 	   		
+			var bgcolor = this[["bgcolor"]]
+			var background = this[[ "(background)" ]] 
+			if( !( ( bgcolor !== null ) || background) ){
+				return;
+			}
+			
+			var hdc = topointer(wParam);
+			var rc = this[["cachClientRect"]]; //获取新的窗口区域    
+			if(! rc ){ 
+				rc = this.getClientRect();
+				this[["cachClientRect"]] = rc;
+			}
+			
+			var erase;
+			if( type(bgcolor) == type.number && ( bgcolor != -1 ) ){ //有可能为0 - 黑色,因为0为false,因此改用类型判断
+				var bgbrush = ::CreateSolidBrush( bgcolor  );
+				var oldbrush   =   ::SelectObject(hdc,bgbrush ); 
+				::PatBlt(hdc,0,0,rc.right - rc.left   ,rc.bottom - rc.top,0xF00021/*_PATCOPY*/);   
+				::SelectObject(hdc,oldbrush); 
+				::DeleteObject(bgbrush); 
+				erase = 1;
+			}
+     			 
+			if( background ){ 
+				if( !erase ){
+					this._defWindowProc(hwnd, message, wParam, lParam);
+				}  
+				var hdcMem   =   ::CreateCompatibleDC(hdc);     
+				var hBitmapStartScanBAK   =   ::SelectObject(hdcMem,background );   
+				::BitBlt(hdc,0,0,rc.right - rc.left   ,rc.bottom - rc.top,hdcMem,0,0, 0xCC0020/*_SRCCOPY*/);   
+				::SelectObject(hdcMem,hBitmapStartScanBAK);   
+				::DeleteDC(hdcMem);  
+				erase = 1; 
+			}
+			
+			//An application should return nonzero if it erases the background; 
+			//otherwise, it should return zero.
+			if( erase )  
+				return 1;
+ 	   }; 
+ 	   [0x5/*_WM_SIZE*/] = function(this,hwnd, message, wParam, lParam){
+			if( hwnd == this.hwnd){ //主窗口 
+			
+				if( ..win.isIconic(hwnd) )
+				   	return;
+				
+				var defDlg = this._defClientRect;
+				if(!defDlg) return;
+				
+				var dlg = this.getClientRect();
+				this.cachClientRect = dlg; 
+				
+				//计算变化的比例
+				var xRate = (dlg.right-dlg.left)/(defDlg.right-defDlg.left);
+				var yRate = (dlg.bottom-dlg.top)/(defDlg.bottom-defDlg.top); 
+				
+   				var defCtrl; 
+   				var l,t,r,b,w,h; //控件左,上,右,下,宽高
+   				
+   				for(hwnd,ctrl in this._ctrlAutoResize ){
+   					var parent = dlg;
+   					var defParent = defDlg;;
+   					
+   					defCtrl = ctrl._defRect;
+   					w = defCtrl.right-defCtrl.left;
+			    	h = defCtrl.bottom -defCtrl.top;
+			    	   
+   					if( ctrl[["dl"]] )
+						l = defCtrl.left;
+					else
+						l = defCtrl.left * xRate ;
+					
+					if( ctrl[["dt"]] )
+						t = defCtrl.top ;
+					else
+						t = defCtrl.top * yRate ;
+					
+					if( ctrl[["dr"]] ) {
+						if( ctrl.parent != this ){
+							 parent = ctrl.parent.getClientRect()
+							 defParent = ctrl.parent._defClientRect
+						} 
+						r = parent.right - ( defParent.right - defCtrl.right) ;
+							
+						if( ctrl[["aw"]] == false ) && ( ctrl[["dl"]] == false )
+							l = r  - w;
+					}
+					else {
+						if( ctrl[["aw"]] )
+							r = defCtrl.right * xRate ;
+						else
+							r = l+w; 
+					}
+		
+					if( ctrl[["db"]] ) 	{
+						if( (ctrl.parent != this) && ( !ctrl[["dr"]] ) ){
+							 parent = ctrl.parent.getClientRect()
+							 defParent = ctrl.parent._defClientRect
+						}
+							
+						b = parent.bottom - ( defParent.bottom - defCtrl.bottom ) ;
+						if( ( ctrl[["ah"]] == false ) && ( ctrl[["dt"]] == false ) )
+							t  = b  - h ;
+					}
+					else{
+						if( ctrl[["ah"]] )
+							b = defCtrl.bottom * yRate ;
+						else
+							b = t + h;
+					}  
+					::MoveWindow( ctrl.hwnd ,l,t, r - l, b - t  ,0);
+					
+					
+   				}
+   				
+   				for(hwnd,ctrl in this._ctrlAutoResize ){
+   					if( ctrl._adjust ){ 
+						ctrl._adjust( r - l, b - t);
+					} 
+					if( ctrl.adjust__ ){ 
+						ctrl.adjust__( r - l, b - t);
+					} 
+   				}
+   				if( this.toolbar[["adjust"]] )
+   					this.toolbar.adjust();
+   				if( this.statusbar[["adjust"]] )
+   					this.statusbar.adjust();
+   						
+   				this.redraw();  
+   				
+   				if( this._adjust ){  
+   					this._adjust( dlg.right-dlg.left,dlg.bottom-dlg.top,wParam);
+   				} 
+   				if( this.adjust__ ){  
+   					this.adjust__( dlg.right-dlg.left,dlg.bottom-dlg.top,wParam);
+   				} 
+   			}
+ 	   }; 
+ 	   [0x111/*_WM_COMMAND*/] = function(this,hwnd, message, wParam, lParam){
+			var id    = ::LOWORD(wParam);
+			var wmEvent = ::HIWORD(wParam); 
+			var proc;
+			if( lParam ){ 
+				var ctrl = this._ctrlId[id];
+				if( ctrl[["oncommand"]] ) {
+					ctrl.oncommand(id,wmEvent);
+					return;
+				}
+			}
+			
+			proc = this._mapCommandProc[id]	
+			if(type(proc)==type.function)
+				proc(id,wmEvent);    
+ 	   }; 
+ 	   [0x10/*_WM_CLOSE*/] = function(this,hwnd, message, wParam, lParam){
+ 	        if( type(this.onClose) == type.function )
+ 	        	return this.onClose(hwnd, message, wParam, lParam)
+ 	   };
+ 	   [0x110/*_WM_INITDIALOG*/] = function(this,hwnd, message, wParam, lParam){
+ 	        if( type(this.onInitDialog) == type.function )
+ 	        	return this.onInitDialog(hwnd, message, wParam, lParam)
+ 	   };  
+ 	   [0x004E /*_WM_NOTIFY*/] = function(this,hwnd, message, wParam, lParam){
+			if(lParam){ 
+				var id = wParam;
+				var ctrl = this._ctrlId[id];
+				if(ctrl){
+					var pre,notify = ctrl._prenotify,ctrl.onnotify; 
+					if( notify || pre ){ 
+						var ptr = topointer(lParam); 
+						var nmdr = ..raw.convert(ptr,ui_nmhdr() );
+						var code = nmdr.code;
+						var ret;
+						if( pre ) 
+							ret = ctrl._prenotify( id,code,ptr,nmdr )
+						
+						if( notify && ( ret === null) ) 
+							ret = ctrl.onnotify(id,code,ptr,nmdr ) 
+						
+						if(ret!==null)
+							return ret;
+					} 
+				}  
+			}
+ 	   } 
+ 	   [0x115/*_WM_VSCROLL*/] = function(this,hwnd, message, wParam, lParam){
+ 	       if( lParam ){
+ 	           var ctrl = this._ctrlHwnd[lParam];
+ 	           if( ctrl[["oncommand"]] ){
+ 	                ctrl.oncommand( ctrl.id,::LOWORD (wParam),::HIWORD(wParam) )
+ 	           } 
+ 	       }
+ 	   } 
+ 	   [0x312/*_WM_HOTKEY*/] = function(this,hwnd, message, wParam, lParam){
+			var id = wParam; //这个是注册的时候设定的ID 
+				
+			if( this[["_hotkeys"]] && ( type( this[["_hotkeys"]][id] ) == type.function )  ){
+			this[["_hotkeys"]][id] (id,::LOWORD(lParam),::HIWORD(lParam) )
+			}
+ 	   }
+ 	   [0x2/*_WM_DESTROY*/] = function(this,hwnd, message, wParam, lParam){
+ 	   		if(this._hasBeenDestroyed){ 
+ 	   			return;
+ 	   		}
+ 	   		this._hasBeenDestroyed = true;
+ 	   		
+			var tm = this[["_tTimeProc"]]  
+			for(id,v in tm){
+				KillTimer(this.hwnd,id); 
+				this[["_tTimeProc"]][id] = null;
+				this[["_tTimeTicks"]][id] = null;  
+			} 
+			
+			//遍历控件 
+			for(hwnd,ctrl in this._ctrlHwnd){ 
+				if(  ! ctrl.isForm ){ 
+					ctrl._closed = true;//控件窗口不考虑阻止 WM_CLOSE
+					if( ctrl._onDestroy ){ 
+						ctrl._onDestroy ();
+					}
+					if( ctrl.onDestroy){
+						ctrl.onDestroy ();
+						ctrl.onDestroy = null;
+					}
+					if( ctrl[["bgBrush"]] ){ //删除GDI对象
+						::DeleteObject( ctrl[["bgBrush"]]  );
+					} 
+				}
+			}
+
+			if( this._onDestroy ){ 
+				this._onDestroy ();
+			}
+			if( this.onDestroy){
+				this.onDestroy ();
+				this.onDestroy  = null;
+			}
+
+			if( this[["_atomId"]] ){ 
+				this.atom(false);//释放实例占用原子
+			} 
+			this[["(__continueModal)"]] = null;//退出模态循环 
+			
+			_forms[hwnd] = null;  
+			if( ..win.getStyle(hwnd,0x80/*_DS_MODALFRAME*/) ){
+				return;
+			}	
+			for(k,f in _forms){
+				 if( ! f._messageOnly )
+				 	return; 
+			}
+			for(k,f in _forms){
+				::SendMessage(f.hwnd,0x2/*_WM_DESTROY*/); 
+			}
+			..win.quitMessage();
+ 	   } 
+  	   [0x138/*_WM_CTLCOLORSTATIC*/ ]  = function(this,hwnd, message, wParam, lParam){
+			var ctrl = this._ctrlHwnd[ lParam ];
+			var hdc = topointer(wParam)
+			if( ctrl  ){
+				if( type(ctrl.color)==type.number )
+					    ::SetTextColor(hdc,ctrl.color ) ;
+					    
+				if(ctrl.transparent) {
+					::SetBkMode(hdc,1);  
+					return tonumber(  ::GetStockObject(5) );//NULL_BRUSH
+				}
+				else if( ctrl.bgBrush ){
+					::SetBkColor(hdc,ctrl[["(bgcolor)"]] )  ;
+					return ctrl.bgBrush;
+				}
+			}
+ 	   }
+ 	   [0x24/*_WM_GETMINMAXINFO*/ ]  = function(this,hwnd, message, wParam, lParam){
+ 	   		if( this.onGetMinMaxInfo )
+ 	   			return this.onGetMinMaxInfo(hwnd, message, wParam, lParam);
+ 	   }
+ 	   [0x1C/*_WM_ACTIVATEAPP*/] = function(this,hwnd, message, wParam, lParam){
+ 	   		if( (!wParam) && this.restoreFullScreen && ( !..win.getStyleEx(this.hwnd,0x80000/*_WS_EX_LAYERED*/) ) ) 
+ 	   			this.fullscreen( false );
+ 	   } 
+ 	   [ 0x2C/*_WM_MEASUREITEM*/ ]  = function(this,hwnd, message, wParam, lParam){
+ 	        lParam =  topointer(lParam)
+            var item = ::MEASUREITEMSTRUCT();  
+            ..raw.convert(lParam,item);  
+            
+            var ctrl; 
+            if( item.CtlID ){
+           		ctrl = this._ctrlId[ item.CtlID ];
+           	}
+            elseif( item.CtlType == 0x1/*_ODT_MENU*/ && ..win.ui.menu) {
+            	ctrl = ..win.ui.menu; 
+            }
+            
+			if( ctrl ? ctrl.onMeasureItem ) {
+				var ret = ctrl.onMeasureItem(item);
+				::CopyMemoryByStruct(lParam,item,24/* raw.sizeof(item)*/);
+				
+				if( ret !== null ){ 
+					return ret;
+				};
+			} 
+        }
+        [ 0x2B/*_WM_DRAWITEM*/ ]  = function(this,hwnd, message, wParam, lParam){
+            var item = ::DRAWITEMSTRUCT();
+            ..raw.convert(topointer(lParam), item);
+
+            var ctrl;
+            if( item.CtlID ){
+           		ctrl = this._ctrlId[ item.CtlID ];
+           	}
+            elseif( item.CtlType == 0x1/*_ODT_MENU*/ && ..win.ui.menu) { 
+            	ctrl = ..win.ui.menu; 
+            }
+            
+			if( ctrl ? ctrl.onDrawItem ) {
+				var ret = ctrl.onDrawItem(item); 
+				if( ret !== null ){ 
+					return ret;
+				};
+			} 
+        }
+ 	}
+ 	var defaultProc = _defaultProc;
+ 	var onCtlColor = defaultProc[0x138/*_WM_CTLCOLORSTATIC*/ ];
+ 	defaultProc[0x133/*_WM_CTLCOLOREDIT*/] = onCtlColor;
+ 	defaultProc[0x135/*_WM_CTLCOLORBTN*/] = onCtlColor;
+ 	defaultProc[0x134/*_WM_CTLCOLORLISTBOX*/] = onCtlColor;  
+ 	defaultProc[0x114/*_WM_HSCROLL*/] = defaultProc[0x115/*_WM_VSCROLL*/] 
+  	/*}}*/
+  	 
+	loadForm = function(code,parent,...){
+		var loopMessage = ..win.loopMessage;
+		..win.loopMessage = ..win.hookMessage;
+		
+		var f,err = loadcode(code) ;
+		if(f){
+			var ret,wb = f(parent,...);
+			..win.loopMessage  = loopMessage;
+			return ret,wb;
+		}
+		else {
+			..win.loopMessage  = loopMessage;
+			error( ..string.concat("载入窗体错误:",err),2);
+		}   
+	};
+	 
+	_metaProperty = ..win.ui.ctrl.metaProperty( 
+			 
+			loadForm = function(path){
+				return ..win.form.loadForm(path,owner /*指定父窗口*/ );
+			};  
+			
+			loadcode = function(path){
+				return owner.loadForm(path)
+			};
+			  
+			getCtrlById = function(id){
+				return owner._ctrlId[id]
+			};
+			
+			getCtrl = function(hwnd){
+				var cs = owner._ctrlHwnd;
+				var c = cs[hwnd]
+				while(!c){
+					hwnd = ..win.getParent(hwnd);
+					if(!hwnd) 
+						return null; 
+						
+					c =  cs[hwnd]; 
+				} 
+				return c;
+			};
+			
+			_getFreeCommandId = function(){ 
+   				var id = owner._mapCommandProc.freeId;
+   				owner._mapCommandProc.freeId++;
+   				return id;
+   			};
+   			
+   			registCommand = function(proc){
+   				var id = owner._getFreeCommandId();
+   				owner._mapCommandProc[id] = proc;
+   				return id;
+   			}; 
+   			 
+			//覆盖父类 ..win.ui.ctrl.metaProperty.commonProperty的redraw成员
+			redraw = function(){
+				//重绘窗口
+				if(owner[["menu"]])owner[["menu"]].redraw();
+				
+    			var rc = ::RECT();
+    			::GetClientRect(owner[["hwnd"]],rc); 
+    			::InvalidateRect(owner[["hwnd"]],rc,1);
+    			::UpdateWindow(owner[["hwnd"]]); 
+			};
+			doModal = function(hwndparent){ 
+			
+				if(!hwndparent){
+					hwndparent = ..win.GetWindow(owner.hwnd,0x4/*_GW_OWNER*/); 
+				}
+				else if(type(hwndparent)==type.table){
+				   hwndparent = hwndparent.hwnd;//winform.hwnd   
+				}
+				
+				if(hwndparent && (hwndparent!=owner[["hwnd"]]) ){ 
+					..win.enable(hwndparent,0x0/*_FALSE*/);
+				} 
+				
+				owner.modifyStyle(0,0x80/*_DS_MODALFRAME*/)
+				owner[["(__continueModal)"]] = true; 
+				owner.show(true);  
+				 
+				::SendMessageInt(owner[["hwnd"]],0x110/*_WM_INITDIALOG*/,0,0);
+				while(owner[["(__continueModal)"]])   
+					..win.pumpMessage(); 
+				
+				if( hwndparent ) ..win.setActive(hwndparent) 	
+				owner.close(); ..win.delay(200) 
+				if( hwndparent ) {
+				    ..win.enable(hwndparent,1/*_TRUE*/);
+				    ..win.setActive(hwndparent)    
+				}  
+				
+				return owner[["dialogResult"]];
+			};
+			endModal = function(result){
+				owner[["dialogResult"]] = result;
+				owner[["(__continueModal)"]] = null; 
+				
+			}; 
+			continueModal = {
+				_get = function(){
+					return owner[["(__continueModal)"]];
+				} 
+			};
+			msgbox = function(str,title = "AAuto" ,style){
+				return ..win.msgbox(str,title,style,owner[["hwnd"]] )
+			};
+			msgboxTest = function(str,title){
+				return ..win.msgboxTest(str,title,owner[["hwnd"]]  )
+			}; 
+			msgboxErr = function(str,title){
+				return ..win.msgboxErr(str,title,owner[["hwnd"]]  )
+			} ;
+			transparent = function( alpha,clr ){
+				if( alpha === false ){
+					owner.modifyStyleEx(0x80000/*_WS_EX_LAYERED*/)
+					return;
+				}
+	    		owner.modifyStyleEx(0,0x80000/*_WS_EX_LAYERED*/)
+	    		if( alpha === true )
+	    			return;
+	    			
+	    		if( clr!==null || alpha !==null )
+					SetLayeredWindowAttributes( owner[["hwnd"]],clr:0, alpha:0,clr!==null?1:2)
+			}
+			image = {
+				_get = function(){ 
+					return owner[["(background)"]];
+				}
+				_set = function( v ){ 	
+					if(type(v) == type.string ){  
+			    		var pic = ..com.picture.load(v)
+                		v =  topointer(pic.CopyHandle());
+                		..com.Release(pic); 
+                	}
+                	owner.setImage(v); 
+				} 	
+			};  
+			setImage = function(h,delPrev=true){
+				var retPrev = owner[["(background)"]] ;
+				if( retPrev ){
+					if(delPrev){
+						::DeleteObject(  owner[["(background)"]]  )
+			    		owner[["(background)"]] = null;
+			    		retPrev = true;//return true;
+			    	}
+			    }
+				 
+			    if(type(h) == type.pointer){
+			    	if( ! owner[["bgcolor"]] )
+			    		owner[["bgcolor"]] = ::GetSysColor(0xF/*_COLOR_BTNFACE*/);
+                	owner[["(background)"]] = h 
+                	return retPrev;
+                }
+			};
+			addtimer = function(elapse,func){ 
+				var freeId = ..table.pop( owner._tTimeTicks.freeId,1) ;
+				if(!freeId){ 
+					freeId = owner._tTimeTicks.allocId;
+					owner._tTimeTicks.allocId++;
+				}
+		 		
+				owner[["_tTimeProc"]][freeId] = func; 
+				owner[["_tTimeTicks"]][freeId] = elapse;
+				
+				if( SetTimer(owner.hwnd,freeId,elapse) )
+	    			return freeId;
+			};
+			settimer = function(id,elapse,func){ 
+				if( owner[["_tTimeProc"]][id] ){
+					SetTimer(owner.hwnd,id,elapse )
+					owner[["_tTimeTicks"]][id] = elapse;
+					if( func ){
+						owner[["_tTimeProc"]][id] =func; 
+					}
+					return true;
+				} 
+			};
+			killtimer = function(id){  
+				if( owner[["_tTimeProc"]][id] ){ 
+	    			KillTimer(owner.hwnd,id);
+	    			owner[["_tTimeProc"]][id] = null;
+	    			owner[["_tTimeTicks"]][id] = null;
+	    			..table.push(owner._tTimeTicks.freeId,id);
+	    			return true;
+	    		}
+			};
+			setTimeout = function(code,elapse=100,...){
+				if( type(code)==type.string ) {
+					code,err = loadcode(code)
+					if(!code)error(err,2)
+				}
+				var args = {...}
+				var this = owner;	
+				return owner.addtimer ( elapse,
+					function(hwnd,msg,id){
+						this.killtimer(id)
+						code( ..table.unpack(args) ); 
+					} 
+				) 
+			};
+			reghotkey  = function( func , mod,vk ){ 
+		 		if(! owner[["_hotkeys"]] ) owner[["_hotkeys"]] = {};
+		 		var id = ..table.push( owner[["_hotkeys"]] ,func); //保存回调函数
+		 		if( RegisterHotKey(owner.hwnd,id,mod,vk) )
+	     			return id;
+	     			
+	     		..table.pop(owner[["_hotkeys"]],1)
+			}; 
+			unreghotkey  = function(idEvent){ 
+	     		UnregisterHotKey(owner.hwnd,idEvent);
+	     		..table.remove( owner[["_hotkeys"]],idEvent);
+			}; 
+			//无边框窗体支持
+			hitCaption = function () { 
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::PostMessage( owner.hwnd, 0xA1/*_WM_NCLBUTTONDOWN*/ , 0x2/*_HTCAPTION*/, 0 ); 
+			};
+			hitTopleft = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF004/*_SC_SIZE | _WMSZ_TOPLEFT*/,0xD/*_HTTOPLEFT*/)
+			};
+			hitTop  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF003 ,0xC/*_HTTOP*/)
+			};
+			hitTopright  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF005,0xE/*_HTTOPRIGHT*/)
+			};
+			hitLeft  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF001,0xA/*_HTLEFT*/)
+			};
+			hitRight  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF002,0xB/*_HTRIGHT*/)
+			};
+			hitBottomleft = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF007,0x10/*_HTBOTTOMLEFT*/)
+			};
+			hitBottom  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF006,0xF/*_HTBOTTOM*/)
+			};
+			hitBottomright  = function () {
+				if(  ..win.isZoomed(owner.hwnd) ) return; 
+				::SendMessageInt( owner.hwnd, 0x112/*_WM_SYSCOMMAND*/, 0xF008,0x11/*_HTBOTTOMRIGHT*/)
+			};
+			hitmin  = function () {
+				::PostMessage(owner.hwnd, 0x112/*_WM_SYSCOMMAND*/,0xF020/*_SC_MINIMIZE*/, 0);  
+			}; 
+			hitmax = function(){
+				var zoomed = ..win.isZoomed(owner.hwnd);
+				if(zoomed)
+					::PostMessage(owner.hwnd, 0x112/*_WM_SYSCOMMAND*/,0xF120/*_SC_RESTORE*/, 0);  
+				else
+					::PostMessage(owner.hwnd, 0x112/*_WM_SYSCOMMAND*/,0xF030/*_SC_MAXIMIZE*/,0);
+				return !zoomed;
+			}; 
+			cmdTranslate = function(hwnd,message,wParam,lParam){
+				if( message == 0x111/*_WM_COMMAND*/ ){
+					defaultProc[0x111/*_WM_COMMAND*/](owner,hwnd,message,wParam,lParam);
+				}
+			};
+			eachControl = function(cls){ 
+				var next; 
+				var this = owner;
+				next = function(name){
+					var k,v = ..table.next(this,name);
+					if( (v===null) || ( v[["hwnd"]] && (!cls || cls == v.cls) ) ){ 
+						return k,v;
+					}
+					
+					return next(k);
+				} 
+				return next;
+			}; 
+			bindConfig = function(cfgFile,mapClass){
+				if( type(cfgFile.save) != "function" )error("无效配置文件",2);
+				if( !mapClass )
+					cfgFile.beforeSave = null;
+					
+				var winform = owner;
+				for(name,ctrl in winform.eachControl() ){
+					var valName = mapClass[ctrl.cls] : mapClass[name]
+					if( valName ? (cfgFile[name]!==null) ){
+						ctrl[valName] = cfgFile[name]
+					}
+				};
+				
+				cfgFile.beforeSave = function(){
+					if( winform._hasBeenDestroyed ){return;}
+					
+					for(name,ctrl in winform.eachControl() ){
+						var valName = mapClass[ctrl.cls] : mapClass[name]
+						if( valName ){
+							cfgFile[name] = ctrl[valName];
+						} 
+					}
+				};
+				winform.onClose = function(){
+					cfgFile.beforeSave();
+				}; 
+			};
+			valid = {
+      			_get = function(){
+      				return( ..win.isWindow( owner.hwnd ) )
+      			} 
+      		};
+      		fullscreen = function(fs){
+      			var hwnd = owner.hwnd;
+      			if( fs === null ) fs = !owner.restoreFullScreen;
+      			if( fs ){
+      				var restoreFullScreen = {
+      					style = ..win.getStyle(hwnd, 0x40C40000/*_WS_CAPTION | _WS_BORDER | _WS_DLGFRAME | _WS_CHILD | _WS_SIZEBOX*/ );
+						rc = owner.getRect();
+						parent = ..win.getParent(hwnd); 
+						top = ..win.getStyleEx(0x8/*_WS_EX_TOPMOST*/); 
+						hwnd = hwnd;
+					}
+					..win.setParent( hwnd,..win.getDesktop() )  
+					owner.modifyStyle( restoreFullScreen.style ) 
+					..win.setTopmost( hwnd )  
+					
+					var rcWnd = ::RECT();
+					rcWnd.right,rcWnd.bottom = ..win.getScreen(); 
+					..win.setRect(hwnd,rcWnd);
+					
+					owner.restoreFullScreen = restoreFullScreen;
+      			}
+      			else {
+      				if( owner.restoreFullScreen ){
+      					with( owner.restoreFullScreen ){
+      						..win.setParent( hwnd, parent );
+							owner.modifyStyle(,style)  
+							..win.setRect(hwnd,rc)   
+							if( !top ){
+								owner.modifyStyleEx( 0x8/*_WS_EX_TOPMOST*/ )
+							}
+						}
+						owner.restoreFullScreen = null;
+      				}
+      			}
+      			return owner.restoreFullScreen;;
+      		};
+      		remove = function(name){
+      			var ctrl = owner[name];
+      			if( ctrl ? ctrl.hwnd ? ctrl.close ){
+      				ctrl.close();
+      			}
+      			owner[name] = null;
+      		};
+			add = function( tParam,parentCtrl ) {
+        		var zorder = {}
+        		for name,opt in  tParam{
+            		for(i=1;#zorder;1){
+                 		if( zorder[i][2].z > opt.z ) { 
+                     		..table.insert( zorder,{name;opt} , i) 
+                     		continue 2;
+                 		}
+            		} 
+            		..table.push( zorder,{name;opt} ); 
+        		}
+ 		
+ 				var ctrl; 
+ 				var parent = parentCtrl : owner;
+ 	 			
+ 	 			var result = {};
+				for(i=1;#zorder ){  
+		    		var name = zorder[i][1];
+		    		var opt = zorder[i][2];    
+		       		
+			 		//创建控件
+					if(!opt.id) //允许显示指定控件ID
+						opt.id = #owner._ctrlId + 1;
+						
+					opt[["parent"]] = parent;
+					opt.hInstance = owner.hInstance;
+					ctrl = ctrl_factory.create(opt);
+					if(!ctrl)continue ;
+					
+					if( type(name) == type.string ){
+						var conflict = parent[name];
+						if( conflict[["hwnd"]] ){
+							if( ( ! conflict._closed ) && conflict.close ){
+								conflict.close();
+							}
+						}
+						parent[name] = ctrl;
+					} 
+					result[name] = ctrl;
+					
+					owner._ctrlId[opt.id] = ctrl;
+		    		ctrl[["id"]] =  opt.id; 
+		    		ctrl[["parent"]] = parent;
+					ctrl[["_parentForm"]] = owner;
+	         		 
+	        		if(	!ctrl.hwnd ){
+	        			//如果不是自定义控件
+						ctrl.hwnd = ::CreateWindowEx (opt.exstyle, opt.cls , opt.text ,  opt.style  ,opt.left,opt.top,opt.right - opt.left , opt.bottom - opt.top,
+								  				parent.hwnd ,  opt.id ,  opt.hInstance   ) 
+						
+					} 
+					else {
+						..win.setPos(ctrl.hwnd,opt.left,opt.top,opt.right - opt.left , opt.bottom - opt.top,0x1/*_HWND_BOTTOM*/);
+					}  
+	
+					owner._ctrlHwnd[ctrl.hwnd] = ctrl   	
+					if( (opt.autoResize === null) || (opt.autoResize)  )
+						owner._ctrlAutoResize[ctrl.hwnd] = ctrl; 
+					
+					ctrl_factory.onCreateComplete(ctrl);
+				} 
+				
+				return result;//返回创建的把有控件对象
+    		}; 
+	)
+}
+
+/**intellisense()
+!nmhdl.hwndFrom = 发送消息的控件句柄
+!nmhdl.idFrom = 发送消息的控件ID
+!nmhdl.code = 通知代码
+win.ui.NMHDR() = 通知消息结构体\n!nmhdl.
+win.form = 在标准库 win.ui 中定义的窗口类,\n该名字空间声明了少量WINAPI
+win.form.getForm(__/*控件或窗口句柄*/) = 返回指向或包含句柄指向窗口的form对象 
+win.form._defaultProc  = @._defaultProc[__/*消息ID*/]  = function(this,hwnd, message, wParam, lParam){\n	\n}
+end intellisense**/ 

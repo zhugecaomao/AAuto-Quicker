@@ -1,0 +1,18 @@
+//控制台扩展库
+
+//console库可根据需要自动打开控制台，
+//在退出程序时可根据需要自动显示按任意键关闭控制台
+import console
+
+str = "字符串"
+num = 123;
+arr ={1;2;3}
+
+//输出变量类型和值,自动展开table对象
+console.varDump(str,num,arr)
+
+//将控制台窗口的文本再读到字符串中
+str = console.readOutputCharacter()
+
+console.log( "--------------------------" )
+console.log( str )

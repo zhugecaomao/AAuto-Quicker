@@ -1,0 +1,47 @@
+//admin 管理权限
+import process;
+import win.version;
+namespace process.admin;
+	
+::Advapi32 := ..raw.loadDll("Advapi32.dll")
+OpenProcessToken = ::Advapi32.api( "OpenProcessToken", "pointer(POINTER ProcessHandle,INT DesiredAccess,pointer &TokenHandle)");
+GetTokenInformation = ::Advapi32.api( "GetTokenInformation", "int(POINTER TokenHandle,int infoClass,struct &TokenInfo,INT len,INT &retLen)");
+ 
+isRunAs = function(hProcess) { 
+	if(!hProcess){
+		hProcess = ..process.getHandle();
+	}
+	var bIsElevated = false;
+	if ( ..win.version.majorVersion < 6  )
+		return false,..win.version.majorVersion;
+
+	var ok,hToken = OpenProcessToken(hProcess,0x0008/*_TOKEN_QUERY*/);
+	if ( hToken ) { 
+		var ok,te，retLength = GetTokenInformation(hToken,20/*TokenElevation*/,{ INT TokenIsElevated },4,0)
+		if (ok && retLength == 4) { 
+				bIsElevated = !!te.TokenIsElevated;
+		}
+		..raw.closehandle( hToken );
+	}
+	return bIsElevated;
+} 
+
+runas = function(file, parameters="",showCmd=5,workdir,hwnd=0,wait,waitTimeout=0xFFFFFFFF){ 
+	if( !file ) file = ..io._exepath;
+	return ..process.execute( file, parameters,"runas",showCmd,workdir,hwnd,wait,waitTimeout)
+}
+
+runas_wait = function( file, parameters="",showCmd,workdir="",hwnd=0){
+	runas(file,parameters,operation,showCmd,workdir,hwnd,"close")
+}
+
+runas_waitInput = function( file, parameters="",showCmd,workdir="",hwnd=0){
+	runas(file,parameters,operation,showCmd,workdir,hwnd,"input")
+}
+
+/**intellisense(process.admin)
+isRunAs(.(进程句柄) = 判断进程是否以管理权限运行,\n成功返回true,XP返回flase,以及majorVersion版本号,\n参数可选,默认为当前句柄 
+runas(.("__", parameters="",showCmd,workdir=",hwnd=0,wait="input") = 运行exe应用程序,\n不指定路径则默认运行启动当前进程的EXE文件 
+runas_wait(.("__", parameters="",showCmd,workdir=",hwnd=0) = 运行exe应用程序\n并等待应用程序关闭。
+runas_waitInput(.("__", parameters="",showCmd,workdir=",hwnd=0) = 运行exe应用程序\n并等待进程初始化完成并接受输入。
+end intellisense**/

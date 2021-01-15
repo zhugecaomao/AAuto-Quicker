@@ -1,0 +1,8 @@
+io.open();//打开控制台
+io.print("请输入一行文本，然后回车")
+var str = io.getText();
+
+io.print("您输入的是" ,str );
+ 
+execute("pause") //按任意键继续
+io.close();//关闭控制台

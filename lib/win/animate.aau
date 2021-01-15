@@ -1,0 +1,66 @@
+//animate 动画窗口 
+//Author wudijushi
+namespace win.animate;
+animateWindow = ::User32.api("AnimateWindow", "bool(INT hwnd,INT time,INT flags)");
+
+var flag = { 
+	show={ 393221;393222;393225;393226;393217;393218;393220;393224;393232;655365;655366;
+	655369;655370;655361;655362;655364;655368;655376 };
+	hide={ 327685;327686;327689;327690;327681;327682;327684;327688;327696;589829;589830;
+	589833;589834;589825;589826;589828;589832;589840 }
+}
+        
+..math.randomize( ..time.tick() );
+animate = function( flagTable,hwnd,flag,tick=200){
+	hwnd = hwnd[["hwnd"]] : hwnd;
+    if( hwnd ){
+        flag := ..math.random(-18,-1);
+        if(flag<0){
+            flag = flagTable[ ..math.abs(flag) ]
+        } 
+        return animateWindow( hwnd, tick, flag );
+    }
+}
+
+hide = function( ... ){
+    return animate( flag.hide,...)
+}
+
+show = function( ... ){
+    return animate( flag.show,...)
+}
+
+/*intellisense(win.animate)
+show(.(窗口句柄,动画效果,动画时间 ) = 动画效果与动画时间为可选参数,\n效果可以 _AW_ 前缀常量组合自定义,\n如果不指定将随机选择效果
+hide(.(窗口句柄,动画效果,动画时间 ) =动画效果与动画时间为可选参数,\n效果可以 _AW_ 前缀常量组合自定义,\n如果不指定将随机选择效果
+end intellisense*/
+
+/**intellisense()
+_AW_SLIDE_LT=@-1/*_AW_SLIDE_LT*/
+_AW_SLIDE_RT=@-2/*_AW_SLIDE_RT*/
+_AW_SLIDE_LB=@-3/*_AW_SLIDE_LB*/
+_AW_SLIDE_RB=@-4/*_AW_SLIDE_RB*/
+_AW_SLIDE_LEFT=@-5/*_AW_SLIDE_LEFT*/
+_AW_SLIDE_RIGHT=@-6/*_AW_SLIDE_RIGHT*/
+_AW_SLIDE_TOP=@-7/*_AW_SLIDE_TOP*/
+_AW_SLIDE_BOTTOM=@-8/*_AW_SLIDE_BOTTOM*/
+_AW_SLIDE_CENTER=@-9/*_AW_SLIDE_CENTER*/
+_AW_FADE_LT=@-10/*_AW_FADE_LT*/
+_AW_FADE_RT=@-11/*_AW_FADE_RT*/
+_AW_FADE_LB=@-12/*_AW_FADE_LB*/
+_AW_FADE_RB=@-13/*_AW_FADE_RB*/
+_AW_FADE_LEFT=@-14/*_AW_FADE_LEFT*/
+_AW_FADE_RIGHT=@-15/*_AW_FADE_RIGHT*/
+_AW_FADE_TOP=@-16/*_AW_FADE_TOP*/
+_AW_FADE_B=@-17/*_AW_FADE_B=*/
+_AW_FADE_CENTER==@-18/*_AW_FADE_CENTER*/  
+_AW_HOR_POSITIVE=@0x1/*_AW_HOR_POSITIVE*/
+_AW_HOR_NEGATIVE=@0x2/*_AW_HOR_NEGATIVE*/
+_AW_VER_POSITIVE=@0x4/*_AW_VER_POSITIVE*/
+_AW_VER_NEGATIVE=@0x8/*_AW_VER_NEGATIVE*/
+_AW_CENTER=@0x10/*_AW_CENTER*/
+_AW_HIDE=@0x10000/*_AW_HIDE*/
+_AW_ACTIVATE=@0x20000/*_AW_ACTIVATE*/
+_AW_SLIDE=@0x40000/*_AW_SLIDE*/
+_AW_BLEND=@0x80000/*_AW_BLEND*/
+end intellisense**/

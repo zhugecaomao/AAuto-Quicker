@@ -1,0 +1,30 @@
+//矩形
+//矩形//打印横5竖8的矩形
+
+/*****************************
+Author ID: weiidoo
+Time	 : March 10, 2010
+*****************************/
+
+
+//打印横5竖8的矩形
+io.open();
+
+for(i=1;5){
+	io.print( "******** ");
+}
+
+io.print('\n');
+
+//打印每次加1个星号,5行
+for(i=1;5){
+    for(i=1;10;1){
+        io.stdout.write( string.format(" "));
+        for(k=1;i) io.stdout.write( string.format("*"));
+    }
+
+	io.stdout.write( string.format('\n'));
+}
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台

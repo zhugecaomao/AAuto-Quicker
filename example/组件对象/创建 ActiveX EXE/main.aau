@@ -1,0 +1,48 @@
+import com.activeX;
+
+namespace AAutoCOM{  
+
+	//AAutoCOM为类型库名称,必须将类型描述文件置于 /res/AAutoCOM.tlb 
+	class Test {
+	
+		AAuto = function( code ){
+			var func = loadcode(code)
+			if( func ){
+				return tostring( ( func() ) )
+			}
+		}
+		
+		Add = function(a,b){
+			..io.print("我是com函数，我收到了参数：",a,b)
+			return a + b
+		} 
+		
+		Quit = function(){
+			//ActiveX EXE 必须提供此函数以退出进程
+			..win.quitMessage(); 
+		}
+	}
+}
+ 
+var activeX = com.activeX("AAutoCOM.Test")
+var result = activeX.main() 
+if( !result ) { 
+	io.open()
+	io.print("请输入参数")
+	io.print("exe路径 /r 注册组件")
+	io.print("exe路径 /u 卸载组件") 
+	io.print("==========================")
+	io.print("AAuto自动注册代码范例:")
+	io.print("import process")
+	io.print("process.execute('/组件/组件名.exe','/r')")
+	io.print("==========================")
+	execute("pause") //按任意键继续
+	io.close();//关闭控制台 
+} 
+elseif( type(result) == type.string ){
+	//注册或卸载控件回显信息
+	io.open()
+	io.print(result) 
+	execute("pause") //按任意键继续
+	io.close();//关闭控制台 
+}

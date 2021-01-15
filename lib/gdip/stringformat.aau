@@ -1,0 +1,52 @@
+//stringformat 文本格式
+namespace gdip ;
+  
+class stringformat { 
+
+	ctor(formatAttributes=0,language=0){ 
+		this.pStringFormat = gdip.assert(  gdip.CreateStringFormat (formatAttributes,language)   )    
+		 
+		
+		if(!this.pStringFormat)
+			error("参数错误",2)
+	
+	}
+
+	@_metaProperty//元表指向属性表
+}
+
+namespace stringformat{
+
+	gdip = ..gdip;
+	
+	import util.metaProperty;//导入属性表支持库
+	_metaProperty = util.metaProperty(
+	
+	 	align = {
+			_get = function(){ 
+				return gdip.assert(  gdip.GetStringFormatAlign(owner[["pStringFormat"]], 0) ); 
+			} 
+			_set = function(v){ 
+				gdip.assert( gdip.SetStringFormatAlign(owner[["pStringFormat"]], v) );
+			}  	
+		}; 
+	 	
+		delete = function(){
+			gdip.DeleteStringFormat(owner[["pStringFormat"]])
+			owner[["pStringFormat"]] = null;//让破他的函数都用不了
+		}
+		
+		//自动转换为API指针
+		_topointer = function(){
+			return owner[["pStringFormat"]];
+		}
+	) 
+
+
+}
+ 
+/**intellisense()
+gdip.stringformat(.(formatAttributes,language) = 创建文本格式对象\n参数都是可选参数,默认值为0
+!gdipstringformat.align = @.align = _GdipStringAlignment__ ;
+?gdip.stringformat = !gdipstringformat.
+end intellisense**/

@@ -1,0 +1,44 @@
+//popup µ¯³öÃæ°å
+import web.layout.event;
+namespace web.layout.behavior.popup;
+
+onButtonClick = function (ltTarget,ltEle,reason,behaviorParams) {
+	ltEle.popupHide()
+}
+
+nHyperlinkClick = function (ltTarget,ltEle,reason,behaviorParams) {
+	ltEle.popupHide()	
+}
+
+onMouseDown = function (ltTarget,ltEle,x,y,mouseParams) {
+	return true;
+}
+
+onMouseUp = function (ltTarget,ltEle,x,y,mouseParams) {
+	ltEle.popupHide();
+}
+
+onFocusLost = function (ltTarget,ltEle,focusParams) {
+	if( ltEle.isChild(ltTarget) )
+		ltEle.popupHide();	
+}
+ 
+namespace handled {
+
+	onButtonClick = function (ltTarget,ltEle,reason,behaviorParams) {
+		ltEle.popupHide()
+	}
+	
+	nHyperlinkClick = function (ltTarget,ltEle,reason,behaviorParams) {
+		ltEle.popupHide()	
+	}
+	
+	onMouseUp = function (ltTarget,ltEle,x,y,mouseParams) {
+		ltEle.popupHide();
+	}
+	
+	onFocusLost = function (ltTarget,ltEle,focusParams) {
+		if( ltEle.isChild(ltTarget) )
+			ltEle.popupHide();
+	}
+}

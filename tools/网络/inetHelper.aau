@@ -1,0 +1,156 @@
+//网站提交代码生成向导
+import win.ui; 
+import inet.http
+import inet.whttp;  
+import win.clip;
+/*DSG{{*/
+var winform = ..win.form( bottom=482;parent=...;right=600;left=0;exmode="";top=0;text="AAuto inet 库示例";style=0;frame=1;edge=1 )
+winform.add( 
+editUrl={ dr=1;dl=1;bgcolor=16777215;color=0;right=576;left=131;dt=1;cls="edit";bottom=42;text="http://test.aau.cn/aauto/test/post.php";multiline=1;top=18;acceptfiles=1;tabstop=1;edge=1;z=2 };
+btnCpy={ dr=1;bgcolor=15790320;bottom=218;align="";right=399;left=312;dt=1;top=188;acceptfiles=1;tabstop=1;color=0;text="复制代码";z=17;cls="button" };
+buttonGetTime={ dl=1;bgcolor=15790320;bottom=177;color=0;text="获取更新时间";left=336;dt=1;top=147;acceptfiles=1;z=7;align="";right=442;tabstop=1;cls="button" };
+editProxy={ dr=1;dl=1;bgcolor=16777215;color=0;right=576;left=132;dt=1;cls="edit";bottom=139;multiline=1;top=115;acceptfiles=1;tabstop=1;edge=1;z=8 };
+static3={ dl=1;bgcolor=15790320;color=0;right=125;left=29;dt=1;cls="static";transparent=1;bottom=77;align="right";text="请输入POST数据";top=53;acceptfiles=1;z=9;tabstop=1 };
+groupbox={ dr=1;dl=1;bgcolor=15790320;color=0;right=592;left=2;dt=1;cls="groupbox";transparent=1;bottom=186;text="inet库测试工具";top=2;acceptfiles=1;z=1;edge=1;tabstop=1 };
+editCode={ dr=1;dl=1;bgcolor=16777215;vscroll=1;color=0;right=595;left=5;dt=1;db=1;cls="edit";bottom=476;multiline=1;top=222;acceptfiles=1;tabstop=1;edge=1;z=11 };
+buttonClearCookies={ dl=1;bgcolor=15790320;color=0;right=327;left=240;dt=1;cls="button";tabstop=1;bottom=177;align="";text="清空cookie";top=147;acceptfiles=1;transparent=1;z=3 };
+buttonHttpdown={ dl=1;bgcolor=15790320;bottom=177;color=0;text="下载网页";left=140;dt=1;top=147;acceptfiles=1;z=4;align="";right=227;tabstop=1;cls="button" };
+buttonGetHeader={ dl=1;bgcolor=15790320;bottom=177;color=0;text="获取HTTP头";left=449;dt=1;top=147;acceptfiles=1;z=5;align="";right=548;tabstop=1;cls="button" };
+editAgent={ dr=1;dl=1;bgcolor=16777215;color=0;right=575;left=131;dt=1;cls="edit";bottom=103;multiline=1;top=79;acceptfiles=1;tabstop=1;edge=1;z=15 };
+static={ dl=1;bgcolor=15790320;color=0;right=123;left=11;dt=1;cls="static";transparent=1;bottom=105;align="right";text="自定义User Agent";top=83;acceptfiles=1;z=16;tabstop=1 };
+static2={ dl=1;bgcolor=15790320;color=0;right=125;left=13;dt=1;cls="static";transparent=1;bottom=141;align="right";text="代理服务器";top=119;acceptfiles=1;z=6;tabstop=1 };
+btnTest={ dr=1;bgcolor=15790320;bottom=218;align="";right=498;left=411;dt=1;top=188;acceptfiles=1;tabstop=1;color=0;text="测试运行";z=18;cls="button" };
+radioHttp={ dl=1;bottom=210;right=143;left=47;dt=1;top=197;z=13;text="使用inet.http";cls="radiobutton" };
+buttonPOST={ dl=1;bgcolor=15790320;color=0;right=125;left=38;dt=1;cls="button";tabstop=1;bottom=177;align="";text="POST测试";top=147;acceptfiles=1;transparent=1;z=10 };
+radioWhttp={ dl=1;bottom=210;right=255;left=154;dt=1;top=197;z=14;text="使用inet.whttp";cls="radiobutton" };
+editPostdata={ dr=1;dl=1;bgcolor=16777215;color=0;right=576;left=132;dt=1;cls="edit";bottom=72;text="username=asdlmmh&password=asdlmmh&question=0&answer=&templateid=0&expires=43200 989";multiline=1;top=48;acceptfiles=1;tabstop=1;edge=1;z=12 }
+)
+/*}}*/
+
+template = {
+
+post = 	/*
+import process
+import inet.http
+io.open()
+http = inet.http( $PROXY );
+
+var str,errmsg = http.post( "$URL" 
+	,"$POSTDATA" );
+http.close();
+
+string.save("/test.html",str )
+process.execute( "/test.html" );
+
+*/;
+
+get = 	/*io.open();//打开控制台
+
+import inet.http
+
+http = inet.http( $PROXY );
+str,errmsg = http.get( "$URL");
+assert( str,errmsg )
+
+io.print( str );
+http.close();
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+*/;
+
+getTime = 	/*io.open();//打开控制台
+
+import inet.http
+
+http = inet.http();
+http.beginRequest( "$URL");
+http.send();
+
+tm = http.getTime()
+io.print( tm );
+
+http.endRequest();
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+*/;
+
+readHeader = 	/*io.open();//打开控制台
+
+import inet.http
+http = inet.http();
+
+http.beginRequest( "$URL");
+http.send();
+
+var responseHeaders = http.readHeader()
+io.print( responseHeaders );
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+*/;
+
+clearCookie = 	/*
+import win;
+import inet; 
+inet.clearCookie();
+win.msgbox("Cookies 已清空")
+*/;
+	
+	
+}
+
+getCode = function(template){
+		
+	var proxy = winform.editProxy.text;
+	var agent = winform.editAgent.text;
+	var code = template;
+	var ctorArg = ""
+	if(#proxy || #agent ){ 
+		ctorArg = string.concat('"',agent,'","',proxy,'"'); 
+		ctorArg = string.replace(ctorArg,'@""',"");
+	}
+	
+	code = string.replace(code,"@$PROXY",ctorArg);
+	code = string.replace(code,"@$URL",winform.editUrl.text);
+	code = string.replace(code,"@$POSTDATA",winform.editPostdata.text );
+	if(winform.radioWhttp.checked){
+		code = string.replace(code,"!\winet.http","inet.whttp");
+	}
+	 
+	return code;
+}
+
+winform.buttonGetHeader.oncommand = function(id,event){
+	 winform.editCode.text = getCode(template.readHeader)
+}
+
+winform.buttonGetTime.oncommand = function(id,event){
+	 winform.editCode.text = getCode(template.getTime)
+}
+
+winform.buttonClearCookies.oncommand = function(id,event){ 
+	 winform.editCode.text = getCode(template.clearCookie)
+}
+
+winform.buttonPOST.oncommand = function(id,event){
+	 winform.editCode.text = getCode(template.post)
+}
+
+winform.buttonHttpdown.oncommand = function(id,event){
+	 winform.editCode.text = getCode(template.get)
+}
+
+winform.btnCpy.oncommand = function(id,event){
+	win.clip.write(winform.editCode.text)
+}
+
+winform.btnTest.oncommand = function(id,event){
+	var func,err = loadcode( winform.editCode.text )
+	assert(func,err );
+	func();	
+}
+ 
+winform.show(true) 
+win.loopMessage( winform );

@@ -1,0 +1,97 @@
+//expandableList À©Õ¹ÁÐ±í
+namespace web.layout.behavior.expandableList;
+
+onAttach = function( ltEle ){ 
+	var gotOne = false;
+	
+	for(i,child in ltEle.eachChild() ){ 
+		if( child.getAttribute("default") && !gotOne) {
+			child.modifyState( 0x20/*_HL_STATE_CURRENT*/ |  0x200/*_HL_STATE_EXPANDED*/,0,false);
+			gotOne = true;
+		}  
+		else{
+			child.modifyState(0x400/*_HL_STATE_COLLAPSED*/,0,false);
+		}
+	} 
+}
+
+setCurrentItem = function( ltEle, item )  {
+	// get previously selected item:
+	var  prevCurrent = ltEle.queryElement(":root > :current");
+	var  prev = ltEle.queryElement(":root > :expanded");
+	
+	if(prevCurrent != item && prevCurrent)
+		prevCurrent.modifyState(0,0x20/*_HL_STATE_CURRENT*/);
+	
+	if( prev ) {
+		if( prev == item ) 
+			return; // already here, nothing to do.
+			
+		prev.modifyState(0, 0x20/*_HL_STATE_CURRENT*/ |  0x200/*_HL_STATE_EXPANDED*/); 
+		
+		// notify all parties involved
+		prev.postEvent(0x90/*_HL_ELEMENT_COLLAPSED*/,0, prev); // source here is old collapsed tab itself
+	} 
+	item.modifyState( 0x20/*_HL_STATE_CURRENT*/ |  0x200/*_HL_STATE_EXPANDED*/); // set state flags
+	item.postEvent(0x91/*_HL_ELEMENT_EXPANDED*/,0, item);  // source here is new expanded tab itself
+} 
+
+targetItem = function( ltEle,ltTarget) {
+	if( ltTarget == ltEle )
+		return;
+	
+	if( !ltTarget )
+		return;
+	
+	var  ltTargetParent = ltTarget.parent();
+	if( !ltTargetParent )
+		return;
+	
+	if( ltTarget.test("li > .caption") )
+		return ltTargetParent; // only if click on "caption" element of <li>. Returns that <li> element.
+	
+	return targetItem( ltEle, ltTarget.parent() );
+}
+    
+onMouseDown = function (ltTarget,ltEle,x,y,mouseParams) { 
+	if( mouseParams.button_state != 1/*_HL_MAIN_MOUSE_BUTTON*/ )
+		return;
+		
+ 	// el is presumably <li>; 
+    var  item = targetItem(ltEle, ltTarget);
+
+    if(item) // click on the item caption
+        owner.setCurrentItem(ltEle, item);
+
+    return true; // as it is always ours then stop event bubbling
+}
+
+onMouseDblClick = onMouseDown;
+
+onActiveChild = function (ltTarget,ltEle,reason,behaviorParams) {
+	var  item = targetItem(ltEle, ltTarget);
+	if(item) {
+		// click on the item caption 
+		owner.setCurrentItem(he, item);
+		return true; 
+	}	
+}
+
+onKeyDown = function (ltTarget,ltEle,keyCode, altState, keyParams) {
+	select(keyCode) {
+		case 0x28/*_VK_DOWN*/ {
+			var  c = ltEle.queryElement(":current");
+			var idx = c? (c.index() + 1):0;
+			if( idx <= ltEle.childCount() ) { 
+   				owner.setCurrentItem(ltEle, ltEle.child(idx) ); 
+			}
+		}
+		case 0x26/*_VK_UP*/ {
+			var  c = ltEle.queryElement(":current");
+			var idx = c? (c.index() - 1):(ltEle.childCount() - 1);
+			if( idx >= 1 ) {
+            	owner.setCurrentItem(ltEle, ltEle.child(idx)); 
+        }
+		} 
+	}
+}

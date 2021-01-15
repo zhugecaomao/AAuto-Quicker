@@ -1,0 +1,25 @@
+
+//控制台 倒计时函数
+countdown = function(s){ 
+	var len = # tostring(s)
+	var backspace = string.repeat(len,'\b');
+	
+	io.stdout.write("倒计时:",string.repeat(len,' ' ) /*预先分配被退格的字符*/ );
+	
+	for(i=s;1;-1){
+		io.stdout.write(backspace/*退格清除原来的时间*/ + string.format("%0"+len+"d",  i) ) 
+	    sleep(1)
+	}
+ 
+}
+
+//打开控制台
+io.open()
+
+//开始倒计时
+countdown(1000)
+
+io.print("")
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+ 

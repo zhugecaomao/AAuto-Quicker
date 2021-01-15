@@ -1,0 +1,58 @@
+//path 路径对象 
+namespace gdip;
+
+//创建类
+class path {
+	ctor(arg){
+		if(type(arg) == type.number){
+			 this.pPath = gdip.assert(  gdip.CreatePath (arg )  )    
+		}
+		
+		if(!this.pPath)
+			error("参数错误",2)
+	
+	}
+
+@_metaProperty//元表指向属性表
+}
+
+namespace path{
+gdip = ..gdip;
+
+import util.metaProperty;//导入属性表支持库
+_metaProperty = util.metaProperty(
+
+	 
+	
+	addstring = function( str,family,style,emSize,rclayout,strformat ){
+		gdip.assert(gdip.AddPathString( owner[["pPath"]],..string.toUnicode(str), -1, family, style, emSize, rclayout, strformat)
+		);
+		
+	}
+	addstringI = function( str,family,style=0/*_GdipFontStyleRegular*/,emSize,rclayout,strformat ){
+		gdip.assert(
+			gdip.AddPathStringI( owner[["pPath"]],..string.toUnicode(str), -1, family, style, emSize, rclayout, strformat)
+		);
+	}
+	delete = function(){
+		gdip.DeletePath(owner[["pPath"]])
+		owner[["pPath"]] = null;//让破他的函数都用不了
+	}
+	
+	//自动转换为API指针
+	_topointer = function(){
+		return owner[["pPath"]];
+	}
+) 
+
+
+
+}
+ 
+/**intellisense()
+gdip.path(_GdipFillMode__) = 创建路径对象
+!gdippath.addstring(.(( str,family,style,emSize,rclayout,strformat ) = 添加字符串
+!gdippath.addstringI(.( str,family,style,emSize,rclayout,strformat ) = 添加字符串 
+!gdippath.delete() = 释放路径对象
+?gdip.path = !gdippath.
+end intellisense**/

@@ -1,0 +1,6 @@
+import com;
+var thunder=com.CreateObject("ThunderAgent.Agent") 
+//thunder.Addtask("下载地址", "另存文件名", "保存目录","任务注释","引用地址","开始模式", "只从原始地址下载","从原始地址下载线程数") 
+//说明一下,开始模式只能为1(立即)/0(手动)/-1,只从原始地址下载请设置为真或者假(true/false) 
+thunder.AddTask("https://svn.ecranesoft.com/svn/aauto/帮助文档/winapi使用手册.chm","winapi使用手册.chm",io.fullpath("/") ,"注释","引用",1,true,10) 
+thunder.CommitTasks(1) 

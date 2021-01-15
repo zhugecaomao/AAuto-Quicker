@@ -1,0 +1,112 @@
+//client REST客户端
+import inet.url;
+import string.list;
+import inet.whttp;
+
+namespace web.rest; 
+
+class client{
+	ctor( ... ){ 
+		this._http = ..inet.whttp(...)  
+		
+		this.stringifyRequestParameters = ..inet.url.stringifyParameters;
+		this.parseResponseResult = parseResponseResult; 
+		this.charset = "UTF-8"; 
+		this.contentType = "application/x-www-form-urlencoded";
+	}; 
+	request = function( url,param,httpMethod ){
+		var utf8 = ..string.cmp("UTF-8",this.charset ) == 0; 
+		if(param){
+			param = this.stringifyRequestParameters( param,utf8 ); 
+		};
+
+		httpMethod = !httpMethod ? owner._defaultHttpMethod  : httpMethod;
+		var ret,errCode,errMsg = this._http.down( url : urlDefalut ,param
+			,'\r\nContent-Type:' + this.contentType + '; charset=' + this.charset,,,httpMethod);
+		if( ret ) {
+			if( utf8 ) ret = ..string.fromto( ret,65001,0); 
+			return this.parseResponseResult(ret);
+		}
+		else {
+			return null,errCode,errMsg;
+		}
+	};
+	declareApi = function(urlTemplate,name="default",httpMethod="POST" ){
+		return  ..table.setByNamespace(name,{ 
+			_urlTemplate = urlTemplate;
+			_url = ..string.replace( urlTemplate ,"@{0}", "");
+			_defaultHttpMethod = ..string.upper(httpMethod);
+			request = this.request;
+			@_meta;
+		},this );
+	};
+}
+
+namespace client { 
+ 
+	parseResponseResult = function(ret){
+		return ret; 
+	}
+	
+	_defaultMethod = { get = "GET"; post = "POST"; put = "PUT"; delete = "DELETE"} ;
+	
+	_meta = {
+		_get = function( k ){
+			if( _defaultMethod[k] ){
+				var method = _defaultMethod[k]; 
+				owner[[k]] = function( param ){  
+					return owner.request( owner._url,param,method ) 
+				} 
+			}
+			else {
+				k = tostring(k);
+				
+				if(k[1]=='_'#)return;
+				
+				var url = ..string.replace(owner[["_urlTemplate"]],"@{0}", k);  
+				var this = owner;
+				
+				if( ! ..string.find( url,"@{1}" ) ){
+					owner[[k]] = function( param,httpMethod ){  
+						return this.request( url,param,httpMethod ) 
+					}
+				}
+				else{
+					owner[[k]] = function( ... ){  
+						var param = {...}
+						var url2 = url;
+						for(i,v in param){
+							 url2 = ..string.replace(url2,"@{"+i+"}", tostring(v));   
+						}  
+						
+						return this.request( url2 ) 
+					} 	
+				}
+			} 
+			
+			return owner[[k]]; 	
+		} 
+		_call = function(param){
+			return owner.request( owner._url,param ) 
+		}
+	} 
+}
+
+/**intellisense()
+web.rest.client = REST客户端
+web.rest.client() = 创建REST客户端,\n!web_restClient.
+
+!web_restClient.contentType = MIME内容类型
+!web_restClient.charset = 获取或修改编码,\n默认为"UTF-8"
+!web_restClient._http = !whttp.
+
+!web_restClient.request(.(网址,参数表,"GET") = 发送请求
+!web_restClient.declareApi(.(网址模板,名字空间,默认调用方法) = 网址模板可以使用{0}表示接口函数名,\n使用{1}...{n}表示将调用参数有序替换到网址中,\n名空空间为可选参数,默认为"default"\n默认调用方法为可选参数,默认为"POST"
+!web_restClient.declareApi() = !web_rest_api.
+
+!web_rest_api.接口函数名(请求参数表,"POST") = @.接口函数名(\n    接口参数名 = 值;__/*更多键值对参数*/\n)
+!web_rest_api.get(请求参数表) = @.get(\n	参数名 = 值;\n);
+!web_rest_api.post(请求参数表) = @.post(\n	参数名 = 值;\n);
+!web_rest_api.delete(请求参数表) = @.delete(\n	参数名 = 值;\n);
+!web_rest_api..put(请求参数表) = @.put(\n	参数名 = 值;\n);
+end intellisense**/

@@ -1,0 +1,28 @@
+//httpHandler 共享会话
+import inet.http;
+import raw.apiHook; 
+
+namespace web.httpHandler;
+
+var session = ..thread.get("{773AE351-67A0-44F0-A8A9-99B636ADA696}.web.form.session")
+if( !session ) { 
+	HookInternetOpen = ..raw.apiHook( "Wininet.dll", "InternetOpen",   
+ 		function (agent, accessType, proxy, proxyBypass,flags) { 
+    		var session = owner.callApi(agent, accessType, proxy, proxyBypass,flags);
+    		owner.unInstall()
+    		
+    		..web.httpHandler = ..inet.http(session) 
+    		..thread.set("{773AE351-67A0-44F0-A8A9-99B636ADA696}.web.form.session", session)
+			return session;
+			
+		},  "pointer(pointer agent,INT accessType,pointer proxy,pointer proxyBypass,INT flags"
+	);
+	HookInternetOpen.install()	 
+}
+else {
+	..web.httpHandler = ..inet.http(session) 
+}
+
+/**intellisense()
+web.httpHandler = 该支持库必须在进程第一次调用web窗体前导入,\n在调用web窗体打开网页后自动获取http会话转换为http对象\n!http.
+end intellisense**/

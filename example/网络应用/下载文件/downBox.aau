@@ -1,0 +1,23 @@
+//创建下载对话框
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( bottom=110;parent=...;right=425;text="AAuto Form" )
+winform.add( 
+button={ bottom=76;right=350;left=191;top=38;z=1;text="下载";cls="button" }
+)
+/*}}*/
+
+import inet.downBox;
+winform.button.oncommand = function(id,event){
+	var downBox = inet.downBox(winform,"下载测试网页...",true )
+	 
+	if( downBox.download(
+		"http://www.ecranesoft.com/public/aauto/lib/java.cab"
+		, ..fsys.joinpath(..io._exedir,"/download/lib/java.cab") 
+	 	) ){
+	 	//winform.msgbox("download complete");
+	 }
+}
+
+winform.show() 
+win.loopMessage();

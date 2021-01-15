@@ -1,0 +1,51 @@
+//嵌入脚本
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( right=599;bottom=399;parent=...;text="HTMLayout 嵌入脚本";border="resizable" )
+winform.add( 
+layoutWindow={ dr=1;dl=1;notify=1;right=580;left=10;dt=1;top=12;bottom=382;z=1;db=1;text="layoutWindow";multiline=1;cls="edit" }
+)
+/*}}*/
+
+import web.layout;
+var wbLayout = web.layout(winform.layoutWindow);
+ 
+import web.script;
+var javascript = web.script("JavaScript") 
+wbLayout.onDocumentComplete = function() {   
+ 	javascript.document = wbLayout.documentElement ;
+	var eles = wbLayout.queryEles("script[type='text/javascript']");  
+	for(i,ele in eles){
+		javascript.AddCode( ele.innerText ); 
+	}; 
+	
+	var eles = wbLayout.queryEles("script[type='text/aauto']");  
+	for(i,ele in eles){
+		assert(  loadcode( "
+		var window = ...;
+		var $ = function(...){
+			return window.queryEles(...);
+		}" + ele.innerText ) )( wbLayout );
+	}; 
+}
+ 
+html =/***
+	<div id="test">......</div>
+	
+	<script type="text/javascript"> 
+	
+		var ele = document.getElementById("test"); 
+		ele.innerText = "Javascript执行结果:测试一下"
+		
+	</script>	
+	
+	<script type="text/aauto"> 
+		import win; 
+		var code = $("script[type='text/aauto']")[1].innerText
+		win.msgbox( code ) 
+	</script>
+***/
+wbLayout.write(html) 
+
+winform.show() 
+win.loopMessage();

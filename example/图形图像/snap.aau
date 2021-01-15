@@ -1,0 +1,6 @@
+//简单抓屏
+import process
+import com.picture
+
+com.picture.snap().Save("/抓屏.bmp")
+process.explore_select("/抓屏.bmp")

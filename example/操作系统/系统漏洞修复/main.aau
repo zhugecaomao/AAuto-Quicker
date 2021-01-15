@@ -1,0 +1,125 @@
+import win.ui;
+import com.picture;
+import fsys;
+import process;
+/*DSG{{*/
+var frmMain = win.form(parent=...; bgcolor=16777215;bottom=527;text="系统漏洞修复";border="resizable";right=799 )
+frmMain.add( 
+picturebox2={ dr=1;dl=1;bottom=120;text="picturebox";left=203;dt=1;top=0;image=$"\res\topCenter.gif";transparent=1;right=529;font=LOGFONT( name='宋体' );z=2;cls="picturebox" };
+listview={ dr=1;dl=1;bgcolor=16777215;right=592;left=16;dt=1;db=1;cls="listview";fullRow=1;bottom=480;text="listview";top=136;font=LOGFONT( name='宋体' );msel=false;z=4;edge=1;
+items={  }
+};
+richedit={ dr=1;vscroll=1;right=784;left=600;dt=1;db=1;cls="richedit";link=1;bottom=480;wrap=1;multiline=1;top=136;font=LOGFONT( name='宋体' );z=5;readonly=1;edge=1;text="http://www.aautofans.com/" };
+static={ bottom=510;right=384;left=152;top=495;font=LOGFONT( name='宋体' );transparent=1;text="正在扫描系统漏洞...";z=8;cls="static";hide=1 };
+picturebox={ dl=1;bottom=120;text="picturebox";left=0;dt=1;top=0;font=LOGFONT( name='宋体' );transparent=1;right=203;image=$"\res\topLeft.gif";z=1;cls="picturebox" };
+button_scan={ dl=1;bgcolor=16777215;bottom=512;right=120;left=16;top=488;font=LOGFONT( name='宋体' );z=6;db=1;text="扫描系统漏洞";cls="button" };
+pic_loader={ bgcolor=16777215;bottom=508;cls="picturebox";text="";left=128;top=492;image=$"\res\loader-1.bmp";transparent=1;right=144;font=LOGFONT( name='宋体' );z=7;hide=1 };
+picturebox3={ dr=1;bottom=120;right=800;left=529;dt=1;top=0;font=LOGFONT( name='宋体' );transparent=1;text="picturebox";image=$"\res\topRight.gif";z=3;cls="picturebox" }
+)
+/*}}*/
+
+WM_MYADD = 0x0400/*_WM_USER*/ + 100;
+
+/** 建立一个变量，用于放置漏洞信息 **/
+frmMain.button_scan.oncommand = function(id, event){
+	hotfix = {};
+	frmMain.button_scan.disabled = true;
+	frmMain.pic_loader.hide = false;
+	frmMain.static.hide = false;
+	var hThread = thread.create(frmMain.scanHotFix, { hWnd = frmMain.hwnd; uMsg = WM_MYADD });
+	thread.waitOne(hThread)
+	frmMain.button_scan.disabled = false;
+	frmMain.pic_loader.hide = true;
+	frmMain.static.hide = true;
+}
+ 
+frmMain.scanHotFix = function (lParam) {
+	import win;
+	import com;
+	import thread.table; 
+	
+	var objSession = com.CreateObject("Microsoft.Update.Session");
+	var objSearcher = objSession.CreateUpdateSearcher();
+	var objResults = objSearcher.Search("Type='SoftWare' And IsInstalled=0");
+	var colUpdates = objResults.Updates;
+	
+	var tab_t = thread.table("hotfixInfo")
+	var hotfix = {}
+	for(i = 0; colUpdates.Count - 1; 1){
+		hotfix.name			= colUpdates.Item(i).Title;
+		hotfix.description	= colUpdates.Item(i).Description;
+		hotfix.size			= colUpdates.Item(i).MaxDownloadSize;
+		hotfix.url			= colUpdates.Item(i).BundledUpdates.Item(0).DownloadContents.Item(0).DownloadURL;
+		hotfix.selected		= colUpdates.Item(i).AutoSelectOnWebSites ? 1 : 0;
+		 
+		if (!string.find(hotfix.name, "<Advantage>|<正版>")  ){	
+			// 过滤正版验证
+			tab_t.push(hotfix);
+			::SendMessage(lParam.hWnd,lParam.uMsg);
+		}
+	}
+}
+
+ 
+import thread.table;
+var tab_t = thread.table("hotfixInfo")
+frmMain.listview.hotfix = {};
+frmMain.wndproc = function (hwnd, message, wParam, lParam){
+	select (message){
+		case WM_MYADD{
+			var hotfix  = tab_t.pop(); 
+			var nIndex = frmMain.listview.addItem(hotfix.name);
+			
+			if (hotfix.selected)
+				frmMain.listview.setChecked(nIndex);
+			
+			frmMain.listview.setItemText( fsys.formatSize(hotfix.size),nIndex,2); 
+			table.push(frmMain.listview.hotfix, hotfix);
+		} 
+		case 0x2/*_WM_DESTROY*/{
+			for (i = 1; 8; 1){
+				frmMain.killtimer(tmid); 
+			}
+		}
+	}
+} 
+
+var loaderIndex = 1;	/* 加载图片索引 */
+tmid = frmMain.addtimer(
+	100, 
+	function(hwnd, msg, id, tick) {
+		try { 
+			frmMain.pic_loader.image = string.load("\res\loader-" + loaderIndex + ".bmp");
+		}
+		catch (e) {
+			frmMain.killtimer(tmid); 
+		}
+		loaderIndex = loaderIndex == 8 ? 1 : loaderIndex + 1;
+	}
+); 
+
+frmMain.listview.onnotify = function(id,code,ptr){
+	if(code==0xFFFFFFFE/*_NM_CLICK*/){
+		var nIndex = frmMain.listview.selIndex
+		if ( nIndex? (nIndex != nIndexOld) ){
+			nIndexOld = nIndex;
+			var hotfix = frmMain.listview.hotfix; 
+			frmMain.richedit.text =  '漏洞名称：' + hotfix[nIndex].name + '\n\n';
+			frmMain.richedit.text += '漏洞描述：\n' + hotfix[nIndex].description + '\n\n';
+			frmMain.richedit.text += '下载地址：' + hotfix[nIndex].url;
+		}
+	}
+}
+  
+frmMain.richedit.onlink=function(msg,title){
+	if( msg == 0x201/*_WM_LBUTTONDOWN*/ )
+		process.execute( title );
+} 
+
+// Items 前添加 CheckBox
+frmMain.listview.setExtended(0x4/*_LVS_EX_CHECKBOXES*/);
+frmMain.listview.insertColumn("漏洞大小",120,1, 0x2/*_LVCFMT_CENTER*/ ); 
+frmMain.listview.insertColumn("漏洞名称",300);
+frmMain.show(true);
+win.loopMessage();
+return winform;

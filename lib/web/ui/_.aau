@@ -1,0 +1,276 @@
+
+import web.form.menu;
+import win.util.round;
+namespace web; 
+
+class ui{
+	ctor( wb,min_cx,min_cy,wEllipse,hEllipse ){  
+	
+		//创建圆角无边框窗口
+		var round;
+		if( wEllipse !== 0 ){ 
+			round = ..win.util.round( wb._form,,,wEllipse,hEllipse ) 
+			if( min_cx && min_cy ){
+				round.setMinTrackSize(min_cx,min_cy)
+			}
+		}
+		else {
+			if( min_cx !== false ){
+				..win.ui.minmax(wb._form,min_cx,min_cy);
+			}
+		}
+		
+		wb._form.translateAccelerator = function(msg){
+			if (   (msg.message == 0x100/*_WM_KEYDOWN*/) || (msg.message == 0x101/*_WM_KEYUP*/) ) {
+				if(msg.wParam == 0x74/*_VK_F5*/)
+					return true; 
+			}  
+			return wb._host.tranacc(msg)
+		} 
+		
+		//等待出现caption_button_close节点,或者页面加载完成
+		wb.waitEle("caption_button_close", , ,true,true);
+		
+		wb.attach(
+			function (event) {
+				var map = {
+					INPUT = true;
+					TEXTAREA = true;
+				}
+				
+				if (!map[event.srcElement.tagName]) {
+					return false;
+				}
+			} 
+			,"onselectstart"
+		);
+		
+		wb.attach(
+			function () {
+				return false;
+			}
+			, "ondragstart"
+		);
+		
+		var hideEle = function(...){
+			var ele = wb.getEle(...)
+			if( ele )
+				ele.style.display = "none";
+		}
+		
+		var maxbox = ..win.getStyle(wb._form.hwnd,0x10000/*_WS_MAXIMIZEBOX*/) 
+		var minbox = ..win.getStyle(wb._form.hwnd,0x20000/*_WS_MINIMIZEBOX*/) 
+		var sysmenu = ..win.getStyle(wb._form.hwnd,0x80000/*_WS_SYSMENU*/)
+		if(sysmenu){
+			var popmenu = ..win.ui.popmenu(wb._form);
+			if(maxbox){
+				popmenu.add(
+					'最大化',
+					function(id){
+						wb._form.hitmax();
+					}, ,777
+				);
+			}
+			if(minbox){
+				popmenu.add(
+					'最小化',
+					function(id){
+						wb._form.hitmin()
+					}
+				);
+			}
+			if( maxbox || minbox )
+				popmenu.add();//分隔线
+				
+			popmenu.add(
+				'关闭\tAlt+F4',
+				function(id){
+					wb._form.close()
+				}
+			); 
+			this.sysmenu = popmenu;
+			
+			wb.attach(
+				function(event){
+					var ele = event.srcElement;   
+					x,y,cx,cy = wb.getPos(ele)
+					this.sysmenu.popup(x,y+cy)
+					return true;
+				} 
+				,"onclick","caption_sysmenu"
+			)   
+		} 
+		else {
+			hideEle("caption_sysmenu") ;
+		} 
+		
+		var ele = wb.getEle("caption_text");
+		if(ele){
+			ele.innerHTML = wb._form.text;
+			wb.document.title = wb._form.text
+		}
+		ele = null;
+		 
+		var tEvents = {
+			caption_button_close = {
+				onclick = function(event){
+			 		wb._form.close();	
+				} 
+				onmouseout = function(event){
+					event.srcElement.blur()
+				}
+			} 
+			caption_bar = { 
+				onmousedown = function(event){
+					var x = event.clientX;  
+					if( event.srcElement.id = "caption_sysmenu" ) //for system icon
+						return true;
+						
+					if( event.button==1){
+						..win.setActive( wb._form.hwnd )
+						wb._form.hitCaption();
+					}
+					elseif( event.button==2 && this.sysmenu){ 
+						this.sysmenu.popup(event.x,event.y) 
+					} 
+					return true;
+				} 
+			}   
+		}
+		if(maxbox){
+			tEvents.caption_button_max = {
+				onclick = function(event){ 
+			 		wb._form.hitmax();
+			 		return true;
+				}  
+				onmouseout = function(event){
+					event.srcElement.blur()
+				}
+			} 
+			tEvents.caption_bar.ondblclick = function(event){
+				if( (!maxbox) || event.srcElement.id = "caption_sysmenu" ) //for system icon
+					return true;
+					
+			 	wb._form.hitmax();
+			} 
+		}
+		else {
+			hideEle("caption_button_max") ;
+		}
+		
+		if(minbox){
+			tEvents.caption_button_min = {
+				onclick = function(event){
+			 		wb._form.hitmin();	
+				} 
+				onmouseup = function(event){ 
+					event.srcElement.blur()
+				} 
+				onmouseout = function(event){
+					event.srcElement.blur()
+				} 
+			} 
+		}
+		else {
+			hideEle("caption_button_min") ;
+		}
+		wb.attachAll( tEvents );
+		
+		var restoreButton = function(max){
+			var ele = wb.getEle("caption_button_max")
+			ele.title = max?"还原":"最大化"
+			ele.className = max?"restore":"max"
+			this.sysmenu.setString(777,max? "还原" : "最大化" ,0x0/*_MF_BYCOMMAND*/)
+		};
+		wb._form.adjust = function( cx,cy,wParam ) {	 
+			wb._host.adjust();
+			
+			if( wParam == 0x2/*_SIZE_MAXIMIZED*/ ){
+		 		restoreButton( 	true );
+		 	}
+		 	elseif( wParam == 0x0/*_SIZE_RESTORED*/ ){
+		 		restoreButton( 	false ); 
+		 	} 
+		};
+		
+		if(min_cx===false)
+			return; //如果参数2恒等为false,不设置边框
+		
+		// 边框
+		wb.attach(
+			function (event) {
+				var ele = event.srcElement; 
+				var oldCur = ele.style.cursor;
+				sizeCur = oldCur ? ..string.endWith(oldCur,"-resize",true); 
+				
+				if( ..win.isZoomed( wb._form.hwnd ) ){ 
+					if( sizeCur  )
+						ele.style.cursor = "default";  
+						
+					return;
+				} 
+				
+				var l,t,w,h = wb._form.getPos() 
+     	 		var x = event.clientX;  
+     	 		var y = event.clientY; 
+     	 		 
+     	 		if( (x <= 5 && y <= 16) || (x <= 16 && y <= 5) || (x >= w - 16 && y >= h - 5) || (x >= w - 5 && y >= h - 32) )
+					ele.style.cursor = "nw-resize";
+				else if ( (x <= 32 && y >= h - 5) || (x <= 5 && y >= h - 32) || ( x >= w - 32 && y <= 5) || ( x >= w - 5 && y <= 32)  )
+					ele.style.cursor = "ne-resize";
+				else if ((x <= 5 || x >= w - 5) && y <= h - 5)
+					ele.style.cursor = "e-resize"
+				else if ( y <= 5 || y >= h - 5)
+					ele.style.cursor = "n-resize";
+				else if(sizeCur)
+					ele.style.cursor = "default"; 	
+			}, 
+			"onmousemove" 
+		);
+		
+		wb.attach(
+			function (event) {
+				if( event.button !=1 )
+						return true;
+					
+				if( ..win.isZoomed( wb._form.hwnd ) )
+						return true;
+						
+				var ele = event.srcElement; 
+				var l,t,w,h = wb._form.getPos() 
+     	 		var x = event.clientX;  
+     	 		var y = event.clientY;  
+     	 		
+     	 		if ( (x <= 5 && y <= 32) || (x <= 32 && y <= 5) )
+     	 			wb._form.hitTopleft();
+     	 		else if ( (x <= 32 && y >= h- 5) || (x <= 5 && y >= h - 32) )
+					wb._form.hitBottomleft();
+				else if (x >= w - 32 && y >= h - 5) || (x >= w - 5 && y >= h - 32)
+					wb._form.hitBottomright();
+				else if ( (x >= w - 32 && y <= 5) || (x >= w - 5 && y <= 32) )
+					wb._form.hitTopright();
+				else if (x <= 5 && y <= h - 5)
+					wb._form.hitLeft(); 
+				else if (x >= w - 5 && y <= h - 5)
+					wb._form.hitRight(); 
+				else if (y >= h - 5)
+					wb._form.hitBottom(); 
+				else if (y <= 5)
+					wb._form.hitTop(); 
+					
+				return true;
+			}
+			,"onmousedown"
+		); 
+	}; 
+	
+	setMinTrackSize = function(cx,cy){
+    	round.setMinTrackSize(cx,cy)
+    } 
+}
+
+/**intellisense()
+web.ui(.(web窗体,最小宽度,最小高度,圆角宽度,圆角高度) = 创建Web UI窗口(无边框圆角窗口)\n如果最小宽度为false则禁止改变窗体大小\n如果圆角宽度为0则不创建圆角窗口
+web.ui().setMinTrackSize(cx,cy__) = 设定窗口最小宽度、高度
+web.ui().sysmenu = !popmenu.
+end intellisense**/

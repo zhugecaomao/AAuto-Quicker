@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title></title>
+<link href="image/frame/caption.css" type="text/css" rel="Stylesheet" />
+<script data-main="js/main" src="js/require.js"></script>
+</head>
+<body>  
+<table id="form_frame" width="100%" height="100%" cellpadding="0" cellspacing="0" >
+	<tr>
+		<td height="27">
+
+			<!--标题栏开始-->
+			<div id="caption">
+				<div id="caption_frame">
+					<div id="caption_bar">
+						<div id="caption_title"><a id="caption_sysmenu" href="javascript:void(0);" hidefocus="true"></a><span id="caption_text">Web UI标题文本</span></div>
+						<ul id="caption_button">
+							<li><a id="caption_button_website" href="javascript:void(0);" hidefocus="true" title="意见反馈">意见反馈</a></li>
+							<li><a id="caption_button_min" href="javascript:void(0);" hidefocus="true" title="最小化">最小化</a></li>
+							<li><a id="caption_button_max" class="max" href="javascript:void(0);" hidefocus="true" title="最大化">最大化</a></li>
+							<li><a id="caption_button_close" href="javascript:void(0);" hidefocus="true" title="关闭">关闭</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<!--标题栏结束-->
+		</td>
+	</tr>
+	<tr>
+		<td height="100%" width="100%" id="tbmain" valign="top">
+			<div id="form_main">
+				<div id="form_main_content" style="padding:20px;">
+
+				<!--窗体内容开始--> 
+                    所有HTML页面请放置于res目录下.<br />
+                    如果res目录设为内嵌资源,则发布时无需修改任何代码自动生成独立EXE文件。<br />
+                    并在head节点链接&quot;res/js/aauto.js&quot;(更改为页面相对路径),例如在本页添加如下代码：<br />
+                    <strong  style=" text-decoration:underline">&lt;script type=&quot;text/javascript&quot; src=&quot;js/aauto.js&quot;&gt;&lt;/script&gt; </strong><br />
+                    <br />
+                    aauto.js的作用是在所有html文件载入时,根据路径自动载入相应的用户库<br />
+                    例如 &quot;/res/main/html&quot; 加载时 自动调用external.loadServer()接口函数,加载 <strong  style=" text-decoration:underline">server.main.aau</strong>,<br />
+                  在页面退出时,自动调用 <strong  style=" text-decoration:underline">server.main().onUnload()</strong> 函数(如果定义了该函数).<br />
+                  <br />
+                  aauto.js 同时定义了 console.log() 函数,用于在javascript输出调试信息到控制台
+                  <br />
+                  <br />
+                  在任意javascript中都可以使用 <strong style=" text-decoration:underline">external.config.配置文件名.配置字段名</strong> 直接读写<br />
+                  配置文件, 配置文件将会自动创建并自动保存<br />
+                  <br />
+                 
+                    <span style="font-size:9pt;">推荐的文件存储位置:</span>
+                    <blockquote style="margin-top:0px; padding-top:0px; padding-left:20pt; margin-left:0px;">
+                        <div style="margin-top:3px">所有图片放在/res/image目录下,图片相关的CSS文件放在同级目录下. </div>
+                        <div style="margin-top:3px">所有js文件请置于res/js目录下,jQuery请置于以下位置: &quot;/res/js/jQuery.min.js&quot;，<br /><br />
+                        使用requireJS支持AMD模块加载:
+			<div style="margin-top:3px">requireJS请置于以下位置: &quot;/res/js/require.js&quot;，<br />
+                        <div style="margin-top:3px">requireJS模块加载入口文件: &quot;/res/js/main.js&quot;，<br />
+                       
+                        </div>
+                    </blockquote>
+                    
+                    <div style="padding-left:200px"><a href="http://www.aau.cn" target="_blank">WWW.AAU.CN </a></div>
+                    
+                <!--窗体内容结束--> 
+            	</div>
+			</div>
+			<div id="form_bottom">
+				<div id="form_bottom_rc1"></div>
+				<div id="form_bottom_rc2"></div>
+			</div>
+		</td>
+	</tr>
+</table>  
+</body>
+</html>

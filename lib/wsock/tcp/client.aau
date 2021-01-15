@@ -1,0 +1,106 @@
+//client 客户端
+import wsock; 
+import wsock.err;
+namespace wsock.tcp
+
+class client{
+
+	ctor(bufferSize = 1024){ 
+		if(! ..wsock.open() ){ 
+			error( ( wsock.err.lasterr() ),2 ) 
+		}
+		 
+		var hSocket= ..wsock.socket(0x2/*_AF_INET*/,0x1/*_SOCK_STREAM 建立流式套接口*/,0x6/*_IPPROTO_TCP*/ )
+		if( hSocket= _INVALID_SOCKET ){ 
+			wsock.close() //关闭wsock
+			error( ( wsock.err.lasterr() ),2 ) 
+		} 
+
+		..table.add_gc(this,"close"); 
+	};
+	
+	connect = function( ip,port){
+		if(!ip && port)
+			error("请指定IP或端口地址",2)
+		if( ..string.find(ip,"\w+") ){
+			ip = ..wsock.getIp(ip) //Is a domain
+		}	
+		var service = ..wsock.sockaddr_in();
+		service.sin_family = 0x2/*_AF_INET*/
+		service.sin_addr.S_un.S_addr = ..wsock.inet_addr( ip )
+		service.sin_port = ..wsock.htons(port) 
+		
+		//之后服务端就调用accept( )来接收连接.客户端在建立套接口后就可调用connect()和服务器建立连接
+		if ..wsock.connect( hSocket,service,..raw.sizeof(service)) =-1/*_SOCKET_ERROR*/	{  
+			return null,"连接服务端失败"
+		} 
+		return true;
+	}
+	read = function(){ 
+        var reads,recvbuf = ..wsock.recv(	hSocket,bufferSize,bufferSize,0)  
+        if ( reads=-1 ){
+		 	return null;
+		}
+		else if( reads>0 ) {  
+			if(reads<bufferSize){
+				recvbuf = ..string.left(recvbuf,reads)
+				return recvbuf,reads; //缓冲区没读满，也是读完了
+			}
+			return recvbuf,reads
+		} 
+	}
+	eachRead = function(){
+		return this.read;
+	}; 
+	readAll = function(){
+		var tab = {}
+		for(str,size in this.eachRead() ){ 
+			..table.push(tab,str);
+		} 
+		return ..string.join(tab);
+	};
+	write = function(str,len){;
+		var max = #str;
+		if( !len )
+			len = max;
+		else 
+			len = ..math.min(max,len); 
+			
+		var step = ..math.min(bufferSize,len );
+		var safePtr = ..raw.convert( { pointer p = str } ,{ pointer p }).p; 
+		
+		for(pos=0;len;step){ 
+			if( ..wsock.send( hSocket,topointer(safePtr,pos), pos+step <= len ? step : len % step ,0)==-1 ){  
+				return null,"tcp客户端发送数据错误";
+			}
+		}; 
+		
+		return true;
+	};
+	setTimeouts = function(send=30000,receive=30000){
+		return ( ..wsock.setsockoptByInt(hSocket,0xFFFF/*_SOL_SOCKET*/,0x1005/*_SO_SNDTIMEO*/,send,4) == 0 )
+			&& ( ..wsock.setsockoptByInt(hSocket,0xFFFF/*_SOL_SOCKET*/,0x1006/*_SO_RCVTIMEO*/,receive,4)  == 0 ) 
+	}; 
+	close = function(){
+		if( hSocket ){ 
+			..wsock.closesocket(hSocket)
+			..wsock.close();
+			hSocket = null;
+		}  
+	}
+}
+ 
+ 
+/**intellisense()
+wsock.tcp.client = TCP客户端支持库
+wsock.tcp.client(.(缓冲区大小) = 创建TCP客户端,\n缓冲区大小为可选参数,默认为1KB
+?.tcp.client = !tcp_client.
+!tcp_client.connect(.(IP或域名,端口号) = 创建连接
+!tcp_client.eachRead = @for(str,size in ??.eachRead() ){ 
+	__/*str为接收的数据*/
+} 
+!tcp_client.readAll() =  接收数据
+!tcp_client.write(.(数据,长度) = 发送数据,\n参数一为字符串或字符串指针,可选使用参数2指定长度
+!tcp_client.close() = 关闭TCP客户端\n如果未显式调用此函数\n在对象析构时,将会自动调用.
+!tcp_client.setTimeouts(.(发送超时,接收超时) = 设置超时,以亳秒为单位(1秒为1000毫秒)
+end intellisense**/

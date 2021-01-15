@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="gb2312"?>
+<project ver="0.60" name="快手工程15" libEmbed="true" icon="...">
+  <file name="main.aau" path="main.aau" >
+  </file>
+  <folder name="资源文件" path="res" embed="true">
+  </folder>
+  <folder name="库" path="lib">
+  </folder>
+</project>

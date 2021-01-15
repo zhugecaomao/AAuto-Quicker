@@ -1,0 +1,177 @@
+//扩展库
+import ide;
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( right=665;text="AAuto扩展库";bottom=399 )
+winform.add( 
+btnSelectAll={ dr=1;bottom=388;right=413;left=334;top=359;z=2;db=1;text="全选";cls="button" };
+btnDeselectAll={ dr=1;bottom=391;right=511;left=432;top=362;z=3;db=1;text="取消全选";cls="button" };
+listview={ dr=1;dl=1;bgcolor=16777215;right=658;left=11;dt=1;db=1;fullRow=1;bottom=356;top=12;z=1;cls="listview";edge=1;
+items={  }
+};
+lbInfo={ dr=1;dl=1;bottom=394;color=0;right=316;left=21;top=366;transparent=1;db=1;text="鼠标双击上面的扩展库项目打开相关范例";z=5;cls="static" };
+btnSetup={ dr=1;bottom=391;right=609;left=530;top=362;z=4;db=1;text="安装";cls="button" }
+)
+/*}}*/
+
+winform.listview.setExtended(0x4/*_LVS_EX_CHECKBOXES*/) 
+winform.listview.insertColumn("扩展库",100) 
+winform.listview.insertColumn("版本",70) 
+winform.listview.insertColumn("本地版本",70) 
+winform.listview.insertColumn("作者",50)  
+winform.listview.insertColumn("说明",-1) 
+
+winform.show() 
+winform.text = "AAuto扩展库安装程序 下在获取服务器列表...."
+
+var jsonData,err = win.invoke(
+	function(){
+		import inet.whttp;
+		return inet.whttp().get("http://update.aau.cn/aauto/lib/find/?all")
+	} 
+)
+ 
+var installedLibs = ide.getExtLibs(); 
+
+import web.json;
+if( jsonData ){
+	var listLib = web.json.parse(jsonData);
+	for(libName,libInfo in listLib){
+		var lib = listLib[libName]
+		var row = winform.listview.addItem( { libName;libInfo.version;installedLibs[libName][["version"]] : "未安装";libInfo.author;libInfo.description } )
+		if( installedLibs[libName][["version"]]  )
+			winform.listview.setChecked(row,true)
+	} 
+}
+else {
+	winform.text = "AAuto扩展库安装程序 x"  +  ( err:"")
+}
+
+winform.text = "AAuto扩展库 - 已获取服务器最新列表";
+winform.setTimeout( function(){
+	winform.text = "AAuto扩展库 - 双击下面的列表项打开相关示范代码";
+},1000 )
+
+
+winform.btnSetup.oncommand = function(id,event){
+	winform.btnSetup.disabled = true;
+	
+	for(i=winform.listview.count;1;-1){
+		if( winform.listview.getChecked(i) ){
+			var libName = winform.listview.getItemText(i,1) ;
+			var libVersion = winform.listview.getItemText(i,2) ;
+			var installVersion = installedLibs[libName][["version"]];
+			
+			if( installVersion != libVersion ){
+				winform.text = "AAuto扩展库安装程序 正在安装扩展库:" + libName;
+				
+				win.invoke(
+					function(libName,installVersion){
+						import ide;
+						ide.importFile( libName,installVersion, "" )
+					} ,libName,installVersion
+				)
+				 
+				installedLibs = ide.getExtLibs(); 
+				winform.listview.setItemText(installedLibs[libName][["version"]]:"安装失败",i,3);
+				if( installedLibs[libName][["version"]] == libVersion ){
+					winform.text = "AAuto扩展库安装程序 已安装扩展库:"  + libName;
+				}
+				else {
+					winform.text = "AAuto扩展库安装程序 扩展库:"  + libName + " 安装失败!";
+				}
+				
+			}
+			else {
+				winform.text = "AAuto扩展库安装程序 忽略已安装扩展库:" + libName;
+			}
+			
+		}
+	} 
+	
+	winform.text = "AAuto扩展库安装程序 安装已完成" ;
+	ide.refreshStdLib();
+	winform.btnSetup.disabled = false;
+}
+
+//取消全选
+winform.btnDeselectAll.oncommand = function(id,event){
+	for(i=winform.listview.count;1;-1){
+		winform.listview.setChecked(i,false) 
+	} 	
+}
+
+//全选
+winform.btnSelectAll.oncommand = function(id,event){ 
+	for(i=winform.listview.count;1;-1){
+		winform.listview.setChecked(i,true) 
+	}  
+}
+ 
+import ide;
+import inet.downBox;
+import process;
+import zlib.unzip;
+import fsys;
+fsys.createDir( "/.sampleCode/");
+winform.listview.onnotify = function(id,code,ptr){
+
+    select(code) { 
+    	case 0xFFFFFFFD/*_NM_DBLCLK*/ {
+    		var nm = winform.listview.getNotifyMessage(code,ptr)
+    		if(winform.listview.selIndex){
+        		var libName = winform.listview.getItemText(nm.iItem,1)
+        		if(!libName) return;
+        		
+        		var jsonData,err = win.invoke(
+					function(libName){
+						import inet.whttp;
+						return inet.whttp().get("http://update.aau.cn/aauto/lib/sample/find/?" +  libName)
+					},libName
+				)
+				if(!jsonData){
+					winform.lbInfo.text = "抱歉,暂时没有找到 " + libName + " 扩展库有关的范例"
+					..process.execute("http://update.aau.cn/search/?q=" + libName);
+					return;
+				};
+				
+				var libInfo = web.json.parse(jsonData);
+				if( libInfo.siteUrl ){
+					..process.execute( libInfo.siteUrl );
+				}
+				elseif( libInfo.codeUrl ){
+					var code,err = win.invoke(
+						function(url){
+							import inet.whttp;
+							return inet.whttp().get(url)
+						},libInfo.codeUrl
+					)
+					if(!code) return;
+					var codePath = "/.sampleCode/" + libName + ".aau";
+					string.save(codePath,code )
+					winform.show( 0x6/*_SW_MINIMIZE*/ )
+					ide.openDocument(codePath)
+				}
+				elseif( libInfo.zipUrl ){
+					var codePath = "/.sampleCode/" + libName + ".zip";
+					var downBox = inet.downBox(winform,"/.sampleCode/" + libName,true )
+	
+					if( downBox.download(libInfo.zipUrl , codePath ) ){
+	 					var ok,err = zlib.unzip.extract( codePath, "/.sampleCode/" + libName ) 
+	 					..process.explore("/.sampleCode/" + libName)
+	 				} 
+				}
+				elseif( libInfo.codePath ){
+					ide.openDocument(  libInfo.codePath )
+				}
+				else{
+					winform.lbInfo.text = "抱歉,暂时没有找到与 " + libName + "扩展库有关的范例"
+					..process.execute("http://update.aau.cn/search/?q=" + libName);
+					return;
+				};
+        	}
+    	}
+    }
+}
+
+win.loopMessage();

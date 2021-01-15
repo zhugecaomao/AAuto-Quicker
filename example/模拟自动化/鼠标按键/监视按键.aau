@@ -1,0 +1,46 @@
+//监视按键、键名检测
+
+//打开控制台窗口
+io.open() 
+io.print("正在监视按键,按ESC键退出!")
+
+//导入HOOK库
+import  key.hook 
+
+//创建录制钩子
+hk = key.hook();
+
+//录制回调函数
+hk.proc = function(msg,vkcode,scancode,injected,flags,timeStamp,extraInfo){ 
+	if( injected ) return;  //模拟按键不处理
+	
+	key.press("A")
+ 
+    var kn = key.getName( vkcode );
+    
+    if( vkcode == key.VK.ESCAPE)
+    	win.quitMessage();
+    	
+    select(msg) {
+    	case 0x100/*_WM_KEYDOWN*/ ,0x104/*_WM_SYSKEYDOWN*/ {
+    	    io.print("按下","键名:" + kn,"键码:"+vkcode)
+    	}
+    	case 0x101/*_WM_KEYUP*/,0x105/*_WM_SYSKEYUP*/ {
+    	    io.print("弹起","键名:" + kn,"键码:"+vkcode)
+    	}  
+    }   
+    
+    //return true;//返回true表示取消按键
+}
+
+//录制需要消消息循环
+import win;
+win.loopMessage()
+
+//一定要关闭钩子
+hk.close(); 
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台
+
+ 

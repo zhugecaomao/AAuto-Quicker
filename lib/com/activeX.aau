@@ -1,0 +1,179 @@
+//activeX 控件
+import win; 
+import com;
+import process;
+import console;
+import fsys;
+
+class com.activeX{
+
+	ctor( clsPath,version){
+		if( version === null ) version = 1;
+		version = tonumber(version)
+		if(!version)
+			error("请在第二个参数中指定正确的版本号",2)
+		
+		var tClsPath = ..string.split( clsPath,".") 
+		if(#tClsPath<2){
+			error("类不应置于全局名字空间",2)
+		}
+		
+		try{
+			..global.import(clsPath); 
+		}
+		
+		this._class = ..table.getByNamespace( clsPath );
+		if( ! this._class ){
+			error("参数一指定的类库错误",2)
+		}
+		
+		this._obj = this._class();
+		this.Control = this._obj.InitialSize 
+			&& this._obj.InitialSize
+			&& this._obj.CreateWindow
+			&& this._obj.SetExtent
+			&& this._obj.GetClass
+			&& this._obj.DestroyWindow;
+		
+		this.clsPath = clsPath  		
+		this.Arguments = "/Automation" 
+	 	this.VersionIndependentProgID = clsPath
+	 	this.ProgID = this.VersionIndependentProgID + "." +  version 
+		this.TypeLib = "res/" +  tClsPath[1] + ".tlb"   
+		var tlbpath = "/" + this.TypeLib;
+		if(!..io.exist( tlbpath ) ){
+			var str = ..string.load( tlbpath );
+			if(!str)
+				error("没有找到" + tlbpath,2);
+				
+			..fsys.createParentDir(tlbpath);
+			..string.save(tlbpath, str );
+		}
+		
+		this.CoClass = tClsPath[#tClsPath];
+		this.ComponentName = tClsPath[1] + " Component";
+	};
+	main = function(){
+		var cmdline = _CMDLINE;
+		
+		if(! #cmdline ){   
+			..console.log("注册按R键,卸载请按U键");
+			var c = ..console.getch();
+			if( c == 'R'# || c == 'r'#  ){
+				cmdline = '/r'
+			}
+			if( c == 'U'# || c == 'u'#  ){
+				cmdline = '/u'
+			}
+		}
+		cmdline = ..string.trim(cmdline)
+		var tcmd = ..string.split(cmdline," ");
+		var farg  = tcmd[1];
+		farg = ..string.replace(farg,"@\","/");
+		
+		if( ..string.cmp(farg,"/r")==0){ 
+			var msg = "注册控件遇到错误";
+			try{
+				this.register();
+				msg = "注册成功"
+			} 
+			return msg + " " + this.clsPath;
+		}
+		else if( ..string.cmp(farg,"/u")==0){
+			var msg = "卸载控件遇到错误";
+			try{ 
+				this.unRegister();
+				msg = "卸载成功"
+			}
+			return msg + " " + this.clsPath;
+			
+		}
+		else if( ..string.cmp(farg,"/Automation")==0){  
+			try{
+				this.start(); 
+				return true;
+			}
+			catch(e){
+				..console.log("启动控件遇到错误") 
+				..console.pause(true);
+			}
+			return true; 
+		}  
+		 
+	};
+	register = function() { 
+		if( _STUDIO_INVOKED )
+			error("请先发布生成EXE文件然后测试",2)
+			
+		..fsys.setCurDir("/")
+		var res = ..com.RegisterObject( this )
+		if(!res) {
+			error("RegisterObject failed!");
+		}
+	};
+	unRegister = function() { 
+		..fsys.setCurDir("/")
+		var res = ..com.UnRegisterObject( this )
+		if(!res) { 
+			error("RegisterObject failed!");
+		}
+	}; 
+	start = function() { 
+		var appObject, events, e = ..com.NewObject(
+			this._obj ,
+			this.clsPath )
+ 	
+		if( ! appObject) {
+			error("NewObject failed: " ++ e)
+		}
+ 	
+		var cookie = ..com.ExposeObject(appObject)
+		if( ! cookie) {
+			error("ExposeObject failed!")
+		} 
+		
+		if( (! _STUDIO_INVOKED) &&  (!win[["form"]]) )
+			..win.loopMessage();
+	} 
+}
+
+namespace com.activeX{
+
+	regsvr32As = function(filepath,reg=true){
+		var filepath = ..io.localpath(filepath) : filepath; 
+		..process.execute_wait("regsvr32", "/s "  + ( reg? "" : "/u " ) + '"' + filepath + '"',"runas",,"/")
+	}
+	
+	regsvr32 = function(filepath,reg=true){
+		var ret = 0;
+		try{
+			var local = ..io.localpath(filepath)
+			if(local)
+				filepath = local;
+				
+			var ocx = ..raw.loadDll(filepath)
+			var regsvr = reg 
+				? ocx.api("DllRegisterServer","int()" )
+				: ocx.api("DllUnregisterServer","int()" );
+			ret = regsvr() >= 0
+		}
+		if (ret === 0) {
+			return false;
+		} else {
+			return ret;
+		}
+	} 
+
+} 
+
+/**intellisense()
+?com.activeX = !com_activeX.
+!com_activeX.register() = 注册组件
+!com_activeX.unRegister() = 卸载组件
+!com_activeX.main() = 该函数检测传入参数并执行相应操作\n/r 注册控件 /u卸载控件 /Automation 运行
+!com_activeX.start() = 运行控件 
+com.activeX.regsvr32("__") = 注册外部控件
+com.activeX.regsvr32("__",false) = 卸载外部控件
+com.activeX.regsvr32As("__") = 注册外部控件,\n如果进程无管理员权限请使用此函数请求管理权限
+com.activeX.regsvr32As("__",false) = 卸载外部控件,\n如果进程无管理员权限请使用此函数请求管理权限
+end intellisense**/

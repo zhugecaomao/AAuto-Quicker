@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="gb2312"?>
+<project ver="0.60" name="Web UI 向导" libEmbed="true" icon="..." CompanyName="单位名称" FileDescription="附加说明......" LegalCopyright="Copyright (C) 作者 2011" ProductName="Web UI" InternalName="Web UI" FileVersion="0.0.1.001" ProductVersion="0.0.1.001" publishDir="/Publish/" ui="win" output="Web UI.exe">
+	<file name="main.aau" path="main.aau"/>
+	<folder name="网页资源" path="res" comment="" embed="true">
+		<file name="main.html" path="res\main.html" comment="res\main.html"/>
+		<folder name="image" path="res\image" comment="res\image">
+			<folder name="frame" path="res\image\frame" comment="res\image\frame">
+				<file name="website.png" path="res\image\frame\website.png" comment="res\image\frame\website.png"/>
+				<file name="sysmenu.png" path="res\image\frame\sysmenu.png" comment="res\image\frame\sysmenu.png"/>
+				<file name="sysmenu.ico" path="res\image\frame\sysmenu.ico" comment="res\image\frame\sysmenu.ico"/>
+				<file name="restore.png" path="res\image\frame\restore.png" comment="res\image\frame\restore.png"/>
+				<file name="min.png" path="res\image\frame\min.png" comment="res\image\frame\min.png"/>
+				<file name="max.png" path="res\image\frame\max.png" comment="res\image\frame\max.png"/>
+				<file name="close.png" path="res\image\frame\close.png" comment="res\image\frame\close.png"/>
+				<file name="caption.gif" path="res\image\frame\caption.gif" comment="res\image\frame\caption.gif"/>
+				<file name="caption.css" path="res\image\frame\caption.css" comment="res\image\frame\caption.css"/>
+				<file name="button.gif" path="res\image\frame\button.gif" comment="res\image\frame\button.gif"/>
+			</folder>
+		</folder>
+		<folder name="js" path="res\js" comment="res\js">
+			<file name="require.js" path="res\js\require.js" comment="res\js\require.js"/>
+			<file name="main.js" path="res\js\main.js" comment="res\js\main.js"/>
+			<file name="aauto.js" path="res\js\aauto.js" comment="res\js\aauto.js"/>
+			<folder name="jQuery" path="res\js\jQuery" comment="res\js\jQuery">
+				<file name="jQuery.min.js" path="res\js\jQuery\jQuery.min.js" comment="res\js\jQuery\jQuery.min.js"/>
+			</folder>
+		</folder>
+	</folder>
+</project>

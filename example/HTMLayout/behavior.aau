@@ -1,0 +1,111 @@
+//自定义 behavior
+import win.ui;
+/*DSG{{*/
+winform = ..win.form( bottom=399;parent=...;text="AAuto Form";right=599 )
+winform.add( 
+layoutWindow={ dr=1;dl=1;bottom=382;right=580;left=10;dt=1;top=12;notify=1;z=1;db=1;multiline=1;cls="edit" }
+)
+/*}}*/
+
+io.open() 
+import web.layout;
+wbLayout = web.layout(winform.layoutWindow);
+  
+namespace web.layout.behavior.button.command{  
+
+	/*
+	
+	添加behavior非常简单
+	只要在 web.layout.behavior 名字空间下添加库,或直接添加新的名字空间都可以创建behavior.
+	例如,这里创建了名称为"button_command"的behavior( 在CSS中用下划线替代名字空间 ).
+	
+	如果CSS中behavior名字包含横线， 则自动修改为驼峰式命名，
+	如果behavior名字包含下划线，则使用名字空间替代表示。 
+	
+	所有HTMLayout窗体可用的事件(函数名前缀为on.... )在 behavior 中都可以使用
+	当然, 仅在CSS样式中指定了 behavior 的节点才可以触发对应的事件
+	
+	仅需定义需要用到的事件即可
+	*/
+	
+	onAttach = function( ltEle ){   
+	}
+	
+	onActiveChild = function (ltTarget,ltEle,reason,behaviorParams) {
+		
+	}
+ 
+ 	/*
+ 	ltEle 参数指的是捕获事件的节点，
+ 	实际上也就是指定了 behavior:command 的节点
+ 	
+ 	ltTarget 通常指的是实际触发事件的节点，
+ 	或者根据不同的事件，ltTarget的意义有所不同
+ 	
+ 	如果最后一个参数是behaviorParams，可以使用下面的语句得到 behaviorParams.he 
+ 	var ltSource = ..web.layout.element( behaviorParams.he )
+ 	ltSource在onMenuItemClick 事件中表示弹出菜单的源节点
+ 	*/
+ 	onButtonClick = function (ltTarget,ltEle,reason,behaviorParams) {
+		
+	}
+	
+	onMouseDown = function (ltTarget,ltEle, x,y,mouseParams) { 
+		..io.print("鼠标单击了,节点:",ltTarget.innerHTML )
+		
+		return true;//所有事件返回true终止事件.
+	} 
+	
+
+	
+	onMouseDblClick = function (ltTarget,ltEle, x,y,mouseParams) {
+		
+	} 
+	
+	onKeyDown = function (ltTarget,ltEle, keyCode, altState, keyParams) {
+		
+	}
+
+	onClick = function( ltEle ){
+		return true;
+	}
+	
+	onIsEmpty = function( ltEle ){
+		
+		return true,false;
+	}
+	 
+	onGetValue = function( ltEle ){
+
+		return true,返回值
+	}
+	onSetValue = function( ltEle,value ){
+
+		return true
+	}
+	
+	//所有不是on前缀的函数,都可以在CSS脚本中直接调用
+	func = function(ltEle,a,b,c){  
+		..io.print("调用了自定义函数，收到参数",a,b,c,ltEle.outerHTML)
+		return "返回新的值"
+	}
+}
+ 
+io.open()
+wbLayout.html =/***
+<div id="my-button" 属性="值">请点击这里</div> 
+***/
+
+
+wbLayout.css = /**
+#my-button{ 
+	behavior:button_command; 
+	active-on!:
+		self.func(1,2,3), //CSS脚本以逗号分隔语句
+	; 
+}
+**/
+ 
+winform.show() 
+win.loopMessage(); 
+

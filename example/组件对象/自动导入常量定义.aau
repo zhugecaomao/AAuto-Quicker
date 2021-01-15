@@ -1,0 +1,21 @@
+//导入常量定义
+//自动导入常量定义
+
+import com
+
+conn = com.CreateObject("ADODB.Connection") 
+var typeinfo = com.GetTypeInfo(conn)
+var typelib = typeinfo.GetTypeLib()
+var enums = typelib.ExportEnumerations()
+
+namespace ado{
+for k, v in enums.DataTypeEnum begin
+self[k] = v 
+end 
+}
+
+//测试一下
+io.open();
+io.print( ado.adChar )
+
+ 

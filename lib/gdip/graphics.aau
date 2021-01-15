@@ -1,0 +1,260 @@
+//graphics 画板对象
+namespace gdip 
+ 
+class graphics {
+	 
+	ctor(arg){
+		 
+		if(type(arg)==type.pointer)
+			this.pGraphics = gdip.assert(gdip.CreateFromHDC(arg) );
+		else{
+			if(type(arg)!=type.table) {
+				error("无效参数",2)
+			}
+			if(arg.hwnd){
+				this.pGraphics = gdip.assert(gdip.CreateFromHWND(arg.hwnd) );
+				this._hwnd = arg.hwnd;
+			}
+			else if(arg.hdc) {
+				this.pGraphics = gdip.assert(gdip.CreateFromHDC(arg.hdc) );
+				this._hdc = arg.hdc;
+			}
+			else if(arg.pImage) {
+				this.pGraphics = gdip.assert( gdip.GetImageGraphicsContext( arg.pImage ) ); 
+				this._image = arg;
+			}
+			else if(arg.pBitmap) {
+				this.pGraphics = gdip.assert( gdip.GetImageGraphicsContext( arg.pBitmap ) ); 
+				this._bitmap = arg;
+			}
+		} 	
+		if(!this.pGraphics)
+			error("无效参数)",2) 
+
+		 ..table.add_gc(this,"delete");	
+	}
+	 
+	@_metaProperty//元表指向属性表
+}
+ 
+namespace graphics{ 
+	gdip = ..gdip; 
+	
+	fromHdc = function(hdc){
+		return gdip.graphics( hdc = hdc ) 
+	}
+	
+	fromHwnd = function(hwnd){
+		return gdip.graphics( hwnd = hwnd ) 
+	}
+	
+	fromImage = function(image){
+		return gdip.graphics(image)	 
+	}   
+	
+	import util.metaProperty;//导入属性表支持库
+	_metaProperty = util.metaProperty(
+	 
+		smoothingMode = {
+			_get = function(){ 
+				return gdip.assert( gdip.GetSmoothingMode(owner[["pGraphics"]], 0) ); 
+			} 
+			_set = function(v){ 
+				gdip.assert( gdip.SetSmoothingMode(owner[["pGraphics"]], v) ); 
+			}  	
+		}; 
+		textRenderingHint = {
+			_get = function(){ 
+				return gdip.assert( gdip.GetTextRenderingHint(owner[["pGraphics"]], 0) ); 
+			} 
+			_set = function(v){ 
+				gdip.assert( gdip.SetTextRenderingHint(owner[["pGraphics"]], v) ); 
+			}  	
+		};  
+		clear = function(argb){
+			gdip.assert( gdip.GraphicsClear(owner[["pGraphics"]],argb) );
+			return owner;
+		};
+		rotate = function(angle,order){
+			gdip.assert( gdip.RotateWorldTransform(owner[["pGraphics"]],angle,order) );
+			return owner;
+		};
+		translate = function(dx,dy,order){
+			gdip.assert( gdip.TranslateWorldTransform(owner[["pGraphics"]],dx,dy,order) );
+			return owner;
+		};
+		setClipRectI = function(x, y,width,height,combineMd){
+			gdip.assert( gdip.SetClipRectI(owner[["pGraphics"]],x, y,width,height,combineMd) );
+			return owner;
+		};
+		resetClip = function(){
+			gdip.assert( gdip.ResetClip(owner[["pGraphics"]]) );
+			return owner;
+		};
+		fillPath = function(brush, strPath){
+			gdip.assert( gdip.FillPath(owner[["pGraphics"]], brush, strPath) ); 
+			return owner;
+		} ;
+		drawPath = function(pen, strPath){
+			gdip.assert( gdip.DrawPath(owner[["pGraphics"]], pen, strPath) ); 
+			return owner;
+		} ;
+		drawString = function( str, thefont, layoutRect,stringFormat,brush){
+			gdip.assert( gdip.DrawString(owner[["pGraphics"]], ..string.toUnicode(str),-1, thefont, layoutRect,stringFormat,brush) ); 
+			return owner;
+		};
+		drawLineI = function( pen,x1,y1,x2,y2){
+			gdip.assert( gdip.DrawLineI(owner[["pGraphics"]], pen,x1,y1,x2,y2 ) ); 
+			return owner;
+		};
+		drawLine = function( pen,x1,y1,x2,y2){
+			gdip.assert( gdip.DrawLine(owner[["pGraphics"]], pen,x1,y1,x2,y2 ) ); 
+			return owner;
+		};
+		drawRectangleI = function( pen,x1,y1,width,height){
+			gdip.assert( gdip.DrawRectangleI(owner[["pGraphics"]], pen,x1,y1,width,height) ); 
+			return owner;
+		};
+		drawRectangle = function( pen,x1,y1,width,height){
+			gdip.assert( gdip.DrawRectangle(owner[["pGraphics"]], pen,x1,y1,width,height) ); 
+			return owner;
+			return owner;
+		};
+		fillRectangleI = function( brush,x1,y1,width,height){
+			gdip.assert( gdip.FillRectangleI(owner[["pGraphics"]], brush,x1,y1,width,height) ); 
+			return owner;
+		};
+		fillRectangle = function( brush,x1,y1,width,height){
+			gdip.assert( gdip.FillRectangle(owner[["pGraphics"]], brush,x1,y1,width,height) ); 
+			return owner;
+		};
+		fillEllipseI = function( brush,x1,y1,width,height){
+			gdip.assert( gdip.FillEllipseI(owner[["pGraphics"]], brush,x1,y1,width,height) ); 
+			return owner;
+		};
+		fillEllipse = function( brush,x1,y1,width,height){
+			gdip.assert( gdip.FillEllipse(owner[["pGraphics"]], brush,x1,y1,width,height) ); 
+			return owner;
+		};  
+		drawImage = function( img,x1=0,y1=0 ){
+			gdip.assert( gdip.DrawImage(owner[["pGraphics"]], img,x1,y1,width,height) ); 
+			return owner;
+		};
+		drawImageI = function( img,x1=0,y1=0 ){
+			gdip.assert( gdip.DrawImageI(owner[["pGraphics"]], img,x1,y1,width,height) ); 
+			return owner;
+		};
+		drawImageRect = function( img,x1,y1,width,height){
+			gdip.assert( gdip.DrawImageRect(owner[["pGraphics"]], img,x1,y1,width,height) ); 
+			return owner;
+		};
+		drawImageRectI = function( img,x1,y1,width,height){
+			gdip.assert( gdip.DrawImageRectI(owner[["pGraphics"]], img,x1,y1,width,height) ); 
+			return owner;
+		};
+		drawImageRectRectI = function( img ,dstX,dstY,dstWidth,dstHeight,srcx,srcy,srcwidth,srcheight,srcUnit=2/*UnitPixel*/,imageAttributes=0,callback,callbackData){
+			gdip.assert( gdip.DrawImageRectRectI(owner[["pGraphics"]], img,dstX,dstY,dstWidth,dstHeight,srcx,srcy,srcwidth,srcheight,srcUnit,imageAttributes ,callback,callbackData) ); 
+			return owner;
+		} ; 
+		drawImagePointRectI = function( img ,dstX,dstY,srcx,srcy,srcwidth,srcheight,srcUnit=2/*UnitPixel*/){
+			gdip.assert( gdip.DrawImagePointRectI(owner[["pGraphics"]], img ,dstX,dstY,srcx,srcy,srcwidth,srcheight,srcUnit  ) ); 
+			return owner;
+		};
+		drawImagePointRect = function( img ,dstX,dstY,srcx,srcy,srcwidth,srcheight,srcUnit=2/*UnitPixel*/){
+			gdip.assert( gdip.DrawImagePointRect(owner[["pGraphics"]], img ,dstX,dstY,srcx,srcy,srcwidth,srcheight,srcUnit ) ); 
+			return owner;
+		} ; 
+		setInterpolationMode = function( interpolation){
+			gdip.assert( gdip.SetInterpolationMode(owner[["pGraphics"]], interpolation) );
+			return owner;
+		};
+		save = function(){
+			owner.lastSaveState = gdip.assert( gdip.SaveGraphics(owner[["pGraphics"]], 0) ); 
+			return owner.lastSaveState;
+		};
+		restore = function( state ){
+			gdip.assert( gdip.RestoreGraphics(owner[["pGraphics"]], state : owner.lastSaveState  ) );
+			return owner;
+		}; 
+		delete = function(){
+			if( owner[["pGraphics"]] ){
+				gdip.DeleteGraphics(owner[["pGraphics"]])
+				owner[["pGraphics"]] = null;//让其他的函数都用不了 
+			}
+		};  
+		//自动转换为API指针
+		_topointer = function(){
+			return owner[["pGraphics"]];
+		} ;
+	)   
+} 
+
+
+/**intellisense() 
+gdip.graphics.fromHwnd() = 使用指定的窗口创建画板
+gdip.graphics.fromImage() = 使用gdip.image对象创建画板
+gdip.graphics(__/*请输入设备句柄hdc*/) =  创建画板
+!gdipgraphics.smoothingMode = @.smoothingMode = _GdipSmoothingMode__ ;
+!gdipgraphics.width = 宽度
+!gdipgraphics._image = 创建画板时使用的gdip.image对象\n!gdipimage.
+!gdipgraphics._hwnd = 创建画板时使用的句柄
+!gdipgraphics._bitmap = 创建画板时使用的gdip.bitmap对象\n!gdipbitmap.
+!gdipgraphics._hdc = 创建画板时使用的设备上下文
+?gdip.graphics = !gdipgraphics.
+gdip.graphics() = !gdipgraphics.
+?gdip.graphics.fromHwnd = !gdipgraphics.
+?gdip.graphics.fromImage = !gdipgraphics.
+!gdipgraphics.restore(__/*状态索引*) = 恢复到指定状态,\n状态索引值由save()函数的返回值获得\n不指定参数则撤消最近一次存储状态
+!gdipgraphics.save() = 存储状态,并返回状态索引( 可作为restore()函数的参数 )
+!gdipgraphics.delete() = 释放图像\n此对象支持自动释放,不必手工调用此函数\n!gdipgraphics.
+!gdipgraphics.setClipRectI(.(左,上,右,下,选项) = 设置一块剪辑区域(限制绘图区块);
+!gdipgraphics.resetClip() = 取消剪辑 \n!gdipgraphics.
+!gdipgraphics.setInterpolationMode() = !gdipgraphics.
+!gdipgraphics.rotate() = !gdipgraphics.
+!gdipgraphics.translate() = !gdipgraphics.
+!gdipgraphics.setClipRectI() = !gdipgraphics.
+!gdipgraphics.drawImage() = !gdipgraphics.
+!gdipgraphics.drawImageI() = !gdipgraphics.
+!gdipgraphics.drawImageRect() = !gdipgraphics. 
+!gdipgraphics.drawImageRectI() = !gdipgraphics.
+!gdipgraphics.drawImageRectRectI() = !gdipgraphics.
+!gdipgraphics.drawImagePointRectI() = !gdipgraphics.
+!gdipgraphics.drawImagePointRect() = !gdipgraphics.
+!gdipgraphics.clear() = !gdipgraphics.
+!gdipgraphics.fillPath() = !gdipgraphics.
+!gdipgraphics.drawPath() = !gdipgraphics. 
+!gdipgraphics.drawString() = !gdipgraphics.
+!gdipgraphics.drawLineI() = !gdipgraphics.
+!gdipgraphics.drawLine() = !gdipgraphics.
+!gdipgraphics.drawRectangleI() = !gdipgraphics.
+!gdipgraphics.drawRectangle() = !gdipgraphics.
+!gdipgraphics.fillRectangleI() = !gdipgraphics.
+!gdipgraphics.fillRectangle() = !gdipgraphics.
+!gdipgraphics.fillEllipseI() = !gdipgraphics.
+!gdipgraphics.fillEllipse() = !gdipgraphics.
+
+!gdipgraphics.setInterpolationMode(__/*请输入参数*/) = 设置图像缩放时的插值模式
+!gdipgraphics.rotate(10, _GdipMatrix__ ) = 旋转画布 
+!gdipgraphics.translate( 水平偏移, 垂直偏移, _GdipMatrix__) = 平移画布 
+!gdipgraphics.setClipRectI( 左, 上, 宽, 高, _GdipCombineMode__) = 设置一块剪辑区域(限制绘图区块)
+!gdipgraphics.drawImage(.(图像,左,上) = 普通画图 
+!gdipgraphics.drawImageI(.(图像,左,上) = 普通画图 
+!gdipgraphics.drawImageRect(.(图像,左,上,宽,高) = 画图 
+!gdipgraphics.drawImageRectI(.(图像,左,上,宽,高) = 画图 
+!gdipgraphics.drawImageRectRectI(.(图像, 输出左,输出上,输出宽,输出高,左,上,宽,高 ) = 将图像的找定区块输出到指定区块
+!gdipgraphics.drawImagePointRectI(.(图像, 输出左,输出上,左,上,宽,高 ) = 将图像的找定区块输出到指定坐标
+!gdipgraphics.drawImagePointRect(.(图像, 输出左,输出上,左,上,宽,高 ) = 将图像的找定区块输出到指定坐标
+!gdipgraphics.clear(0xFFFFFFFF__) = 用指定的颜色清空画板 
+!gdipgraphics.fillPath(.(brush, strPath) = 填充路径  
+!gdipgraphics.drawPath(.(pen, strPath) = 画路径 
+!gdipgraphics.drawString(.(str, thefont, layoutRect,stringFormat,brush) = 输出文本
+!gdipgraphics.drawLineI(.(pen,x1,y1,x2,y2) = 画线
+!gdipgraphics.drawLine(.(pen,x1,y1,x2,y2) = 画线
+!gdipgraphics.drawRectangleI(.(pen,x1,y1,width,height) = 画方块
+!gdipgraphics.drawRectangle(.(pen,x1,y1,width,height) = 画方块
+!gdipgraphics.fillRectangleI(.(brush,x1,y1,width,height) = 填充方块
+!gdipgraphics.fillRectangle(.(brush,x1,y1,width,height) = 填充方块
+!gdipgraphics.fillEllipseI(.(brush,x1,y1,width,height) = 画圆形、或椭圆
+!gdipgraphics.fillEllipse(.(brush,x1,y1,width,height) = 画圆形、或椭圆 
+ 
+end intellisense**/

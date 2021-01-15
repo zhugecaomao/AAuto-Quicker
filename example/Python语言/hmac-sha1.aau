@@ -1,0 +1,23 @@
+import console;
+import py;
+
+pyCode = /**
+def sign_request():
+    from hashlib import sha1
+    import hmac
+    import binascii
+    key = "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
+    raw = "Hi There" # as specified by oauth
+    hashed = hmac.new(key, raw, sha1)
+    return binascii.b2a_base64(hashed.digest())[:-1]
+**/
+py.run( pyCode )
+
+__main__ = py.addModule("__main__") //创建模块对象
+sign_request = __main__.get("sign_request")  //返回函数对象
+var ret = sign_request.call().parseString()  //调用函数并获取返回值
+
+//上面的代码也可以简写为一句, io.print() 自动调用 tostring( ret )
+console.log( __main__.sign_request()  )  
+
+console.pause(true);

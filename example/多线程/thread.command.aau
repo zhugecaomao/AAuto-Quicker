@@ -1,0 +1,36 @@
+//线程命令订阅模式
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( bottom=399;parent=...;right=599;text="AAuto Form" )
+winform.add( 
+edit={ bottom=273;right=521;left=66;multiline=1;top=52;z=1;edge=1;cls="edit" }
+)
+/*}}*/
+
+import thread.command;
+var 订阅者 = thread.command();
+订阅者.自定义线程命令 = function(...){
+	winform.edit.appendText('\n',...) //将参数追加输出到文本框
+} 
+订阅者.自定义线程命令2 = function(...){
+	winform.edit.appendText('\n',...) //将参数追加输出到文本框
+}  
+ 
+//创建线程
+thread.create( 
+	function(hwnd){
+	
+		import thread.command 
+		
+		//如果不指定窗口,所有订阅了此命令的窗口相应函数都会被调用
+		thread.command.post("自定义线程命令","线程调用",",线程调用参数2",'\r\n') 
+		
+		//也可以显式指定窗口,仅触发指定窗口的命令
+		thread.command.post(hwnd,"自定义线程命令2","线程调用",'\r\n')
+		
+	},订阅者._form.hwnd
+)
+
+winform.show() 
+ 
+win.loopMessage(); 

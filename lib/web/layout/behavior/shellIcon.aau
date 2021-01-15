@@ -1,0 +1,35 @@
+//shellicon ÎÄ¼þÍ¼±ê
+
+import win.imageList;
+namespace web.layout.behavior.shellIcon;
+
+SHGetFileInfo := ::Shell32.api("SHGetFileInfoA","pointer(string pszPath, INT fileAttributes,struct &psfi,INT cbFileInfo, INT uFlags)" );
+
+class SHFILEINFO {
+	pointer hIcon; 
+	int iIcon; 
+	INT dwAttributes;
+	byte szDisplayName[0x104/*_MAX_PATH*/];
+	byte szTypeName[80];
+} 
+
+onDrawContent = function(ltEle,hdc,rc){ 
+	var filename = ltEle.filename;
+	if( !filename )
+		return;  // no such attribute at all.
+	
+	var  sfi = SHFILEINFO();
+	var hList = SHGetFileInfo( filename, 0, sfi, ..raw.sizeof(sfi)
+		, 0x10/*_SHGFI_USEFILEATTRIBUTES*/ | 0x4000/*_SHGFI_SYSICONINDEX*/ | 0x1/*_SHGFI_SMALLICON*/ );
+		
+	if(!hList)return; 
+ 	var imgList = ..win.imageList(hList) 
+  	var x = rc.left + (rc.right - rc.left - imgList.width) / 2;
+    var y = rc.top + (rc.bottom - rc.top - imgList.height) / 2;
+
+    //draw_file_icon(hdc, x, y, filename);
+ 	imgList.draw( sfi.iIcon, hdc, x, y, 1/*_ILD_TRANSPARENT*/); 
+ 	
+ 	return true; /*skip default draw as we did it already*/ 
+} 
+

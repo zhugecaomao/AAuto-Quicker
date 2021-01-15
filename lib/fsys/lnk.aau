@@ -1,0 +1,178 @@
+//lnk 快捷方式
+import fsys; 
+import util.metaProperty
+import com.interface.IShellLink;
+
+namespace fsys;
+ 
+class lnk{
+	ctor( path ){
+		this.shell = ..com.interface.create("{00021401-0000-0000-C000-000000000046}",..com.interface.IShellLink );
+		this.file = this.shell.QueryInterface(..com.interface.IPersistFile)  
+	}; 
+	load = function(path){
+		var hr = this.file.Load( ..string.toUnicode( path ) ,0);
+		if( (hr)<0/*FAILED*/ )
+			return false,..lasterr(hr) 
+		return true;
+	} 
+	save = function(path,remember=true){
+		var hr = this.file.Save(..string.toUnicode( path ) ,remember/*是否设为当前路径*/);
+		if( (hr)<0/*FAILED*/ )
+			return false,..lasterr(hr); 
+		return true;
+	}  
+ 	getIcon = function(){
+		var hr,location,index = this.shell.GetIconLocation(1024,1024,0);
+		if( (hr)<0/*FAILED*/ )
+			return false,..lasterr(hr); 
+		return location,index;
+	}  
+	setIcon = function(location,index){
+		var hr = this.shell.SetIconLocation(location,index);
+		if( (hr)<0/*FAILED*/ )
+			return false,..lasterr(hr); 
+		return true;
+	}   
+	@_metaProperty
+} 
+lnk._metaProperty = ..util.metaProperty(
+
+	description = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetDescription(256, 256);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetDescription(value);
+		} 	
+	};
+
+	arguments = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetArguments(256, 256);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetArguments(value);
+		} 	
+	};
+	
+	path = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetPath(1024, 1024, {}, 0x2/*_SLGP_UNCPRIORITY*/);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetPath(value);
+		} 	
+	};
+	
+	workDir = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetWorkingDirectory(1024, 1024);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetWorkingDirectory(value);
+		} 	
+	};
+ 
+	hotkey = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetHotkey(0);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetHotkey(value);
+		} 	
+	};
+	
+	showCmd = {
+		_get = function(){ 
+			var hr,value =  owner.shell.GetShowCmd(0);
+			if( (hr)>=0/*SUCCEEDED*/)
+				return value;
+		}
+		_set = function( value ){
+			owner.shell.SetShowCmd(value);
+		} 	
+	};
+	
+)
+
+/**intellisense()
+!lnkfile.description = 附加说明
+!lnkfile.arguments = 参数
+!lnkfile.path = 目标路径
+!lnkfile.workDir = 工作目录
+!lnkfile.hotkey = 热键
+!lnkfile.showCmd = 显示参数
+!lnkfile.getIcon() = 返回图标文件路径,以及路标索引
+!lnkfile.setIcon(.(文件路径,图标索引) = 设置图标
+!lnkfile.load(__/*lnk文件*/) = 载入快捷方式
+!lnkfile.save(__/*lnk文件*/) = 保存快捷方式
+?fsys.lnk = !lnkfile.
+end intellisense**/ 
+
+ 
+namespace lnk {
+
+	enum = function(dir,proc){
+		var lnk = ..fsys.lnk();
+		var dir = ..fsys.getSpecial(dir);
+		if(!dir)
+			return;
+    	..fsys.enum( dir , 
+            "*.lnk", 
+            function(dir,filename,fullpath){ 
+                if(filename){   
+                    if( lnk.load( fullpath ) ){ 
+                    	return proc( dir,filename,fullpath, ..string.lower(lnk.path) )
+                    } 
+                }    
+            } 
+        )
+        lnk = null;	
+	}
+	  
+	searchLnk =function(pattern,lable,dir){
+    	pattern = pattern ? ..string.lower(pattern)  
+    	var retpath;
+    	enum( dir, 
+            function(dir,filename,fullpath,target){ 
+                target  =  ..string.lower(target);
+                if( ( !lable || ..string.cmp_match( filename,lable ) ) &&  ( !pattern  ||  ..string.find( target,pattern))){
+                    retpath = target 
+                    return false;
+                }    
+            } 
+        ); 
+   		return retpath;
+	}
+ 	
+	search = function(filename,lable,dir){ 
+		var dir = ..io.localpath("\");
+		
+		return ( filename ? ..fsys.searchFile(filename) )
+			|| searchLnk( filename,lable, 0 /*_CSIDL_DESKTOP*/  )
+			|| searchLnk( filename,lable, 2 /*_CSIDL_PROGRAMS*/ ) 
+			|| searchLnk( filename,lable, 0x19 /*_CSIDL_COMMON_DESKTOPDIRECTORY*/  )
+			|| searchLnk( filename,lable, 0x17 /*_CSIDL_COMMON_PROGRAMS*/ ) 
+	}
+
+}
+
+/**intellisense(fsys.lnk) 
+searchLnk("文件名","快捷方式标题", 0 /*_CSIDL_DESKTOP*/ /) = 在桌面搜索快捷方式并返回路径
+searchLnk("文件名","快捷方式标题", 2 /*_CSIDL_PROGRAMS*/) = 在程序目录搜索快捷方式并返回路径
+search(.("文件名","快捷方式标题") = 全部参数可选,至少输入一个参数\n按下列顺序搜索文件: 桌面快捷方式、应用程序快捷方式\n查找支持模式匹配语法,忽略大小写\n快捷方式标题支持普通文本比较
+enum = @.enum( \n	0 /*_CSIDL_DESKTOP*/ , \n    function(dir,filename,fullpath,target){ \n        /*return false 停止遍历*/  \n    } \n); 
+end intellisense**/
+
+

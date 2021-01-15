@@ -1,0 +1,25 @@
+//共享web窗体会话
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( bottom=399;parent=...;text="共享web窗体会话";right=599;scroll=1 )
+winform.add(  )
+/*}}*/
+
+import web.form;
+import web.httpHandler;
+
+var wb = web.form( winform  ); 
+wb.go("http://www.baidu.com")  
+winform.show(); 
+
+if( web.httpHandler.session  )
+	wb.write( tostring( web.httpHandler.session ) )
+else {
+	wb.html = /**
+			web窗体在进程中使用同一个会话句柄，必须在当前进程第一次调用web窗体打开网页以前 import web.httpHandler;
+	**/
+}  
+ 
+//启动消息循环
+win.loopMessage();
+return winform,wb;

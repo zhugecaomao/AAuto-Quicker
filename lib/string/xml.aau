@@ -1,0 +1,225 @@
+//xml 简单xml解析
+namespace string;
+
+var push = ..table.push;
+var pop = ..table.pop;
+var sub = sub;
+var trim = trim;
+var find = find;
+var match = match; 
+var format = format;
+
+var nodePrototype = {
+	enumNodes = function(p,tagName){
+		for(index,tagName,childCount,xNode in owner.eachChild(tagName) ){
+			var ret,ret2 = p(owner,index,tagName,childCount,xNode)
+			if( ( ret !== null ) && ( !ret ) ) return ret,ret2;
+		}
+		for(index,tagName,childCount,xNode in owner.eachChild(tagName) ){
+			var ret,ret2 = xNode.enumNodes(p,tagName);
+			if( ( ret !== null ) && ( !ret ) ) return ret,ret2;
+		}
+	};
+	queryEles = function(opt){
+		var cmp = ..string.cmp_match;
+		
+		var attr; 
+		var result = {}
+		var ok,ele = owner.enumNodes( 
+			function(parentElement,index,tagName,childCount,xNode){ 
+				for(k,v in opt){
+					attr = xNode[k]
+					if( ( attr!=v ) && ( ! cmp( attr,v ) )  )
+						return;
+				} 
+				push( result,xNode ) 
+			}
+		);	
+		return result;
+	};
+	eachChild = function(tagName){
+		var root = owner;
+		if( tagName ) root = owner[tagName];
+		
+		var len = #root; 
+		return function(ind){
+			ind++;
+			if(ind<=len){
+				var node = root[ind];
+				return ind,node.tagName,#node,node;
+			}
+		}, ,0
+	};
+	innerText = function(){
+		var children = {};
+		for(i=1;#owner;1){
+			if( !owner[i].tagName && owner[i].text )
+				push(children,owner[i].text );
+			else 
+				push(children,owner[i].innerText() ) 
+		}
+		return ..string.join( children,"")
+	};
+	innerXml = function(line='\r\n'){
+		var children = {};
+		for(i=1;#owner;1){
+			push(children,owner[i].outerXml(line) );
+		}
+		return ..string.join( children,"");
+	};
+	outerXml = function(line='\r\n'){
+		var prop = {""};
+		var tv;
+		
+		if( ( !owner.tagName ) ){
+			if( owner.text )
+				return owner.text;
+				
+			if( owner.cdata )
+				return '<![CDATA['+ owner.cdata +']]>' + line;
+		}
+		 
+		for(k,v in owner){ 
+			if( type(k) != "string" || k =="tagName"  )
+				continue;
+				
+			if( v ){
+				tv = type(v);
+				if( tv != "string" && tv!="number" && tv !="boolean" )
+					continue ;
+			};
+				;
+			push(prop, k + '="' + tostring(v) + '"' );
+		}
+		prop = #prop > 1 ? ..string.join( prop," ") : "" ;
+		 
+		if( ! owner.tagName ){ 
+			return owner.innerXml(line);
+		}
+		
+		var innerXml = owner.innerXml(line);
+		if( owner.tagName[1] == '?'# ){
+			return format('<%s%s>%s', owner.tagName, prop,line )
+		} 
+		if(innerXml){
+			return format('<%s%s>%s%s</%s>%s', owner.tagName
+				, prop , line, innerXml, owner.tagName ,line )
+		}
+		else {
+			return format('<%s%s/>%s', owner.tagName, prop,line )
+		}
+	}
+}
+
+var eleMeta = { _get = nodePrototype;_tostring = nodePrototype.outerXml }
+var function pushEle(parent,ele){
+	if(ele.tagName){
+		parent[ele.tagName] = type(parent[ele.tagName])==type.table?parent[ele.tagName]:{};
+		push( parent[ele.tagName],ele );
+	}
+	push( parent,ele ); 
+	ele@ = eleMeta;
+} 
+	
+var function parseProperties (ele, str) { 
+	replace(
+		str, 
+		"([\w_:]+)\s*=\s*([""'])(.*?)\2", 
+		function (w, a, b){
+    		ele[w] = b
+		} 
+	) 
+}
+ 
+class xml{
+	ctor( xmlstr ){
+		if(!xmlstr) error("XML文本参数不能为空",2);
+		
+		var nodeStack = {};
+		var topNode = this;
+		push(nodeStack, topNode);  
+ 	
+		var strfrom = 1;  
+		var tagfrom,tagto //find pos
+				,slash_front ,tagName ,properties, slash_back = find(xmlstr, "\<([\/]?)(<[\?\w_:]+>|<:+>)(.*?)([\/\?]?)\>", strfrom);
+				
+		while(tagfrom) { 
+		
+			var innerText = sub(xmlstr, strfrom, tagfrom-1)
+			var innerText = trim(innerText);
+			if( #innerText ){ 
+				push(topNode, { text = innerText;@eleMeta } )  
+			}
+			
+			if #slash_back   {  
+				// e.g. <tagName />
+				var tab = {  tagName=tagName }
+				parseProperties( tab,properties);
+				pushEle(topNode,tab)
+			}
+			elseif slash_front  != "/"  {  
+			 	// e.g. <tagName prop="value" >
+				topNode = { tagName=tagName }
+				parseProperties( topNode,properties);
+				push(nodeStack, topNode);
+			}
+			else {
+				// e.g. </tagName>
+				var ele = ..table.pop(nodeStack)
+				topNode = nodeStack[#nodeStack]
+			 	
+				if #nodeStack < 1 {
+					error("nothing to close with "+ tagName)
+				}
+				if ele.tagName != tagName {
+					error("trying to close <" + ele.tagName + "> with </" + tagName + ">")
+				}
+				pushEle(topNode, ele)
+			}
+			
+			strfrom = tagto+1 
+			tagfrom,tagto,slash_front ,tagName,properties, slash_back = find(xmlstr, "\<([\/]?)(<[!\?\w_:]+>|<:+>)(.*?)([\/\?]?)\>" , strfrom);
+				 
+			if( tagfrom && xmlstr[tagfrom+1]=='!'#  ) { 
+				//e.g <![CDATA[ ..... ]]>
+				if( sub(xmlstr,tagfrom,tagfrom+8 ) == "<![CDATA[" ){ 
+					var cdata = match(xmlstr,"(.*?)<@]]>@>", tagfrom+9)
+					if(cdata){  
+						pushEle( topNode,{cdata=cdata} )
+						strfrom = tagfrom + 12 + #cdata
+						tagfrom,tagto,slash_front ,tagName,properties, slash_back =  find(xmlstr, "\<([\/\?]?)(<[!\w_:]+>|<:+>)(.*?)([\/\?]?)\>" , strfrom);
+					}
+				} 
+			}
+		}
+		
+		var innerText = sub(xmlstr, strfrom)
+		var innerText = trim(innerText);
+		if( #innerText ){  
+			push(nodeStack[#nodeStack], { text = innerText ;@eleMeta;} )
+		}
+	  	
+		if #nodeStack> 1 {
+			error("unclosed " + nodeStack[#nodeStack].tagName)
+		} 
+	};
+	@eleMeta;
+}
+
+/**intellisense()
+string.xml = xml解析
+string.xml(__/*xml字符串*/) = 创建xml对象.
+?string.xml = !string_xml.
+!string_xml.eachChild(标签名) = @for(index,tagName,childCount,xNode in ??.eachChild(__/*标签名*/) ){
+	io.print( index,tagName,childCount,xNode ) 
+}
+!string_xml.outerXml() = 转换为XML文本,\n可在参数中自定义换行符
+!string_xml.innerXml() = 将子节点转换XML文本,\n可在参数中自定义换行符
+!string_xml.innerText() = 返回节点内部文本
+!string_xml.queryEles(查询条件) = @.queryEles(\n	tagName = "?xml";\n)
+!string_xml.queryEles() = !string_xml.
+!string_xml.enumNodes(枚举函数,节点名) = @.enumNodes( \n	function(parentElement,index,tagName,childCount,xNode){ \n	\n	},__/*可选指定节点名*/\n)
+!string_xml.tagName = 节点标签名 
+!string_xml.eachChild() = !string_xml.
+end intellisense**/
+ 

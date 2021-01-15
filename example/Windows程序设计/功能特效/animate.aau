@@ -1,0 +1,44 @@
+//窗口动画演示
+import win.ui;
+import win.animate;
+/*DSG{{*/
+var winform = win.form(parent=...; right=400;text="动画窗口演示  by wudijushi";bottom=202 )
+winform.add( 
+lbTip={ right=394;bottom=67;text="";left=20;top=43;font=LOGFONT( name="宋体";h=-12 );z=4;transparent=1;cls="static" };
+btnDemo={ bottom=193;text="Cool.......";left=14;top=65;font=LOGFONT( name="宋体";h=-12 );z=3;right=387;cls="button" };
+showbutton={ disabled=1;bottom=34;text="显示窗口效果";left=288;top=5;font=LOGFONT( name="宋体";h=-12 );z=1;right=381;cls="button" };
+hidebutton={ bottom=35;text="隐藏窗口效果";left=184;top=6;font=LOGFONT( name="宋体";h=-12 );z=2;right=277;cls="button" };
+lbFlag={ right=48;bottom=31;text="效果";left=14;top=13;z=6;transparent=1;cls="static" };
+combobox={ bottom=29;text="";left=52;
+items={ "左上至右下 滑行效果";"右上至左下 滑行效果";"左下至右上 滑行效果";"右下至左上 滑行效果";"左至右 滑行效果";"右至左 滑行效果";"上至下 滑行效果";"下至上 滑行效果";'中心<=">四周 滑行效果"';"左上至右下 淡入淡出";"右上至左下 淡入淡出";"左下至右上 淡入淡出";"右下至左上 淡入淡出";"左至右 淡入淡出";"右至左 淡入淡出";"上至下 淡入淡出";"下至上 淡入淡出";'中心<=">四周 淡入淡出 "' };right=178;z=5;top=9;mode="dropdown";edge=1;cls="combobox" }
+)
+/*}}*/
+
+winform.combobox.oncommand = function(id,event){
+	if(event==0x1/*_CBN_SELCHANGE*/){
+		winform.lbTip.text = string.format("win.animate.%s(winform.btnDemo.hwnd,-%d)"
+			,winform.hidebutton.disabled?"show":"hide"
+			,winform.combobox.selIndex )
+	} 
+} 
+winform.combobox.selIndex = 1
+winform.combobox.oncommand(0,0x1/*_CBN_SELCHANGE*/);
+ 
+winform.hidebutton.oncommand = function(id,event){
+	win.animate.hide(winform.btnDemo.hwnd,-winform.combobox.selIndex);
+	winform.showbutton.disabled = false;
+	winform.hidebutton.disabled = true;
+	winform.combobox.oncommand(0,0x1/*_CBN_SELCHANGE*/);
+}
+
+winform.showbutton.oncommand = function(id,event){
+	win.animate.show(winform.btnDemo.hwnd,-winform.combobox.selIndex);
+	winform.showbutton.disabled = true;
+	winform.hidebutton.disabled = false;
+	winform.combobox.oncommand(0,0x1/*_CBN_SELCHANGE*/);
+}
+ 
+winform.show(true)
+
+win.loopMessage();
+return winform;

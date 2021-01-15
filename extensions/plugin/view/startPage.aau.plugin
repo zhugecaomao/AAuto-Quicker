@@ -1,0 +1,112 @@
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( exmode="none";bottom=399;parent=...;text="开始页.....";left=0;border="none";top=0;scroll=1;mode="child";right=599 )
+winform.add(  )
+/*}}*/
+
+import ide;
+import web.layout;
+
+var wbLayout = web.layout(winform);   
+wbLayout.go("\res\start-page.htm")  
+wbLayout.wait();
+ 
+import string.xml;
+getProjectInfo = function(path){
+ 
+	var xmlstr = string.load(path); 
+	if(!xmlstr) return;
+	
+	var xmlDoc = string.xml( xmlstr )
+ 	if(!xmlDoc) return;
+
+
+	var project = xmlDoc.queryEles( tagName = "project"); 
+	if(!project) return;
+	return project[1];
+}
+
+var recentList = {};
+var cfgRecentProject = ..string.load("~/config/RECENT.PROJECT.TABLE");
+if( cfgRecentProject ){
+	try{
+		recentList = eval(cfgRecentProject)
+	} 
+}
+
+loadRecentProject = function(){
+	var ltList = wbLayout.getEle("recent-projects-list"); 
+	ltList.innerHTML = "";
+	
+	if( #recentList ){ 
+		for(i=1;#recentList;1){
+			var inf = getProjectInfo( recentList[i] );
+			if(!inf) continue;
+			ltList.printf( '<li href="%s" title="%s" name="recent-project-item">%s <button name="delete-project"><img src="images/delete.png"/> </button></li> '
+				,recentList[i],recentList[i],inf.name ); 
+		}
+	}
+	else {
+		ltList.innerHTML =  '<li href="http://api.aau.cn/aauto/doc/first-project" >我的第一个工程</li>'
+	}	
+}
+loadRecentProject(); 
+
+import process;
+wbLayout.sinking = { 
+	onHyperlinkClick = {
+		["recent-project-item"] = function (ltTarget,ltEle,reason,behaviorParams) {
+			
+			var path = ltEle.href; 
+			if( io.exist(path) ){ 
+				ide.openDocument(path);
+			}
+			return true;
+		}
+		["create-project"] = function (ltTarget,ltEle,reason,behaviorParams) { 
+			ide.createDialogProject();
+			return true;
+		}
+		["open-project"] = function (ltTarget,ltEle,reason,behaviorParams) { 
+			import fsys.dlg;
+			var defDir = ide.getConfig("project_default_dir");
+			if(#recentList) defDir = ..fsys.getParentDir( recentList[1] ); 
+			var path = fsys.dlg.open("AAuto工程文件|*.aproj||","请选择要打开的快手工程文件",defDir,ide.getMainHwnd(),,"default.aproj")
+			if( path ? io.exist(path) ){ 
+				ide.openDocument(path);
+			}
+			return true;
+		}
+		["default"] = function (ltTarget,ltEle,reason,behaviorParams) {
+			var path = ltEle.href; 
+			if(path)process.execute(path);
+			return true;
+		}
+	}
+}
+wbLayout.onButtonClick = {
+	["delete-project"] = function (ltTarget,ltEle,reason,behaviorParams) {
+		var idx = ltEle.parent().index();
+		table.remove(recentList,idx);
+		..string.save("~/config/RECENT.PROJECT.TABLE", table.tostring(recentList))
+		ltEle.parent().delete();
+	}
+}
+ 
+//winform.show();
+ide.pluginViewShow(winform)  
+
+var htmlNews = win.invoke(
+	function(){
+		import inet.whttp;
+		return inet.whttp().get("http://api.aau.cn/aauto/api/start-page-news")
+	}  
+)
+if( htmlNews ) {
+	wbLayout.getEle("start-page-news").innerHTML = htmlNews;
+}
+else {
+	wbLayout.getEle("start-page-news").innerHTML = "<li href='#'>获取官网最新消息失败......<li>"
+}
+
+win.loopMessage();

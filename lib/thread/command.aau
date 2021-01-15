@@ -1,0 +1,94 @@
+//command 线程命令
+import win.ui;
+import thread.table;
+namespace thread;
+
+class command{
+	ctor( winform ){ 
+		if(!winform){
+			winform = ..win.form( {} );
+			winform.messageOnly();
+		}
+		this._form = winform;
+		this._commands = {};
+		
+		if( winform.__onThreadCommand ){
+			error("目标窗口已绑定线程命令,禁止重复绑定!",2)
+		}
+		
+		winform.__onThreadCommand  = function( cmdId ){
+        	return receive( this._commands,cmdId);
+		}
+		
+		..table.add_gc(this,function(){
+			for(name in this._commands ){
+				 this[name] = null;
+			} 
+		});
+	};
+	@_meta;
+}
+ 
+namespace command {  
+	var commandTable = ..thread.table("{3EA9E65D-B101-42AF-93D7-08522F8841CD}")
+ 	
+ 	_meta = {
+		_set = function(k,v){
+			commandTable.setByNamespace("subscribe['"+k+"'][" + owner._form.hwnd + "]",v?true:null)
+			owner._commands[k] = v;
+		}
+	};
+ 	var sendCmd = function( sendApi,hwnd,method,... ){  
+ 		var ret;
+ 		var t = type(hwnd); 
+		if( t == "string" ){
+			var realName = hwnd;
+			var sendTable = {realName;method;...};
+			var subscribe = commandTable.getByNamespace("subscribe['"+realName+"']");
+			
+			
+			for(hwnd in subscribe){
+				var id = commandTable.push(sendTable); 
+				ret = sendApi(hwnd,0x4CC/*_WM_THREAD_COMMAND*/,id,0)
+			} 
+		}
+		elseif(t == "number" ){
+			var sendTable = {method;...}; 
+			var id = commandTable.push( sendTable ); 
+			ret = sendApi( hwnd,0x4CC/*_WM_THREAD_COMMAND*/,id,0);
+		};
+		return ret;
+	}
+ 	
+	send = function( ... ){
+		return sendCmd(::SendMessageInt,... );
+	}
+	
+	post = function( ... ){
+		sendCmd(::PostMessage,... );
+	} 
+	
+	receive = function( methodTable,wParam ){ 
+		var args = commandTable.get(wParam) 
+		commandTable.set(wParam,null); 
+		var action = ..table.remove(args); 
+		var method = methodTable[action]
+		if(type(method)=="function"){ 
+			return invoke(method,methodTable, ..table.unpack( args) )	
+		}
+	} 
+}
+
+/**intellisense()
+thread.command.post(.(窗口句柄,"命令函数名",其他参数) = 不阻塞调用跨线程命令 
+thread.command.post(.("命令函数名",其他参数) = 不阻塞调用跨线程命令,\n不指定窗口句柄,所有同名的线程命令函数都会被调用
+thread.command.send(.(窗口句柄,"命令函数名",其他参数) = 阻塞调用跨线程命令,\n可获取回调函数的数值返回值
+thread.command.send(.("命令函数名",其他参数) = 阻塞调用跨线程命令\n不指定窗口句柄,所有同名的线程命令函数都会被调用,\n可获取最后一个回调函数的数值返回值
+thread.command(.(窗口对象) = 创建线程命令对象\n省略参数则创建 message only window,\n该对象定义的成员函数,都可在其他线程中用 thread.command.post()调用
+thread.command() = !thread_command.
+!thread_command.自定义函数名 = @.命令函数 = function(__/*支持不定个数参数*/){
+	
+}
+!thread_command._form = 窗体对象\n!winform.
+_WM_THREAD_COMMAND=@0x4CC/*_WM_THREAD_COMMAND*/
+end intellisense**/

@@ -1,0 +1,84 @@
+//cur 鼠标指针
+namespace win.cur;
+import win.image;
+
+GetCursor = ::User32.api("GetCursor","pointer()")
+SetCursor = ::User32.api("SetCursor","int(pointer hCursor)")
+  
+
+//记录load.....函数最后一次加载的鼠标指针
+var lastcur;
+
+loadfile = function(file){
+	if(beginning)
+		return;
+		 
+	lastcur = win.image.loadCursorFromFile(file) ;
+	return lastcur;
+}
+
+load = function(id,instance){ 
+	if(beginning)
+		return;
+		 
+	lastcur = win.image.loadCursor( id,instance );
+	return lastcur;
+}
+
+getCur= function(){
+	return GetCursor();
+}
+
+setCur = function( hcur ){
+	if(beginning)
+		return;
+		
+	hcur := lastcur;
+	return SetCursor( hcur )
+}
+
+//消息观察函数，用于持续设置鼠标指针
+var waitproc = function(msg){ 
+	if(msg.message==0x200/*_WM_MOUSEMOVE*/  ){ 
+		SetCursor( lastcur ); 
+		return false;
+	} 
+}	
+		
+//设置一个鼠标指针
+beginCur = function(hcur){ 
+	if(hcur){ 
+		lastcur = hcur;
+	} 
+	if(beginning)
+		return;
+	
+	beginning = true;
+	..win.loopMessage( waitproc) 
+}
+
+endCur = function(){
+	..win.loopMessage( waitproc,false)
+	beginning = false;
+}
+
+beginWaitCur = function(){
+	lastcur = load(0x7F02/*_IDC_WAIT*/)
+	beginCur()
+} 
+
+/*intellisense(win.cur)
+load(.(id__,instance) = 载入鼠标指针资源，返回鼠标指针句柄\nid为资源ID，或资源名字\ninstance为DLL模块句柄
+load(.(id__) = 载入鼠标指针资源，返回鼠标指针句柄\nid为资源ID，或资源名字 
+loadfile("__") = 载入鼠标指针文件，返回鼠标指针句柄
+getCur() = 返回当前鼠标指针句柄
+setCur(.(hcur) = 设置当前鼠标指针句柄\nhcur为鼠标指针句柄\n此函数一般用于回调函数中响应_WM_SETCURSOR消息
+setCur(.() = 设置为最后一次使用load或loadfile加载的鼠标指针句柄
+beginCur(.(hcur) = 持续设置当前鼠标指针句柄\n直到调用win.cur.endCur()\nhcur为鼠标指针句柄
+beginCur(.() = 持续设置当前鼠标指针句柄为最后一次使用load或loadfile加载的鼠标指针句柄
+beginWaitCur() = 持续设置鼠标指针为等待指针\n直到调用win.cur.endCur()
+endCur() = 恢复默认鼠标指针
+beginning = 如果调用了beginCur或beginWaitCur\n在尚未调用endCur之前beginning返回true
+end intellisense*/
+
+ 

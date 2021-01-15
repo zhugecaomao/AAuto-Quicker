@@ -1,0 +1,67 @@
+//Listbox控件演示 
+//Author xYe
+import win.ui;  
+/*DSG{{*/
+var winform = win.form(parent=...; exmode="";bgcolor=14215660;bottom=171;text="button/listbox/edit控件演示";right=397;style=0 )
+winform.add( 
+edit={ bgcolor=16777215;bottom=44;color=0;right=360;left=129;multiline=1;top=20;acceptfiles=1;tabstop=1;text="请输入...";z=9;edge=1;cls="edit" };
+static={ transparent=1;bgcolor=14215660;bottom=158;color=0;text="";left=128;align="";top=111;acceptfiles=1;tabstop=1;right=360;z=5;edge=1;cls="static" };
+static2={ bgcolor=14215660;bottom=236;color=0;right=197;left=196;align="";top=235;acceptfiles=1;transparent=1;text="static2";tabstop=1;z=7;cls="static" };
+btnFindEx={ bgcolor=14215660;bottom=107;color=0;right=362;left=298;multiline=1;top=83;acceptfiles=1;transparent=1;text="精确查找";z=11;tabstop=1;cls="button" };
+btnClear={ bgcolor=16053492;bottom=76;color=0;text="清除";left=184;multiline=1;top=52;acceptfiles=1;z=3;right=230;tabstop=1;transparent=1;cls="button" };
+btnAdd={ bgcolor=14215660;bottom=75;color=0;text="添加";left=126;multiline=1;top=51;acceptfiles=1;z=4;right=172;tabstop=1;transparent=1;cls="button" };
+groupbox={ bgcolor=14215660;bottom=165;color=0;right=379;left=114;top=2;acceptfiles=1;tabstop=1;z=1;text="添加删除";edge=1;cls="groupbox" };
+btnDelete={ bgcolor=14215660;bottom=76;color=0;text="删除";left=241;multiline=1;top=52;acceptfiles=1;z=2;right=287;tabstop=1;transparent=1;cls="button" };
+btnFind={ bgcolor=14215660;bottom=76;color=0;right=360;left=297;multiline=1;top=52;acceptfiles=1;transparent=1;text="模糊查找";z=10;tabstop=1;cls="button" };
+listbox={ bgcolor=16777215;vscroll=1;color=0;right=110;left=3;bottom=144;top=3;acceptfiles=1;z=6;
+items={  };tabstop=1;edge=1;cls="listbox" };
+combobox={ bottom=101;text="combobox";left=128;
+items={  };right=236;z=8;top=81;mode="dropdown";edge=1;cls="combobox" }
+)
+/*}}*/
+
+winform.btnFindEx.oncommand = function(id,event){
+	var ind = winform.listbox.findEx(winform.edit.text)
+	winform.listbox.selIndex = ind; 
+	win.msgbox(ind,"AAuto");
+}
+
+winform.btnFind.oncommand = function(id,event){ ;
+	var ind = winform.listbox.find(winform.edit.text)
+	winform.listbox.selIndex = ind
+	
+	var ind = winform.combobox.find(winform.edit.text)
+	winform.combobox.selIndex = ind
+	winform.msgbox(ind)
+}
+ 
+winform.combobox.oncommand = function(id,event){
+	winform.edit.text = winform.combobox.text;
+}
+
+winform.btnClear.oncommand = function(id,event){
+	winform.listbox.clear();
+	winform.static.text = "";
+	winform.redraw();
+}
+
+winform.listbox.oncommand = function(id,event){ 
+	if( event == 0x1/*_LBN_SELCHANGE*/ ){
+		winform.static.text =  string.format( '您选中了第%d项\n总计%d项\n项名：%s',winform.listbox.selIndex,winform.listbox.count,winform.listbox.text);
+	}
+}
+
+winform.btnDelete.oncommand = function(id,event){
+	winform.listbox.delete(); 
+}
+
+winform.btnAdd.oncommand = function(id,event){
+	str = winform.edit.text;
+	winform.listbox.add(str)
+	winform.combobox.add(str)
+	winform.combobox.selText =  str 
+	winform.listbox.selIndex = winform.listbox.count;
+}
+
+winform.show(true) 
+win.loopMessage( winform );

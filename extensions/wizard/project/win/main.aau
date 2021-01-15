@@ -1,0 +1,18 @@
+import win.ui;
+/*DSG{{*/
+mainForm = win.form( bottom=400;right=600;text="${PRJECTNAME}" )
+mainForm.add(  )
+/*}}*/
+
+/***
+import config;
+mainForm.bindConfig( config.mainForm,{
+	edit = "text"; //绑定edit控件的text属性值到配置文件
+	radiobutton = "checked";
+	checkbox = "checked";
+	combobox = "selIndex";
+} );
+***/
+
+mainForm.show() 
+win.loopMessage(); 

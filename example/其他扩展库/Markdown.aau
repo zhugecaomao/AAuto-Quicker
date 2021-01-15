@@ -1,0 +1,479 @@
+//win-markdown 编辑器
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( text="win-markdown 编辑器  www.aau.cn ( 按F11切换全屏,Shift + F11 全屏切换预览编辑模式)";bottom=612;scroll=1;right=892;parent=...;cls="WIN_MARKDOWN" )
+winform.add( 
+btnSaveHtml={ dr=1;bottom=611;right=871;left=744;top=587;z=4;db=1;text="另存为HTML文件";cls="button" };
+btnSaveMarkdown={ dr=1;bottom=611;right=644;left=564;top=587;z=5;db=1;text="另存为";cls="button" };
+btnCopy={ dr=1;bottom=611;right=554;left=487;top=587;z=8;db=1;text="复制";cls="button" };
+lbBrowser={ dr=1;dl=1;bottom=279;right=891;left=2;top=0;z=1;ah=1;edge=1;cls="custom" };
+btnOpenMarkdown={ dr=1;bottom=611;right=476;left=409;top=587;z=6;db=1;text="打开";cls="button" };
+btnCopyHtml={ dr=1;bottom=611;right=733;left=654;top=587;z=7;db=1;text="复制HTML";cls="button" };
+editMd={ dr=1;dl=1;vscroll=1;color=0;right=891;left=2;db=1;cls="edit";bottom=585;multiline=1;top=287;font=LOGFONT( name='新宋体' );acceptfiles=1;z=3;hscroll=1;edge=1 };
+splitter={ dr=1;dl=1;bottom=285;right=891;left=2;top=280;z=2;frame=1;horz=1;cls="splitter" }
+)
+/*}}*/
+
+import web.form; 
+var wb = web.form( winform.lbBrowser , , ,,true); 
+wb.noScriptErr = true;
+
+wb.html = /**
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=GB2312" />
+<title></title>
+<style type="text/css">
+body {
+    font-family: Helvetica, arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: white;
+    padding: 30px; }
+
+body > *:first-child {
+    margin-top: 0 !important; }
+body > *:last-child {
+    margin-bottom: 0 !important; }
+
+a {
+    color: #4183C4; }
+a.absent {
+    color: #cc0000; }
+a.anchor {
+    display: block;
+    padding-left: 30px;
+    margin-left: -30px;
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 20px 0 10px;
+    padding: 0;
+    font-weight: bold;
+    -webkit-font-smoothing: antialiased;
+    cursor: text;
+    position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+    background: url("../../images/modules/styleguide/para.png") no-repeat 10px center;
+    text-decoration: none; }
+
+h1 tt, h1 code {
+    font-size: inherit; }
+
+h2 tt, h2 code {
+    font-size: inherit; }
+
+h3 tt, h3 code {
+    font-size: inherit; }
+
+h4 tt, h4 code {
+    font-size: inherit; }
+
+h5 tt, h5 code {
+    font-size: inherit; }
+
+h6 tt, h6 code {
+    font-size: inherit; }
+
+h1 {
+    font-size: 28px;
+    color: black; }
+
+h2 {
+    font-size: 24px;
+    border-bottom: 1px solid #cccccc;
+    color: black; }
+
+h3 {
+    font-size: 18px; }
+
+h4 {
+    font-size: 16px; }
+
+h5 {
+    font-size: 14px; }
+
+h6 {
+    color: #777777;
+    font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+    margin: 15px 0; }
+
+hr {
+    background: transparent url("../../images/modules/pulls/dirty-shade.png") repeat-x 0 0;
+    border: 0 none;
+    color: #cccccc;
+    height: 4px;
+    padding: 0; }
+
+body > h2:first-child {
+    margin-top: 0;
+    padding-top: 0; }
+body > h1:first-child {
+    margin-top: 0;
+    padding-top: 0; }
+body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+    margin-top: 0;
+    padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+    margin-top: 0;
+    padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+    margin-top: 0; }
+
+li p.first {
+    display: inline-block; }
+
+ul, ol {
+    padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+    margin-top: 0; }
+
+ul :last-child, ol :last-child {
+    margin-bottom: 0; }
+
+dl {
+    padding: 0; }
+dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+dl dt:first-child {
+    padding: 0; }
+dl dt > :first-child {
+    margin-top: 0; }
+dl dt > :last-child {
+    margin-bottom: 0; }
+dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+dl dd > :first-child {
+    margin-top: 0; }
+dl dd > :last-child {
+    margin-bottom: 0; }
+
+blockquote {
+    border-left: 4px solid #dddddd;
+    padding: 0 15px;
+    color: #777777; }
+blockquote > :first-child {
+    margin-top: 0; }
+blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+    padding: 0; }
+table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+table tr:nth-child(2n) {
+    background-color: #f8f8f8; }
+table tr th {
+    font-weight: bold;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr td {
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+    margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+    margin-bottom: 0; }
+
+img {
+    max-width: 100%; }
+
+span.frame {
+    display: block;
+    overflow: hidden; }
+span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+span.frame span img {
+    display: block;
+    float: left; }
+span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+    display: block;
+    overflow: hidden;
+    clear: both; }
+span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+    display: block;
+    overflow: hidden;
+    clear: both; }
+span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+    display: block;
+    margin-right: 13px;
+    overflow: hidden;
+    float: left; }
+span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+    display: block;
+    margin-left: 13px;
+    overflow: hidden;
+    float: right; }
+span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+    margin: 0 2px;
+    padding: 0 5px;
+    white-space: nowrap;
+    border: 1px solid #eaeaea;
+    background-color: #f8f8f8;
+    border-radius: 3px; }
+
+pre code {
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+    border: none;
+    background: transparent; }
+
+.highlight pre {
+    background-color: #f8f8f8;
+    border: 1px solid #cccccc;
+    font-size: 13px;
+    line-height: 19px;
+    overflow: auto;
+    padding: 6px 10px;
+    border-radius: 3px; }
+
+pre {
+    background-color: #f8f8f8;
+    border: 1px solid #cccccc;
+    font-size: 13px;
+    line-height: 19px;
+    overflow: auto;
+    padding: 6px 10px;
+    border-radius: 3px; }
+pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+</style>
+</head>
+<body>
+
+</body>
+</html>	 
+**/
+
+fullscreen =function(id,event,shift){  
+	var ctrl;
+	var hCtrl = win.getFocus();
+	if( hCtrl ){
+		ctrl = winform.getCtrl(hCtrl)
+	}
+	if(!ctrl && !winform.restoreFullScreen){
+		ctrl = winform.lbBrowser;
+	}
+	
+	if( shift ){ 
+		if( ctrl == winform.lbBrowser ){
+			if(winform.lbBrowser.restoreFullScreen){
+				winform.setRedraw(false)
+				winform.lbBrowser.fullscreen(false)
+			}
+			ctrl = winform
+		}
+		else {
+			if(winform.restoreFullScreen ){
+				winform.setRedraw(false)
+				winform.fullscreen(false)
+			}
+			winform.lbBrowser.hide = false;
+			ctrl = winform.lbBrowser ;
+		} 
+	}
+	
+	if( ctrl == winform.lbBrowser ){
+		winform.lbBrowser.fullscreen( ! winform.lbBrowser.restoreFullScreen )
+	}
+	else {  
+		if( !winform.fullscreen() ){
+			winform.lbBrowser.hide = false;
+		}
+		else { 
+			winform.lbBrowser.hide = true; 
+			var x,y,cx,cy = winform.editMd.getPos();
+			win.setPos( winform.editMd.hwnd,x,0,cx,cy+y); 
+		}  
+		
+		winform.editMd.setFocus();
+	} 
+	 
+	winform.setRedraw(true)
+	winform.editMd.setRedraw(true) 
+} 
+ 
+import win.ui.accelerator;
+var accelerator = win.ui.accelerator( {
+	{ vkey = 0x7A/*_VK_F11*/;  oncommand = fullscreen }  
+	{ shift = true; vkey = 0x7A/*_VK_F11*/;  oncommand = function(){ fullscreen(,,true) }  } ;
+	{ vkey = 0x1B/*_VK_ESC*/; oncommand = function(){  if( winform.restoreFullScreen || winform.lbBrowser.restoreFullScreen) fullscreen() } }
+},winform);
+
+import process;
+wb.BeforeNavigate2=function( pDisp, url, Flags, TargetFrameName, PostData, Headers, Cancel ) { 
+ 	process.execute(url);
+	return url, Flags, TargetFrameName, PostData, Headers,true;
+}
+  
+import string.markdown;
+var markdown = string.markdown(8/*_MD_MKDEXT_AUTOLINK*/ | 4/*_MD_MKDEXT_FENCED_CODE*/ | 2/*_MD_MKDEXT_TABLES*/  | 1/*_MD_MKDEXT_NO_INTRA_EMPHASIS*/ ); 
+winform.editMd.oncommand = function(id,event){
+	if( event = 0x300/*_EN_CHANGE*/ ){
+		wb.body.innerHTML = markdown.render( winform.editMd.text ) 
+		wb.getDoc().parentWindow.scroll(0,wb.body.scrollHeight); 
+	} 
+}  
+
+import fsys.dlg;
+import fsys.codepage;
+loadMd = function(path){
+	if(!path)return;
+	
+	var codepage;
+	var str,codepage  = fsys.codepage.load(path)
+	if(!codepage && fsys.codepage.isTextUtf8(str))
+		str = string.fromto(str); 
+		
+	winform.editMd.text = str;
+	wb.body.innerHTML =  markdown.render( str); 
+}
+
+import key;
+winform.editMd.wndproc = function(hwnd,message,wParam,lParam){
+	select(message) { 
+		case 0x100/*_WM_KEYDOWN*/ { 
+			if( wParam == 'A'# ){
+				if( key.getState("CTRL") ) {
+					winform.editMd.selectAll();
+					return false;
+				}
+			}
+			elseif ( wParam == 0x9/*_VK_TAB*/ ){
+				winform.editMd.selText = "    "
+			}
+		} 
+		case 0x233/*_WM_DROPFILES*/{ 
+			var path= win.getDropFile(wParam )[1];   
+			loadMd(path); 
+		} 
+	} 
+} 
+
+winform.btnOpenMarkdown.oncommand = function(id,event){
+	var path = fsys.dlg.open("Markdown文件|*.md|文本文件|*.txt||","打开Markdown文件|",,winform.hwnd) 
+	loadMd(path)
+} 
+
+winform.btnSaveHtml.oncommand = function(id,event){
+	var path = fsys.dlg.save("HTML文件|*.html||","另存为HTML文件",,winform.hwnd)
+	if(!path)return;
+	string.save(path,wb.document.documentElement.outerHTML )
+}
+
+winform.btnSaveMarkdown.oncommand = function(id,event){
+	var path = fsys.dlg.save("Markdown文件|*.md|文本文件|*.txt||","另存为Markdown文件|",,winform.hwnd)
+	if(!path)return;
+	string.save(path,winform.editMd.text )
+} 
+
+import win.clip;
+winform.btnCopy.oncommand = function(id,event){
+	win.clip.write(winform.editMd.text)
+}
+
+winform.btnCopyHtml.oncommand = function(id,event){
+	wb.execWb( 0x11/*_OLECMDID_SELECTALL*/,0 )
+	wb.execWb( 0xC/*_OLECMDID_COPY*/,0 )  
+}
+ 
+wb.wait();
+
+if( io.exist( "/.md/temp.md" ) ){
+	loadMd( "/.md/temp.md" );
+}
+else{
+winform.editMd.text = /****
+## 功能说明
+1. 鼠标放在预览窗口与编辑器中间，可拖动调整编辑器大小
+2. 按F11可切换预览窗口到全屏状态，点击编辑器按F11则可切换编辑器到全屏状态
+3. 按SHIFT + F11 可全屏切换预览、编辑状态
+
+## MARKDOWN 教程
+http://wowubuntu.com/markdown/
+
+## 关于 win-markdown
+本程序源码 http://www.aau.cn/thread-9240-1-1.html
+
+列标题    |  列标题
+--------- | -------------
+表格扩展  | 表格扩展演示
+表格扩展  | 表格扩展演示
+
+****/
+wb.body.innerHTML =  markdown.render( winform.editMd.text ); 
+} 
+
+winform.onClose = function(hwnd,message,wParam,lParam){
+	..fsys.createDir("/.md/");
+    ..string.save( "/.md/temp.md", winform.editMd.text  )
+}
+
+winform.splitter.split( winform.lbBrowser,winform.editMd ); 
+winform.show();
+win.loopMessage(); 

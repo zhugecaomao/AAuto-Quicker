@@ -1,0 +1,281 @@
+//.. GDI绘图
+import win;
+namespace gdi
+
+/*intellisense(gdi)*/ 
+
+RGBQUAD = class{ 
+	ctor(r,g,b,q){
+		this.rgbRed = b;
+		this.rgbGreen = g;
+		this.rgbBlue = r;
+		this.rgbReserved = q;
+	}
+	BYTE rgbBlue; 
+	BYTE rgbGreen; 
+	BYTE rgbRed; 
+	BYTE rgbReserved;  
+} 
+
+RGB = function(r,g,b,q){ 
+    //根据rgb值返回颜色数值 
+    return ..raw.convert( RGBQUAD(r,g,b,q),{INT color} ).color;
+}
+
+getRgb = function (c) { 
+	return c  & 0xFF, c>> 8  & 0xFF, c>> 16 & 0xFF;
+}
+
+BITMAP = class {
+	int bmType;
+	int bmWidth;
+	int bmHeight;
+	int bmWidthBytes;
+	WORD bmPlanes;
+	WORD bmBitsPixel;
+	pointer bmBits;
+}
+/*end intellisense*/
+
+/*intellisense()
+RGBQUAD = @gdi.RGBQUAD;
+RGB = @gdi.RGB( 0__,0,0)
+end intellisense*/
+ 
+::LOGFONT = class{ 
+	ctor(arg){ 
+		//如果用户未设置的属性，设置为默认值
+		this.name = "Tahoma"; 
+		this.h = -12;
+		this.weight = 400;
+		this.charset = 134;
+		..table.mixin(this,arg); 
+	}  
+	
+	int h;//像素高度
+	int w;//像素宽度
+	int esc;//字符串相对页面底端角度
+	int ori;//字符相对页面底端角度
+	int weight;//重量
+	BYTE italic;//是否斜体
+	BYTE underline;//是否添加下划线
+	BYTE strike;//是否添加删除线
+	BYTE charset;//字符集
+	BYTE out;//输出精度
+	BYTE clip;//剪辑精度
+	BYTE quality;//输出质量
+	BYTE family;//字符间距和族
+	BYTE name[32] ;//字体名
+	createIndirect = createIndirect; 
+	deleteIndirect = deleteIndirect;
+	//请参考： http://baike.baidu.com/view/2421591.htm?fr=ala0_1_1 
+} 
+namespace ..LOGFONT{
+	createIndirect = function(hdcIn,hwnd=0){
+		if( owner.point ){
+			var hdc = hdcIn or ::GetDC(hwnd);  
+		 	var pt = ::POINT();
+		 	pt.y = ..math.mulDiv( ::GetDeviceCaps(hdc, 0x5A/*_LOGPIXELSY*/),owner.point,72) 
+		 	::DPtoLP(hdc,pt,1);
+		  
+		 	var ptOrg =  ::POINT();
+		 	::DPtoLP(hdc,pt,1);
+		 	owner.h = pt.y - ptOrg.y; 
+		 	if(!hdcIn)
+		 		::ReleaseDC(hwnd,hdc); 
+		}
+		owner.h = -(..math.abs(owner.h)); //强制为负数
+		owner.handle = ::CreateFontIndirect( owner )
+		return owner.handle;
+	}
+	deleteIndirect = function(){
+		if( owner.handle ){
+			::DeleteObject(owner.handle)
+			owner.handle =  null
+		}
+	} 
+} 
+/**intellisense(::)
+::LOGFONT() = 创建字体对象\n!logfont.
+::LOGFONT(name="Tahoma";point=12) = 创建字体对象\npoint指定字体大小,单位pt(磅)
+end intellisense**/
+
+setFont = function(hwnd,font){ 
+	var hfont = font;
+	if( type(font) == type.table ) {
+		if(!font[["_struct"]] )
+			font = ..table.mixin(getFont(hwnd),font);
+			
+		hfont = font.createIndirect( ,hwnd);
+		font.handle = null; //禁止删除 
+	}
+	if(type(hfont)==type.pointer){
+   		::SendMessage(hwnd,0x30/*_WM_SETFONT*/,hfont);
+   		return true;
+	}
+} 
+getFont = function(hwnd){
+	var hf = ::SendMessage(hwnd, 0x31/*_WM_GETFONT*/);
+	var lf = LOGFONT();
+	::GetObject(topointer(hf), ..raw.sizeof(lf), lf);
+	return lf;
+}
+
+/**intellisense()
+gdi.setFont(.(窗口句柄,LOGFONT对象) = 设置窗口字体\n第二个参数也可以是字体句柄\n也可以仅指定部份字体属性,例如:\ngdi.setFont( hwnd,{ point=12;name="宋体" } )\n新属性将会自动混入窗体原来的字体
+gdi.getFont(__/*窗口句柄*/) = 返回窗口字体,LOGFONT对象.
+?gdi.getFont = !logfont.
+?.getFont = !logfont.
+end intellisense**/
+   
+::Gdi32 := ..raw.loadDll("Gdi32.dll")
+var g,u =  ::Gdi32,::User32;
+/*intellisense(::)*/  
+::PAINTSTRUCT = class {
+	pointer hdc;
+	int fErase;
+	struct rcPaint = ::RECT();
+	int fRestore;
+	int fIncUpdate;
+	BYTE rgbReserved[32];
+}
+::TRIVERTEX = class {
+	int x;
+	int y;
+	WORD Red;
+	WORD Green;
+	WORD Blue;
+	WORD Alpha;
+}
+::GRADIENT_RECT = class {
+	int UpperLeft;
+	int LowerRight;
+}
+::DRAWITEMSTRUCT = class {
+	INT CtlType;
+	INT CtlID;
+	INT itemID;
+	INT itemAction;
+	INT itemState;
+	addr hwndItem;
+	pointer hDC;
+	struct rcItem = ::RECT();
+	INT itemData;
+}
+::MEASUREITEMSTRUCT = class {
+	INT CtlType;
+	INT CtlID;
+	INT itemID;
+	INT itemWidth;
+	INT itemHeight;
+	INT itemData;
+}
+::SelectObject = g.api("SelectObject","pointer(POINTER hdc,pointer hObject)");
+::DeleteObject = g.api("DeleteObject", "int(pointer hObject)");
+::GetCurrentObject = g.api("GetCurrentObject","pointer(pointer hdc,int uObjectType)");
+::GetWindowDC = u.api("GetWindowDC","pointer(int hwnd)" ) 
+::CreateDC = g.api("CreateDC","pointer(str drive, str device, st output,struct lplnitData)")；
+::DeleteDC = g.api("DeleteDC","pointer(pointer hdc)");
+::ReleaseDC = u.api("ReleaseDC","pointer(int hwnd,pointer hdc)");
+::GetDC = u.api("GetDC","pointer(int hwnd)");
+::CreateFontIndirect = g.api("CreateFontIndirectA","pointer(struct lplf)" )
+::GetStockObject = g.api("GetStockObject","pointer(int i)" )
+::CreatePatternBrush = g.api("CreatePatternBrush","pointer(pointer hbm)" ) 
+::PatBlt = g.api("PatBlt","int( POINTER hDc, int x, int y, int cx, int cy, INT rop)" ) 
+::AbortPath = g.api("AbortPath","int(pointer hdc)");
+::BeginPath = g.api("BeginPath","int(pointer hdc)");
+::BitBlt = g.api("BitBlt","int(pointer hDestDC,int x,int y,int nWidth,int nHeight,pointer hSrcDC,int xSrc,int ySrc,int dwRop)");
+::EndPath = g.api("EndPath","int(pointer hdc)");
+::CreatePen = g.api("CreatePen", "pointer(int nPenStyle,int nWidth,int crColor)");
+::CreateSolidBrush = g.api("CreateSolidBrush","pointer(int crColor)");
+::CreateHatchBrush = g.api("CreateHatchBrush","pointer(int nIndex,int crColor)");
+::CreateFont = g.api("CreateFontA","pointer(int H,int W,int E,int O,int W,bool I,bool u,int S,int C,int OP,int CP,int Q,int PAF,string F)");
+::CreateCompatibleDC = g.api("CreateCompatibleDC","pointer(pointer hdc)");
+::CreateCompatibleBitmap = g.api("CreateCompatibleBitmap","pointer(pointer hdc,int nWidth,int nHeight)");
+::CreateBitmap = g.api("CreateBitmap","pointer(int nWidth,int nHeight,INT nPlanes,INT nBitCount,pointer lpBits)");
+::MoveToEx = g.api("MoveToEx","int(pointer hdc,int x,int y,struct& lpPoint)");
+::LineTo = g.api("LineTo","int(pointer hdc,int x,int y)");
+::DrawEdge = u.api("DrawEdge","int(pointer hdc,struct qrc,int edge,int grfFlags)");
+::DrawFocusRect = u.api("DrawFocusRect","int(pointer hdc,struct lpRect)");
+::DrawFrameControl = u.api("DrawFrameControl","int(pointer hdc,struct rc,int un1,int un2)");
+::DrawIconEx = u.api( "DrawIconEx", "int( POINTER hdc, int x, int y,pointer hIcon,int cx, int cy,int stepIfAni,pointer hbrFlickerFreeDraw,int flags )" );
+::Ellipse = g.api("Ellipse","int(pointer hdc,int X1,int Y1,int X2,int Y2)");
+::CancelDC = g.api("CancelDC","int(pointer hdc)");
+::AngleArc = g.api("AngleArc","int(pointer hdc,int x,int y,int dwRadius,float eStartAngle,float eSweepAngle)");
+::Arc = g.api("Arc","int(pointer hdc,int X1,int Y1,int X2,int Y2,int X3,int Y3,int X4,int Y4)");
+::ArcTo = g.api("ArcTo","int(pointer hdc,int X1,int Y1,int X2,int Y2,int X3,int Y3,int X4,int Y4)");
+::FillPath = g.api("FillPath","int(pointer hdc)");
+::FillRect = u.api("FillRect","int(pointer hdc,struct& lpRect,pointer hBrush)");
+::FrameRect = u.api("FrameRect","int(pointer hdc,struct& lpRect,pointer hBrush)");
+::GetBkColor = g.api("GetBkColor","int(pointer hdc)");
+::SetBkColor = g.api("SetBkColor","int(pointer hdc, int color)");
+::GetTextColor = g.api("GetTextColor","int(pointer hdc)");
+::SetTextColor = g.api("SetTextColor","int(pointer hdc,int crColor)");
+::GetBkMode = g.api("GetBkMode","int(pointer hdc)");
+::SetBkMode = g.api("SetBkMode","int(pointer hdc, int mode)");
+::TextOut = g.api("TextOutA","int(pointer hdc,int x,int y,string lpString,int nCount)");
+::SelectClipPath = g.api("SelectClipPath","int(pointer hdc,int iMode)");
+::BeginPaint = u.api("BeginPaint", "pointer(int hWnd, struct &lpPaint)");
+::EndPaint = u.api("EndPaint", "int(int hWnd, struct lpPaint)");
+::GdiGradientFill = g.api("GdiGradientFill", "int(pointer hdc, struct pVertex, int, struct, int, int)");
+::PrintWindow = u.api("PrintWindow", "int(int hwnd, pointer hdcBlt, int nFlags)");
+::GetPixel = g.api("GetPixel","int(pointer hdc,int x,int y)");
+::SetPixel = g.api("SetPixel","int(pointer hdc,int x,int y,int crColor)");
+::RoundRect = g.api("RoundRect","int(pointer hdc,int X1,int Y1,int X2,int Y2,int X3,int Y3)");
+::GetTextAlign = g.api("GetTextAlign","int( POINTER hdc)")
+::SetTextAlign = g.api("SetTextAlign","int( POINTER hdc,INT align)") 
+::DrawText = u.api("DrawTextA","int(pointer hdc,string lpStr,int nCount,struct& lpRect,int wFormat)");
+::GetStretchBltMode = g.api("GetStretchBltMode","int(pointer hdc)");
+::SetStretchBltMode = g.api("SetStretchBltMode","int(pointer hdc,int nStretchMode)");
+::StretchBlt = g.api("StretchBlt","int(pointer hdc,int x,int y,int nWidth,int nHeight,pointer hSrcDC,int xSrc,int ySrc,int nSrcWidth,int nSrcHeight,int dwRop)");
+::TransparentBlt = g.api("GdiTransparentBlt","int(pointer hdcDest,int xoriginDest,int yoriginDest,int wDest,int hDest,pointer hdcSrc,int xoriginSrc,int yoriginSrc,int wSrc,int hSrc,INT crTransparent)");
+::GetObject = g.api("GetObjectA","int(pointer hObject,int nCount,struct& lpObject)");
+::GetSysColor = u.api("GetSysColor", "int(int nIndex)");
+::GetDeviceCaps = g.api("GetDeviceCaps","int(pointer hdc,int nIndex)"); 
+::DPtoLP = g.api("DPtoLP","int(pointer hdc,struct &points,int count)"); 
+/*end intellisense*/ 
+
+/*intellisense(gdi)*/
+getPixel = function(x,y,hwnd = 0 ){ 
+    //抓点
+    var hdc = GetDC(hwnd); 
+    if(hdc){
+       var pix = GetPixel(hdc,x,y);
+      
+       ::ReleaseDC(hwnd,hdc); 
+       return pix; 
+    }
+}
+setPixel = function(x,y,color,hwnd = 0 ){ 
+    //抓点
+    var hdc = GetDC(hwnd); 
+    if(hdc){
+       var pix = SetPixel(hdc,x,y,color);
+      
+       ::ReleaseDC(hwnd,hdc); 
+       return pix; 
+    }
+}
+/*end intellisense*/
+
+ /**intellisense()
+_SRCCOPY=@0xCC0020/*_SRCCOPY*/
+_SRCPAINT=@0xEE0086/*_SRCPAINT*/
+_SRCAND=@0x8800C6/*_SRCAND*/
+_SRCINVERT=@0x660046/*_SRCINVERT*/
+_SRCERASE=@0x440328/*_SRCERASE*/
+_NOTSRCCOPY=@0x330008/*_NOTSRCCOPY*/
+_NOTSRCERASE=@0x1100A6/*_NOTSRCERASE*/
+_MERGECOPY=@0xC000CA/*_MERGECOPY*/
+_MERGEPAINT=@0xBB0226/*_MERGEPAINT*/
+_PATCOPY=@0xF00021/*_PATCOPY*/
+_PATPAINT=@0xFB0A09/*_PATPAINT*/
+_PATINVERT=@0x5A0049/*_PATINVERT*/
+_DSTINVERT=@0x550009/*_DSTINVERT*/
+_BLACKNESS=@0x42/*_BLACKNESS*/
+_WHITENESS=@0xFF0062/*_WHITENESS*/
+_STRETCH_ANDSCANS=@0x1/*_STRETCH_ANDSCANS*/
+_STRETCH_ORSCANS=@0x2/*_STRETCH_ORSCANS*/
+_STRETCH_DELETESCANS=@0x3/*_STRETCH_DELETESCANS*/
+_STRETCH_HALFTONE=@0x4/*_STRETCH_HALFTONE*/
+end intellisense**/

@@ -1,0 +1,170 @@
+//bitmap 位图对象 
+namespace gdip 
+
+//创建类
+class bitmap {
+	ctor(arg,...){
+		var tArg = type(arg);
+		if( tArg == type.string ){
+			var len = #arg; 
+			if(len<= 0x104/*_MAX_PATH*/ ){
+				if(!len)error("参数不能是空字符串",2);
+				
+				this.path = ..io.exist( arg) 
+				if( this.path ){
+					 this.pBitmap = gdip.assert( gdip.CreateBitmapFromFile (..string.toUnicode( this.path ) )  )  
+				} 
+			}
+			if(!this.pBitmap)
+				this.pBitmap = gdip.assert( gdip.loadBitmapFromString (arg )  )   
+			
+		}
+		elseif( tArg == type.table ){
+			if(arg.pGraphics){
+				var w,h = ... 
+				this.pBitmap = gdip.assert( gdip.CreateBitmapFromGraphics (w,h,arg )  ) 
+			}
+			elseif(arg.CopyHandle){ 
+				this.pBitmap = gdip.assert( gdip.createBitmapFromHandle ( arg.CopyHandle() )  )  
+			}
+			
+		}
+		elseif( tArg == type.pointer ) { 
+			this.pBitmap = gdip.assert( gdip.createBitmapFromHandle (arg,... )  )  
+		}
+		elseif( tArg == type.number && type(...) == type.number ){ 
+			var width,height,pixelFormat,scan0,stride = arg,...
+			if(!pixelFormat)pixelFormat= 0x26200A/*_GdipPixelFormat32bppARGB*/  
+			stride := 0;
+			this.pBitmap = gdip.assert( gdip.CreateBitmapFromScan0 (width,height,stride,pixelFormat,scan0)  )  
+		}
+		
+		if(!this.pBitmap)
+			error("参数错误",2)
+		
+		..table.add_gc( this,"dispose" )
+	} 
+	@_metaProperty//元表指向属性表
+}
+
+namespace bitmap{ 
+import util.metaProperty;//导入属性表支持库
+
+gdip = ..gdip;
+getBitsFromBitmapData32  = function(bmpdata){
+	var ptr = bmpdata.Scan0;
+	var height = bmpdata.Height;
+	var width = bmpdata.Width;
+	assert( ptr && height && width,"无效的BitmapData" )
+	var bits =  ..raw.toarray( height) 
+	for(i=1;height){
+		bits.array[i] = ..raw.toarray( width,"INT" )
+	} 
+	..raw.convert(ptr,bits);
+	return bits;
+}
+ 
+ 
+_metaProperty = util.metaProperty(
+	getGraphics = function(){ 
+		return gdip.graphics.fromImage(owner);   	
+	};
+	save = function(path,quality){
+		gdip.checkError(
+			gdip.SaveImage( owner[["pBitmap"]],path : this.path,quality ) 
+			,2
+		);
+	}
+	width = {
+		_get = function(){ 
+			return gdip.assert(  gdip.GetImageWidth(owner[["pBitmap"]], 0)) ; 
+		}  	
+	}; 
+	
+	height = {
+		_get = function(){ 
+			return gdip.assert( gdip.GetImageHeight(owner[["pBitmap"]], 0)) ; 
+		}  	
+	}; 
+	getPixel = function(x,y){
+		return gdip.assert( gdip.BitmapGetPixel(owner[["pBitmap"]], x,y,0)) ;  
+	};
+	setPixel = function(x,y,argb){
+		return gdip.assert( gdip.BitmapSetPixel(owner[["pBitmap"]], x,y,argb)) ;  
+	}; 
+	lockdata = function(){
+		//创建BMP结构体 
+    	var bmpdata =  gdip.BitmapData( ); 
+    	bmpdata.Width = owner.width;
+		bmpdata.Height = owner.height;
+		bmpdata.Stride = 4 * (bmpdata.Width );
+		bmpdata.Scan0 = ..raw.malloc(4 * (bmpdata.Width ) * (bmpdata.Height )) //分配缓冲区
+    	bmpdata.PixelFormat = 0x26200A/*_GdipPixelFormat32bppARGB*/;
+ 	
+    	
+    	//锁定图像内存
+    	gdip.assert(  gdip.BitmapLockBits(owner[["pBitmap"]], 
+        									::RECT( 0,0,bmpdata.Width,bmpdata.Height) ,
+        								    4/*_GdipImageLockModeUserInputBuf*/ | 
+    								    	1/*_GdipImageLockModeRead*/ |
+    								    	2/*_GdipImageLockModeWrite*/ , 
+    								    	0x26200A/*_GdipPixelFormat32bppARGB*/ , bmpdata) 
+    				);
+ 	
+ 		bmpdata.bits =  getBitsFromBitmapData32(bmpdata);
+ 		return bmpdata;
+ 	
+	};
+	unlockdata = function(bmpdata){
+		assert(type(bmpdata)==type.table && bmpdata.bits ,"无效参数"); 
+		bmpdata.Scan0  = ..raw.malloc(bmpdata.bits);
+		gdip.assert(  
+			gdip.BitmapUnlockBits (owner[["pBitmap"]],bmpdata)
+			);
+		
+	};
+	copyHandle= function(width=0,height=0){
+		var hbmp = gdip.assert( gdip.CreateHBITMAPFromBitmap(owner[["pBitmap"]], null,0x808080/*_CLR_DEFAULT*/) );
+		if( width || height){
+			return ::CopyImage(hbmp, 0x0/*_IMAGE_BITMAP*/, width, height, 0x4/*_LR_COPYRETURNORG*/ | 0x8/*_LR_COPYDELETEORG*/ ); 
+		}
+		return hbmp;
+	};
+	rotateFlip = function(refType){
+		gdip.ImageRotateFlip(owner[["pBitmap"]],refType)
+	};
+	dispose = function(){
+		if( owner[["pBitmap"]] ){  
+			gdip.DisposeImage(owner[["pBitmap"]])
+			owner[["pBitmap"]] = null;//让其他的函数都用不了
+		}
+	}
+	
+	//自动转换为API指针
+	_topointer = function(){
+		return owner[["pBitmap"]];
+	};
+)
+
+
+}
+ 
+/**intellisense()
+gdip.bitmap(.(图片文件路径或数据) = 创建GDI+位图对象
+gdip.bitmap(.(graphics对象,100,100) = 从指定的graphics对象创建GDI+位图副本\n对位图的修改不会影响原来的graphics对象\n参数(graphics对象,宽度,高度)
+gdip.bitmap(.(位图句柄,0) = 从位图句柄创建bitmap对象
+gdip.bitmap(.(位图句柄,1) = 从图标句柄创建bitmap对象
+gdip.bitmap(.(宽,高) = 创建指定大小空位图
+gdip.bitmap(.(宽,高,像素格式,内存指针,行扫描间隔) = 自内存指针创建指定大小位图
+!gdipbitmap.getGraphics()  = 从图像创建画布\n!gdipgraphics.
+!gdipbitmap.save(__) = 保存图像\n使用参数指定的文件路径或加载图片时的路径\n根据后缀名自动设定格式
+!gdipbitmap.save("__/*请输入文件路径*/",80) = 保存图像\n使用参数指定的文件路径或加载图片时的路径\n根据后缀名自动设定格式\njpg文件可使用第二个参数指定图像质量
+!gdipbitmap.dispose() = 释放图像\n此对象支持自动释放,不必手工调用此函数
+!gdipbitmap.getPixel(.(x__,y) = 读取位图指定坐标(x,y)的ARGB颜色值
+!gdipbitmap.setPixel(.(x__,y,argb) = 设定位图指定坐标(x,y)的ARGB颜色值 
+!gdipbitmap.rotateFlip(_GdipRotate__/*指定翻转选项*/) = 翻转图片
+!gdipbitmap.copyHandle(.(宽度,高度) = 创建并返回HBITMAP句柄\n可选指定宽度、高度
+!gdipbitmap.width = 宽度 
+!gdipbitmap.height = 高度
+?gdip.bitmap = !gdipbitmap.
+end intellisense**/

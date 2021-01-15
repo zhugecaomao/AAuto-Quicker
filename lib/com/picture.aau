@@ -1,0 +1,178 @@
+//picture 图像
+namespace com.picture;
+
+import com; 
+import win;
+import gdi
+import win.guid;
+import win.ole;
+ 
+IID_IPicture = win.guid( 2079852928, 48946, 4122, { 139;187;0;170;0;48;12;171} )
+
+OleLoadPicture = ::Oleaut32.api("OleLoadPicture","int(pointer lpStream,int lSize,int fRunmode,struct riid,pointer &lpIPicture)")
+OleSavePictureFile = Oleaut32.api("OleSavePictureFile","int(pointer pDisp,string szFilePath)") 
+OleCreatePictureIndirect = Oleaut32.api("OleCreatePictureIndirect","int(struct lpPictDesc, struct riid, bool fOwn, pointer & lplpvObj)")
+
+var PICTDESC = class {
+    INT cbSizeofstruct;
+    INT picType;
+    union desc = {
+        struct bmp = {
+            pointer hbitmap;        // Bitmap
+            pointer hpal;           // Accompanying palette
+        } 
+
+        struct wmf = {
+            pointer hmeta;          // Metafile
+            int xExt;
+            int yExt;           // Extent
+        } 
+
+        struct icon ={
+            pointer hicon;              // Icon
+        } ;
+ 
+        struct emf = {
+            int hemf;        // Enhanced Metafile
+        } 
+    };
+
+}  
+
+/*封装IPicture{{*/
+	var copyHandle = function(width=0,height=0){ 
+		var flag = 0x4/*_LR_COPYRETURNORG*/;
+		if( width || height ) flag = 0;
+		if( owner.Type ==  3 )
+			return  ::CopyImage(   topointer(  owner.Handle  ) , 0x1/*_IMAGE_ICON*/, width, height, flag) , 0x1/*_IMAGE_ICON*/;
+  		else if( owner.Type ==  1 )
+  	  		return  ::CopyImage(   topointer(  owner.Handle  ) , 0/*_IMAGE_BITMAP*/, width, height, flag) , 0/*_IMAGE_BITMAP*/;
+	}
+	var save = function( filepath ){
+		var bstrPath = ::SysAllocString( ..string.toUnicode( ..io.fullpath( filepath) ) );    
+		OleSavePictureFile( ..com.topointer( owner ) , bstrPath) ;  
+		::SysFreeString( bstrPath );
+	}
+	var wrap = function(ipicture){
+		ipicture.Save = save
+		ipicture.CopyHandle = copyHandle
+		return ipicture;
+	}
+/*}}*/
+
+load = function(strfile){  
+    var strBmp = "";
+    var len = #strfile;
+    
+    if(!len)
+    	return;
+    elseif( len < 0x104/*::_MAX_PATH*/ ){ //是文件路径吗？
+	    strBmp = ..string.load(  strfile ) //尝试载入图像文件
+	    if( !strBmp )
+	        strBmp = strfile;
+    }
+	else{
+	    strBmp = strfile;
+	}
+	
+	var hImageMemory = ::GlobalAlloc( 0x2 /*_GMEM_MOVEABLE*/, #strBmp); //给图片分配全局内存
+	pImageMemory = ::GlobalLock(hImageMemory); //锁定内存
+	::CopyMemory(pImageMemory,strBmp,#strBmp);//复制图片
+	::GlobalUnlock(hImageMemory); //解锁内存
+ 	
+	var re,pIStream,pIPicture ;
+	re,pIStream = ::CreateStreamOnHGlobal(hImageMemory, 1,pIStream) //用全局内存初使化IStream接口指针
+	if(re){
+		::GlobalFree(hImageMemory); //释放全局内存
+		return null,"CreateStreamOnHGlobal failed"; //不等于0为出错
+	}
+	
+	re,pIPicture =  OleLoadPicture(pIStream, #strBmp, 0, IID_IPicture, pIPicture  );//用OleLoadPicture获得IPicture接口指针
+	..com.Release(pIStream) //释放pIStream
+	::GlobalFree(hImageMemory); //释放全局内存
+		
+	if(re) return null,"OleLoadPicture failed"; //不等于0为出错c
+	 
+	var pic = ..com.QueryObject( pIPicture  ,IID_IPicture ) //将一个 C指针转换为com object
+	..com.Release(pIPicture)
+ 	
+ 	wrap(pic);
+	return  pic; 
+}
+
+fromBitmap = function(hBmp,fOwn=true,picType=0x1/*_PICTYPE_BITMAP*/){
+	var picdesc = PICTDESC()
+	picdesc.cbSizeofstruct = ..raw.sizeof( picdesc );
+	picdesc.desc.bmp.hbitmap = hBmp;
+	picdesc.picType = picType;
+	  
+	var re ,pIPicture  = OleCreatePictureIndirect( picdesc, IID_IPicture, fOwn );  
+	var pic = ..com.QueryObject( pIPicture  ,IID_IPicture ) //将一个 C指针转换为com object 
+	..com.Release(pIPicture)  
+	return wrap(pic); 
+}
+
+fromIcon = function(hIcon,fOwn=true){
+	return fromBitmap(hIcon,fOwn,0x3/*_PICTYPE_ICON*/);
+}
+
+snap = function(hWnd,x=0,y=0,w,h)   {
+ 
+	if( hWnd===null ) hWnd =  ..win.getDesktop();
+	
+	var re ,rcWindow = ::GetWindowRect(hWnd,::RECT() )
+	var w = w:( rcWindow.right - rcWindow.left - x)
+	var h = h:(rcWindow.bottom - rcWindow.top - y)
+	var hSrcDC = ::GetWindowDC(hWnd)
+	var hDCMemory  = ::CreateCompatibleDC(hSrcDC)
+	var tempPict = ::CreateCompatibleBitmap(hSrcDC, w, h)
+	var oldPict = ::SelectObject(hDCMemory , tempPict)
+  
+	::BitBlt( hDCMemory , 0, 0,w,h, hSrcDC, x, y,0xCC0020/*_SRCCOPY*/ | 0x40000000/*_CAPTUREBLT*/)
+	tempPict = ::SelectObject(hDCMemory , oldPict)
+	::DeleteDC( hDCMemory  )
+	::ReleaseDC(hWnd, hSrcDC)
+	var pic = fromBitmap(tempPict);
+	return pic;
+} 
+
+self.type = {
+	none = 0;
+	uninitialized = -1;
+	bitmap = 1;
+	metafile = 2;
+	icon = 3;
+	enhmetafile = 4;
+}
+
+ /**intellisense()
+_PICTYPE_UNINITIALIZED=@0xFFFFFFFF/*_PICTYPE_UNINITIALIZED*/
+_PICTYPE_NONE=@0x0/*_PICTYPE_NONE*/
+_PICTYPE_BITMAP=@0x1/*_PICTYPE_BITMAP*/
+_PICTYPE_METAFILE=@0x2/*_PICTYPE_METAFILE*/
+_PICTYPE_ICON=@0x3/*_PICTYPE_ICON*/
+_PICTYPE_ENHMETAFILE=@0x4/*_PICTYPE_ENHMETAFILE*/
+end intellisense**/
+ 
+/**intellisense(com.picture) 
+load(__/*请输入文件路径*/) =  载入图片文件返回IPicture(com对象)
+snap(.(窗口句柄,左坐标,顶坐标,宽,高) = 抓屏并返回IPicture(com对象) \n所有参数都是可选参数
+fromBitmap(__/*位图句柄*/) = 自位置句柄返回IPicture对象
+fromIcon(__/*图标句柄*/) = 从图标句柄返回IPicture对象
+fromBitmap(__/*位图句柄*/,false) = 自位置句柄返回IPicture对象\n不负责销毁位图
+fromIcon(__/*图标句柄*/,false) = 从图标句柄返回IPicture对象\n不负责销毁位图
+IID_IPicture = IPicture IID;
+end intellisense**/
+ 
+/**intellisense()  
+!ipicture.Handle = 位图句柄
+!ipicture.Type = 图片类型\n参考com.picture.type成员
+!ipicture.Save(__/*文件路径*/) = 保存图片到文件 
+!ipicture.CopyHandle(.(宽度,高度) = 返回位图句柄,位图类型(_IMAGE_BITMAP 或 _IMAGE_ICON)\n可选指定宽度、高度
+?com.picture.snap = !ipicture.
+?com.picture.load = !ipicture.
+com.picture.snap() = !ipicture.
+com.picture.load() = !ipicture.
+com.picture.fromBitmap() = !ipicture.
+com.picture.fromIcon() = !ipicture.
+end intellisense**/

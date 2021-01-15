@@ -1,0 +1,6 @@
+
+import fsys; 
+var path = fsys.joinpath(io._exedir,"Tools\ÆäËû±àÒëÆ÷\Protobuf\main.aau")
+
+import ide;
+ide.runFile( path );

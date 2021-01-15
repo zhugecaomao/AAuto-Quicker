@@ -1,0 +1,30 @@
+//jsonClient REST客户端
+import web.json;
+import web.rest.client;
+namespace web.rest; 
+
+class jsonClient{
+	ctor( ... ){
+		this = ..web.rest.client( ... ); 
+		this.stringifyRequestParameters = stringifyRequestParameters;
+		this.parseResponseResult = ..web.json.parse;
+		this.contentType = "application/json";  
+	}; 
+}
+
+namespace jsonClient { 
+
+	var fromto = ..string.fromto;  
+	
+	var stringify = ..web.json.stringify;
+	stringifyRequestParameters = function(t,utf8){
+		var ret = stringify(t)
+		if(utf8) ret = fromto(ret,0,65001);
+		return ret;
+	} 
+}
+
+/**intellisense()
+web.rest.jsonClient = REST客户端
+web.rest.jsonClient() = 创建REST客户端,\n!web_restClient.
+end intellisense**/

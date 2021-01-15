@@ -1,0 +1,75 @@
+//进制转换
+import win.ui;
+/*DSG{{*/
+var winform = win.form(parent=...; bottom=246;max=false;right=367;text="AAuto 进制转换工具" )
+winform.add( 
+btnDec={ dr=1;bottom=108;text="十进制";left=270;top=78;z=4;right=330;cls="button" };
+spin={ dr=1;bottom=105;text="<>";left=96;top=82;z=6;right=122;transparent=1;edge=1;cls="spin" };
+static={ dr=1;bottom=36;align="right";text="表达式:";left=22;top=16;z=7;right=73;transparent=1;cls="static" };
+static2={ dr=1;bottom=106;align="right";right=61;left=21;top=86;transparent=1;text="进制:";z=9;cls="static" };
+btnHex={ dr=1;bottom=108;text="十六进制";left=201;top=78;z=2;right=261;cls="button" };
+lbInfo={ dr=1;bottom=228;right=340;left=32;top=111;z=8;text="
+十进制不需要任何前缀,例如 123
+十六进制以0x为前缀表示,例如 0xEF
+八进制以0为前缀表示,例如 077
+其他自定以进制,以进制加下划线为前缀表示,例如 2_1010
+
+字符串转为数值 tonumber(字符串,指定进制) 
+数值转为字符串 tostring(数值,指定进制)
+";transparent=1;cls="static" };
+editCustom={ dr=1;num=1;bottom=105;text="10";left=63;top=82;z=5;right=96;edge=1;cls="edit" };
+editExpression={ dr=1;bottom=68;text="0x1000 + 18";left=33;top=39;z=1;right=329;edge=1;cls="edit" };
+btnOct={ dr=1;bottom=108;text="八进制";left=132;top=78;z=3;right=192;cls="button" }
+)
+/*}}*/
+
+convert  = function(ratio){
+	var exp = winform.editExpression.text
+	var num;
+	try{
+		num = eval(exp)
+		var str = tostring(num,ratio)
+		select(ratio) {
+			case 10,8,16 {
+			} 
+			else {
+				str = ratio + "_" + str;
+			}
+		}
+		winform.editExpression.text = str;
+	}
+	catch(e){
+		io.open()
+		..io.print( e )
+		winform.msgboxErr("表达式语法错误","AAuto进制转换工具")
+	}
+} 
+
+winform.spin.setRange(2,36);
+winform.spin.buddy = winform.editCustom; 
+winform.spin.oncommand = function(id,event,pos){
+	if(pos){
+		convert( pos )
+	}
+}
+
+winform.btnHex.oncommand = function(id,event){
+	convert( 16 )
+	winform.editCustom.text = "16"
+}
+
+winform.btnDec.oncommand = function(id,event){
+	convert( 10 )
+	winform.editCustom.text = "10"
+}
+
+
+winform.btnOct.oncommand = function(id,event){
+	convert( 8 )
+	winform.editCustom.text = "8"	
+}
+
+
+
+winform.show() 
+win.loopMessage();

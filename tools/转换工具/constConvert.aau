@@ -1,0 +1,106 @@
+//WINAPI常量转换工具
+
+import win.ui;
+/*DSG{{*/
+var winform = win.form(parent=...; bottom=435;right=500;border="resizable";text="WINAPI 常量查询转换工具" )
+winform.add( 
+editCode={ dr=1;dl=1;vscroll=1;right=484;left=12;dt=1;db=1;cls="edit";bottom=332;text='\xBF\xC9\xD4\xDA\xCF\xC2\xC3\xE6\xCB\xE6\xD2\xE2\xB0\xB4\xC8\xCE\xD2\xE2\xB8\xF1\xCA\xBD\xCA\xE4\xC8\xEBC\xD3\xEF\xD1\xD4\xD6\xD0\xB1\xED\xCA\xBE\xCA\xFD\xD6\xB5\xB5\xC4\xBA\xEA\xBB\xF2\xB3\xA3\xC1\xBF\r\n\xB8\xC3\xB9\xA4\xBE\xDF\xBF\xC9\xB2\xE9\xD1\xAF\xB3\xA3\xC1\xBF\xD6\xB5\xA3\xAC\xD2\xB2\xBF\xC9\xD2\xD4\xD3\xC3\xD3\xDA\xD7\xAA\xBB\xBB\xCE\xAA\xCA\xCA\xD3\xC3\xD3\xDAAAuto\xB5\xC4\xB8\xF1\xCA\xBD\r\n\r\n#define EN_SETFOCUS 0x0100\r\n#define EN_KILLFOCUS 0x0200\r\n#define EN_CHANGE 0x0300\r\n#define EN_UPDATE 0x0400\r\n#define EN_ERRSPACE 0x0500\r\n';multiline=1;top=9;z=1;hscroll=1;edge=1 };
+radioComment={ dr=1;checked=1;bottom=370;right=216;left=134;top=348;z=3;db=1;text="注释格式";cls="radiobutton" };
+btnConvert={ dr=1;bottom=421;text="转换";left=254;top=378;z=2;db=1;right=426;cls="button" };
+radioConst={ dr=1;bottom=370;text="常量声明格式";left=338;right=441;top=348;z=5;db=1;cls="radiobutton" };
+radioIntell={ dr=1;bottom=370;text="智能提示格式";left=224;right=327;top=348;z=4;db=1;cls="radiobutton" }
+)
+/*}}*/
+
+template = /****
+
+	#include <stdio.h>
+	#include <stdlib.h> 
+	#include <windows.h>
+	#include <winuser.h> 
+	#include <basetsd.h> 
+	#include <basetyps.h> 
+	#include <winbase.h> 
+	#include <wincon.h> 
+	#include <windef.h> 
+	#include <windows.h> 
+	#include <winerror.h> 
+	#include <wingdi.h> 
+	#include <winnetwk.h> 
+	#include <winnls.h> 
+	#include <winnt.h> 
+	#include <winreg.h> 
+	#include <winsvc.h> 
+	#include <winuser.h> 
+	#include <winver.h> 
+	int getDef (){    
+   		return ${DEF};
+	} 
+
+****/
+
+import tcc;  
+//创建TCC编译器
+
+convert = function( proc ){
+	var tResult = {}
+	 
+	for DEF in string.gmatch( winform.editCode.text,"[_a-zA-Z][\w_]+") { 
+		var vm = tcc( );
+		DEF = string.trimleft(DEF,"_")
+		if(tResult[DEF])
+			continue 
+		tResult[DEF]=true;
+		
+		var code = string.replace(template,"@${DEF}",DEF )
+		try{
+			vm.compile(code);  
+			var getDef_c = vm.getCdecl("getDef","int()")
+			table.push(tResult, proc(getDef_c(),DEF ) ) 
+		}
+		vm.close()
+	} 
+	 
+	return string.join(tResult,'\r\n') 
+}
+ 
+
+winform.btnConvert.oncommand = function(id,event){
+	winform.btnConvert.disabled = true;
+	
+	var str
+	if( winform.radioConst.checked ){
+		str = convert(
+			function(value,name){
+				return string.format("_%s = 0x%X",name,value )
+			}
+		)
+			
+	}
+	elseif( winform.radioComment.checked ){
+		str = convert(
+			function(value,name){
+				return string.format("0x%X/*_%s*/",value,name )
+			}
+		) 	
+	}
+	elseif( winform.radioIntell.checked ){
+		str = convert(
+			function(value,name){
+				return string.format("_%s = @0x%X/*_%s*/",name,value,name )
+			}
+		) 
+		str ='/**intellisense()\r\n' + str + '\r\nend intellisense**/'	
+	}
+	winform.editCode.text = str;
+	
+	winform.btnConvert.disabled = false;
+}
+
+winform.radioComment.oncommand = winform.btnConvert.oncommand  
+winform.radioConst.oncommand = winform.btnConvert.oncommand  
+winform.radioIntell.oncommand = winform.btnConvert.oncommand 
+
+
+winform.show() 
+win.loopMessage();

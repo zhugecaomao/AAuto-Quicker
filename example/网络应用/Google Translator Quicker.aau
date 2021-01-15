@@ -1,0 +1,105 @@
+import win.ui;  
+import inet.http
+import inet.url
+import string.list 
+import web.json
+/*DSG{{*/
+var winform = ..win.form( bgcolor=14215660;bottom=397;parent=...;right=417;rame=false;text="Google 快译 v1.7 - WWW.AAU.CN";exmode="";style=0;_struct="f rame";cls="AFORM" )
+winform.add( 
+groupResult={ dr=1;dl=1;bgcolor=14215660;color=0;right=409;left=7;dt=1;db=1;cls="groupbox";bottom=367;text="输出结果";top=133;acceptfiles=1;tabstop=1;edge=1;z=6 };
+edit={ dr=1;dl=1;bgcolor=16777215;vscroll=1;color=0;right=402;left=16;dt=1;cls="edit";bottom=95;text="Just try it!";multiline=1;top=21;acceptfiles=1;tabstop=1;hscroll=1;edge=1;z=4 };
+groupInput={ dr=1;dl=1;bgcolor=14215660;color=0;right=410;left=6;dt=1;cls="groupbox";bottom=129;text="输入要翻译的文本";top=5;acceptfiles=1;z=1;edge=1;tabstop=1 };
+static={ bottom=388;text="本程序使用AAuto编程语言制作";left=37;top=370;z=8;db=1;transparent=1;right=226;cls="static" };
+cmbsl={ dr=1;bgcolor=14215660;vscroll=1;color=0;right=208;left=131;dt=1;mode="dropdownlist";cls="combobox";bottom=119;text="combobox";transparent=1;top=99;acceptfiles=1;tabstop=1;
+items={  };hscroll=1;edge=1;z=3 };
+btnSource={ bottom=390;notify=1;color=16711680;text="查看本程序源代码";left=238;top=370;font=LOGFONT( name='Microsoft Sans Serif';underline=1 );z=9;db=1;right=345;transparent=1;cls="static" };
+button={ dr=1;bgcolor=14215660;color=0;right=293;left=221;dt=1;cls="button";z=5;bottom=123;text="翻译为";multiline=1;top=98;acceptfiles=1;transparent=1;tabstop=1 };
+cmbtl={ dr=1;bgcolor=14215660;vscroll=1;color=0;right=375;left=310;dt=1;mode="dropdownlist";cls="combobox";bottom=119;text="combobox2";transparent=1;
+items={  };acceptfiles=1;z=2;top=99;hscroll=1;edge=1;tabstop=1 };
+editResult={ dr=1;ah=1;bgcolor=16777215;vscroll=1;color=0;right=400;left=17;dt=1;db=1;cls="edit";bottom=355;multiline=1;top=152;acceptfiles=1;z=7;dl=1;hscroll=1;edge=1;tabstop=1 }
+)
+/*}}*/
+
+var tlangmap = { 土耳其语="tr";爱尔兰语="ga";法语="fr";印尼语="id";塞尔维亚语="sr";泰语="th";越南语="vi";
+荷兰语="nl";马其顿语="mk";阿拉伯语="ar";德语="de";检测语言="auto";冰岛语="is";韩语="ko";加利西亚语="gl";
+加泰罗尼亚语="ca";海地克里奥尔语 ALPHA="ht";克罗地亚语="hr";印地语="hi";马来语="ms";斯洛伐克语="sk";丹麦语="da";
+爱沙尼亚语="et";白俄罗斯语="be";波兰语="pl";芬兰语="fi";罗马尼亚语="ro";希腊语="el";菲律宾语="tl";西班牙语="es";保加利亚语="bg";斯洛文尼亚语="sl";立陶宛语="lt";乌克兰语="uk";马耳他语="mt";英语="en";波斯语="fa";瑞典语="sv";威尔士语="cy";中文="zh-CN";拉脱维亚语="lv";葡萄牙语="pt";希伯来语="iw";俄语="ru";捷克语="cs";挪威语="no";匈牙利语="hu";日语="ja";斯瓦希里语="sw";意第绪语="yi";阿尔巴尼亚语="sq";南非荷兰语="af";意大利语="it" }
+var tlanglist = { "中文"; "检测语言";"英语"; "土耳其语";"爱尔兰语";"法语";"印尼语";"塞尔维亚语";"ALPHA";"泰语";"越南语";"荷兰语";"马其顿语";"阿拉伯语";"德语";"检测语言";"冰岛语";"韩语";"波兰语";"意大利语";"白俄罗斯语";"阿尔巴尼亚语";"印地语";"意第绪语";"斯洛伐克语";"丹麦语";"爱沙尼亚语";"加泰罗尼亚语";"斯瓦希里语";"马来语";"加利西亚语";"希腊语";"菲律宾语";"西班牙语";"保加利亚语";"南非荷兰语";"挪威语";"乌克兰语";"马耳他语";"捷克语";"瑞典语";"威尔士语";"拉脱维亚语";"希伯来语";"葡萄牙语";"俄语";"斯洛文尼亚语";"波斯语";"匈牙利语";"日语";"罗马尼亚语";"芬兰语";"克罗地亚语";"立陶宛语" }
+
+winform.cmbsl.items = tlanglist;
+winform.cmbsl.selIndex = 3;
+winform.cmbtl.items = tlanglist;
+winform.cmbtl.selIndex = 1;
+
+winform.button.oncommand = function(id,event){
+
+		if( ! #winform.edit.text ){
+			winform.msgboxErr("请输入要翻译的文本")
+			return;
+		}
+ 
+		//创建URL参数对象
+		values = string.list("client=t&pc=0",'&') 
+		values.tl = tlangmap[winform.cmbtl.text] //目标语言
+		values.sl = tlangmap[winform.cmbsl.text] //源语言 
+		values.hl = values.sl
+		values.text  = inet.url.encode(winform.edit.text);
+
+
+		//创建HTTP对象
+		http = inet.http("Mozilla/5.0+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html)" );
+		var strJson = http.get( 'http://translate.google.com/translate_a/t?' + tostring(values)  , ,'http://translate.google.com');
+
+		//将UTF8转换为简体中文
+		strJson = string.fromto(strJson,65001,936 ); 
+	 
+		//JSON字符串解码成table对象
+		var json =  web.json.parse(strJson); 
+		var jsonText = json[1]; //译后的文本
+		var resultText = {} //准备合并结果
+		for(i=1;#jsonText){
+			table.push( resultText, jsonText[i][1] ) //[2]是源文 [1]是译文
+		} 
+		 
+		resultText = string.join( resultText );
+		winform.editResult.text = string.replace( resultText,"@\r\n",'\r\n');   
+}
+
+import win.cur; 
+var hand = win.cur.load(32649/*_IDC_HAND*/ )
+winform.btnSource.wndproc = function(hwnd,message,wParam,lParam){
+	if( message = 0x200/*_WM_MOUSEMOVE*/ )
+		win.cur.setCur(); 
+}
+
+//打开超链接
+winform.btnSource.oncommand = function(id,event){
+	import process;
+	process.execute("http://www.aau.cn");
+} 
+
+import key;
+winform.edit.wndproc = function(hwnd,message,wParam,lParam){
+	
+	if( message = 0x100/*_WM_KEYDOWN*/ && wParam == 'A'#){
+		if( key.getState("CTRL") ) {
+			winform.edit.selectAll();
+			return false;
+		}
+	}
+} 
+winform.editResult.wndproc = function(hwnd,message,wParam,lParam){
+	
+	if( message = 0x100/*_WM_KEYDOWN*/ && wParam == 'A'#){
+		if( key.getState("CTRL") ) {
+			winform.editResult.selectAll();
+			return false;
+		}
+	}
+}
+
+import win.ui.minmax;
+win.ui.minmax(winform)
+
+winform.show(true) 
+win.loopMessage( winform );

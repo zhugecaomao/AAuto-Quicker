@@ -1,0 +1,62 @@
+//version 版本信息
+namespace win
+
+GetVersionEx = ::Kernel32.api("GetVersionEx","int(struct &lpVersionInformation)")  
+var OSVERSIONINFO = class{  
+	INT osVersionInfoSize = 148; 
+	INT majorVersion; 
+	INT minorVersion; 
+	INT buildNumber; 
+	INT platformId; 
+	BYTE csdVersion[128] 
+}
+
+version = OSVERSIONINFO();  
+GetVersionEx( version );
+
+namespace version{
+	if(csdVersion)
+		csdVersion = ..string.str(csdVersion);
+		
+	if( platformId == 2 ){ 
+        if( majorVersion = 5 ){
+        	select(minorVersion) {
+        		case 1 {
+        			isXp = true;
+        		}
+        		case 2 {
+        			isWin2003 = true;
+        		} 
+        	}
+        } 
+        else if( majorVersion ==  6 ){
+        	select(minorVersion) {
+        		case 0 {
+        			isVista = true; 
+        			isWin2008 = true;
+        		}
+        		case 1 {
+        			isWin7 = true; 
+        		}
+        		case 2 {
+        			isWin8 = true;
+        		}
+        	} 
+        }   
+	} 
+}
+
+/**intellisense(win.version)
+majorVersion = 操作系统的主版本号
+minorVersion = 操作系统的副版本号
+buildNumber = 操作系统的构建版本号
+platformId = 平台ID
+csdVersion = 关于该操作系统的附加信息
+isXp = 是否 WinXP
+isWin2003 = 是否 Win2003
+isVista = 是否 Vista
+isWin2008 = 是否 win2008
+isWin7 = 是否 win7
+isWin8 = 是否 win8
+end intellisense**/
+

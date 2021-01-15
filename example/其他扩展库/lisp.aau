@@ -1,0 +1,17 @@
+//嵌入newLISP
+
+import console;
+import newLisp;
+
+newLisp.callback( "callme",
+	function(a,b,c){
+		console.log("回调参数",a,b,c)
+		return "hello";
+	},"string(int,int,int)"
+)
+ 
+var code = /**
+	(get-string (callme 1 2 3) )
+**/
+var ret = newLisp.eval(code)
+console.log( ret )

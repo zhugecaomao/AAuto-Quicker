@@ -1,0 +1,95 @@
+import web.ui;
+/*DSG{{*/
+mainForm = ..win.form( mode="popup";title=false;bottom=483;text="${PRJECTNAME}";border="none";right=700 )
+mainForm.add(  )
+/*}}*/
+
+//import config;
+import console;
+import web.util;
+
+mainWb = web.form( mainForm 
+	,0x4/*_UIFLAG_NO3DBORDER*/ //可输入_UIFLAG_ 前缀的常量自定义外观
+	,//可输入_DLCTL_ 前缀的常量以控制下载行为
+	,//"USER AGENT"
+	,true/*securityTrusted*/ ); 
+
+/*网页接口{{*/ 
+mainWb.external = {   
+	config = config;
+	log = function(...){
+		if( _STUDIO_INVOKED ){
+			console.log(...) 
+		};
+	}; 
+	loadServer = function (option) { 
+		//将 /html/some.html 映射到 /lib/html/some.aau 用户库中定义的类 
+		var url = string.lower(option.document.location.href);  
+		var path = "server." + string.replace(
+			assert( string.match(url, "[\/\\]res[\/\\](\w[\w\/\\]+)\.html" ) ) 
+			, "[/\\]", ".") ; 
+		
+		global.import(path);  
+	   	return ..table.getByNamespace(path)( mainWb, option.document ).external;
+	}; 	  
+} 
+/*}}*/
+
+/*导入网页用户库{{*/
+import server.main;
+/*}}*/
+
+/*自定义网页右键菜单{{*/ 
+import web.form.menu;
+var webmenu = web.form.menu( mainWb, {
+	[2/*_CONTEXT_MENU_CONTROL*/] = {  
+		{ "撤消";"Undo" }; 
+		{ /*-----*/};  
+		{ "剪切";"Cut"}; 
+		{ "复制";"Copy"}; 
+		{ "粘贴";"Paste"};
+		{ "删除";"Delete"}; 
+		{ /*-----*/};
+		{ "全选";"SelectAll"};  
+	};
+	[4/*_CONTEXT_MENU_TEXTSELECT */] = {  
+		{ "剪切";"Cut" }; 
+		{ "复制";"Copy" }; 
+		{ "粘贴";"Paste" };
+		{ "删除";"Delete" };
+	};  
+} );
+mainWb.showMenu = function( x,y,id,ele ) {
+	return webmenu.popup( x,y,id,ele ) 
+}
+/*}}*/ 
+
+/*自定义线程命令{{*/
+import thread.command;
+var tCommands = thread.command( mainForm );
+tCommands.自定义线程命令 = function(参数){
+	mainWb.write(参数)
+} 
+/*}}*/
+
+if( ! _STUDIO_INVOKED ){
+	mainWb.noScriptErr=true; 
+};
+mainWb.go("/res/main.html");
+web.ui( mainWb );
+
+mainWb.attachAll(  
+	/* html节点ID = 事件触发函数表 */
+	caption_button_website = {
+		onclick = function(event){ 
+			web.util.ieBrowser("http://www.aau.cn")
+		} 
+		onmouseup = function(event){
+			event.srcElement.blur();
+		}
+	}
+) 
+ 
+
+mainForm.show() 
+win.loopMessage(); 

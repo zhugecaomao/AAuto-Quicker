@@ -1,0 +1,87 @@
+//.. 系统操作
+namespace sys
+
+ExitWindowsEx = ::User32.api("ExitWindowsEx","int(int uFlags,pointer dwReserved)")
+SetSystemPowerState = ::Kernel32.api("SetSystemPowerState","int(int fSuspend,int fForce)")
+ 
+shutdown = function( mode = 1){
+    if(! setprivilege("SeShutdownPrivilege",true) )
+    	return false;
+    
+    
+    var result;
+    
+    select(mode){ 
+        case 1 {
+            //关机
+            result = ExitWindowsEx(0x1/*_EWX_SHUTDOWN*/| 0x00000008/*_EWX_POWEROFF*/ |0x4/*_EWX_FORCE*/ );
+        } 
+        case 2 {
+            //重启
+            result = ExitWindowsEx(0x2/*_EWX_REBOOT*/|0x4/*_EWX_FORCE*/ );
+        } 
+        case 3 {
+            //注销
+            result = ExitWindowsEx(0x0/*_EWX_LOGOFF*/|0x4/*_EWX_FORCE*/);
+        } 
+        case 4 {
+            //待机
+            result = SetSystemPowerState( 1, 1); 
+        } 
+        else {
+            //休眠
+            result = SetSystemPowerState( 0, 0 );
+        } 
+    
+    }
+    
+    return result ;
+}
+restart = function(){
+	return shutdown(2)
+} 
+logoff = function(){
+	return shutdown(3)	
+}
+standby= function(){
+	return shutdown(4)	
+}
+self.sleep= function(){
+	return shutdown(5)	
+}
+lock = ::User32.api( "LockWorkStation", "int()");
+
+/*intellisense(sys)
+shutdown()=关机
+restart()=重启
+logoff()=注销
+standby()=待机
+sleep()=休眠
+lock()=锁定计算机
+end intellisense*/
+
+::Advapi32 := ..raw.loadDll("Advapi32.dll")
+GetUserName_ =  Advapi32.api( "GetUserNameA", "bool(str& buf,int &size)");
+GetComputerName_ = ::Kernel32.api("GetComputerNameA","bool(str &lpBuffer,int& nSize)")
+getUserName = function(){
+	var ok,name = GetUserName_(0x101,0x101);	
+	if(ok)return name;
+}
+getComputerName = function(){
+	var ok,name = GetComputerName_(32,32);	
+	if(ok)return name;
+}
+
+SetComputerNameEx = ::Kernel32.api("SetComputerNameEx","int(int type,str name)") 
+setComputerName = function( name,iType = 5 ){
+    return SetComputerNameEx(iType,str)
+}
+
+/**intellisense(sys)
+getUserName() = 返回当前登录用户名
+getComputerName() = 返回计算机名
+setComputerName(.("计算机名") = 修改计算机名,重启后生效
+end intellisense**/
+ 
+
+

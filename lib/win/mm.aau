@@ -1,0 +1,65 @@
+//mm 多媒体  
+//author: dasan  
+
+namespace win.mm
+ 
+::Winmm  :=  ..raw.loadDll("Winmm.dll");
+
+var MessageBeep = ::User32.api("MessageBeep","int(int kType)") 
+var PlaySound = Winmm.api("PlaySound","int(pointer pszSound,int hmod,int fdwSound") 
+var MciSendString = Winmm.api("mciSendStringA","int(string lpstrCommand,str &lpstrReturnString,int uReturnLength,int hwndCallback)")
+var MciGetErrorString = Winmm.api("mciGetErrorStringA","bool(INT err,str& strErr,INT cchErr )")
+
+mciGetErrorString = function(err=0){
+	var ok,strErr = MciGetErrorString(err,128,128);
+	if( ok) return strErr;
+}
+
+mciSendString = function(command,hwndCallback=0){
+    var err,retString = MciSendString( command,256, 256, hwndCallback )
+    if( err == 0 ) 
+    	return true,retString;
+    else 
+    	return false,mciGetErrorString(err);
+}
+
+playMp3 = function(path){
+    return mciSendString( 'play "' + ( ..io.localpath(path):path ) + '"'  ) 
+}
+
+playSound = function(filepath,flag = 0x0001 /*_SND_ASYNC*/){ 
+    if(!filepath)
+    	PlaySound(null,0,flag)
+    else
+		PlaySound( ..io.fullpath(filepath),0,flag)
+} 
+
+msgBeep = function(ktype = -1 ){
+	MessageBeep(ktype);
+}
+
+/*intellisense(win.mm)*/
+Beep := ::Kernel32.api("Beep","int(int a,int b)"); 
+TimeGetTime := Winmm.api("timeGetTime","long()" )
+/*end intellisense*/
+ 
+/**intellisense(win.mm)
+msgBeep() = 从机器的扬声器中发出蜂鸣声
+msgBeep(0x40/*_MB_ICONASTERISK*/) = 播放由SystemAsterisk定义的声音。 
+msgBeep(0x30/*_MB_ICONEXCLAMATION*/) = 播放由SystemExclamation定义的声音。 
+msgBeep(0x20/*_MB_ICONQUESTION*/) = 播放由SystemQuestion定义的声音。 
+msgBeep(0x10/*_MB_ICONHAND*/) = 播放由SystemHand定义的声音。 
+msgBeep(0x0/*_MB_OK*/) =    播放由SystemDefault定义的声音。0xFFFFFFFF
+playSound() = 停止播放声音
+playSound("/__") = 播放wav文件
+playSound("/__",0x0008) = 循环播放wav文件
+playMp3(.("/mp3/filename->mp3") = 播放mp3
+mciSendString('open "' + io->fullpath("/mp3/filename->mp3__") + '"') = 发送命令串打开MP3文件,\n成功返回true,以及可选的返回文本,\n失败返回false,以及错误信息
+mciSendString('play song') = 发送命令串播放音乐,\n使用别名播放音乐时，线程终止将会自动停止
+mciSendString('stop song') = 发送命令串停止播放音乐
+mciSendString('pause song') = 发送命令串暂停播放音乐
+mciSendString('close song') = 发送命令串关闭音乐
+mciSendString("seek song to __/*位置*") = 到你指定的位置播放
+mciGetErrorString(.(错误代码) = 返回MCI错误信息
+end intellisense**/
+ 

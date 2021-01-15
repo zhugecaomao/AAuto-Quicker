@@ -1,0 +1,100 @@
+//多线程多文件下载
+import win.ui;
+/*DSG{{*/
+var winform = ..win.form( text="多线程多文件断点续传下载";right=599;bottom=399 )
+winform.add( 
+listview={ dr=1;dl=1;bgcolor=16777215;bottom=300;right=571;left=23;dt=1;top=16;z=1;db=1;edge=1;cls="listview" };
+button={ dr=1;bottom=367;right=499;left=274;top=331;z=2;db=1;text="多线程多文件断点续传下载";cls="button" }
+)
+/*}}*/
+
+//初始化listview控件
+winform.listview.insertColumn("文件名",180);
+winform.listview.insertColumn("状态",100);
+winform.listview.insertColumn("大小",80);
+winform.listview.insertColumn("已下载",120);
+winform.listview.adjust = function(cx,cy){
+    winform.listview.fillParent(1);
+}
+
+//响应下载事件
+import fsys;
+import thread.command;
+var command = thread.command(winform);
+command.onReciveBegin = function(filename,lable,statusCode,contentLength,fileSize){
+	winform.listview.addItem( { filename;lable;fsys.formatSize(contentLength + fileSize);fsys.formatSize(fileSize) } );
+	return winform.listview.count;
+}
+command.onRecive = function(itemId,totalSize){ 
+	winform.listview.setItemText( fsys.formatSize(totalSize),itemId,4); 
+}
+command.onReciveEnd = function(itemId,ok,err,filename,fileSize){  
+	winform.listview.setItemText( ok ? "已完成" : err,itemId,2); 
+}
+
+import thread.works;
+var downloadTask = thread.works( 5/*个下载线程*/,
+
+	function( option ) {
+		
+		import fsys;
+		import inet.http
+		import inet.httpFile;
+		import thread.command;
+		import thread.event;
+		
+		var itemId;
+		var total;
+		var evt = thread.event("STOP ALL",true);//参数2为真避免线程自动切换信号
+		
+		var remoteFile = inet.httpFile( option.url 
+			, ..fsys.joinpath( "/downlaod/" ,option.filename )  ) 
+		
+		remoteFile.onReciveBegin = function(statusCode,contentLength,fileSize){
+			if( statusCode == 206/*断点续传*/ ){ 
+				itemId = thread.command.send( "onReciveBegin",option.filename,"断点续传",statusCode,contentLength,fileSize)
+			}
+			elseif(fileSize){ 
+				itemId = thread.command.send( "onReciveBegin",option.filename,"重新下载",statusCode,contentLength,fileSize)
+			}
+			else {
+				itemId = thread.command.send( "onReciveBegin",option.filename,"开始下载",statusCode,contentLength,fileSize)
+			}  
+			total = fileSize;
+		}
+		
+		remoteFile.onRecive = function(str,size,contentLength){ 
+			total = total + size;
+			thread.command.send( "onRecive",itemId,total );
+			return ! evt.wait(1) /*检测主线程是否发出停止信号*/;
+		}
+		 
+		var ok,err,fileSize = remoteFile.download() 
+		if(ok && err && !itemId ){
+			itemId = thread.command.send( "onReciveBegin",option.filename,"下载完成",0,0,fileSize)
+		}
+		thread.command.send( "onReciveEnd",itemId,ok,err,option.filename,fileSize  ) 
+	} 
+);
+fsys.createDir("/downlaod/");
+
+/*
+添加下载任务非常简单,
+直接push参数到downloadTask队列里就可以了
+*/
+winform.button.oncommand = function(id,event){	
+	downloadTask.push( url = "http://oss.aau.cn/aauto/ide/AAuto.7z";filename="aau.7z")
+	downloadTask.push( url = "http://oss.aau.cn/aauto/ide/AAuto.zip";filename="aau.zip")
+}
+
+//关闭窗体时停止所有下载
+import thread.event;
+winform.onClose = function(hwnd,message,wParam,lParam){
+	winform.text = "正在等待关闭"; 
+    thread.event("STOP ALL",true).set(); /*发出停止信号*/
+    downloadTask.waitClose()
+}
+ 
+//显示主窗体
+winform.show() 
+win.loopMessage();

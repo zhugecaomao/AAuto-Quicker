@@ -1,0 +1,52 @@
+import web.json
+
+io.open();
+
+//为显示准备一个数组
+t = {};
+
+//来自真实世界的测试数据
+str = '{ "action":"","flag1":true, "flag2":null, "result":"success", "itemid":"865691", "url":"", "message":"1件产品下载成功", "total": -3.5E+5 , "redirection":"/distributor/product/my_product_list.htm?pageNo=1&download=-1&pageTotal=0&supplierId=-1&needPageTotal=true&productNumber=" } ';
+//自己构造的合法的JSON字串
+str2 = '[25,39/*,"test comment 1"*/,-3.5e7,/*"test comment 2"*/true,false,null/*json空类型*/,"\\"\\u53CC\\u5F15\\u53F7\\"","\\t\\\\"]';
+
+table.push(t,"一、原JSON字符串：",'JSON字串1：',str,'JSON字串2：',str2,'\r\n');
+
+//json字串解码成table
+tjson = web.json.parse(str);
+tjson2 = web.json.parse(str2,true);
+table.push(t,"二、JSON字串解码(parse)成table");
+table.push(t,"JSON字串1解码成table 1：",table.tostring(tjson));
+table.push(t,"JSON字串2解码成表table 2：",table.tostring(tjson2));
+
+
+table.push(t,'\r\n三、JSON字串解码(parse)后的调用：','调用一(forin/for方式)，请看示例的源代码：');
+//forin 显示table内容
+table.push(t,'******JSON字串1解码后调用显示******');
+for(k,v in tjson){
+	table.push(t,v);
+}
+table.push(t,'******JSON字串2解码后调用显示******');
+for(i=1;#tjson2){
+	table.push(t,tjson2[i]);
+}
+
+table.push(t,'\r\n调用二(对象点方式)，请看示例的源代码：')
+//table还可以类化成对象
+obj = tjson; //table.declare(tjson)();
+obj2 = tjson2; //table.declare(tjson2)();
+//用对象“.”方式显示JSON字串内容，按需显示
+table.push(t,'******JSON字串1解码后调用显示******',obj.action,obj.flag1,obj.flag2,obj.result,obj.itemid,obj.url,obj.message,obj.total,obj.redirection);
+table.push(t,'******JSON字串2解码后调用显示******',obj2[1],obj2[2],obj2[3],obj2[4],obj2[5],obj2[6],obj2[7]);
+
+//table 编码成JSON字串
+s = web.json.stringify(tjson, true);
+s2 = web.json.stringify(tjson2, true);
+table.push(t,'\r\n四、JSON编码(stringify)：','table 1编码成JSON字串1：',s,'table 2编码成JSON字串2：',s2);
+
+//输出显示信息
+for(k,v in t){
+	io.print(v);
+}
+
+//enjoy it.

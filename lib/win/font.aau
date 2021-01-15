@@ -1,0 +1,64 @@
+//font 字体
+namespace win.font; 
+
+ ::Gdi32 := ..raw.loadDll("Gdi32.dll")
+AddFontResource = Gdi32.api("AddFontResource","int(str filename)");
+RemoveFontResource  =  Gdi32.api("RemoveFontResource","bool(str filename)");
+AddFontMemResourceEx =  Gdi32.api("AddFontMemResourceEx","pointer( pointer pbFont,INT cbFont,pointer pdv,INT &pcFonts)");
+RemoveFontMemResourceEx =  Gdi32.api("RemoveFontMemResourceEx","bool(str filename)");
+
+add = function(f,notify){
+	if( !f ) error("字体参数不能为空值",2);
+	if( notify === null ) notify = true;
+	
+	var data = f;
+	if( #f <= 0x104/*_MAX_PATH*/ ){
+		var path = ..io.exist(f)
+		
+		
+		if( path ){
+			var num = AddFontResource( path )
+			if( num > 0 ){ 
+				if(notify)::SendMessage( 0xFFFF/*_HWND_BROADCAST*/,0x1D/*_WM_FONTCHANGE*/);  
+				return path,num;
+			}
+		}
+		
+		data = ..string.load(f) : f; 
+	}
+	 
+	if( data ){
+		var hnd,num = AddFontMemResourceEx( data,#data,null,0); 
+		if( hnd && num ) {
+			if(notify)::SendMessage( 0xFFFF/*_HWND_BROADCAST*/,0x1D/*_WM_FONTCHANGE*/); 
+			return hnd,num;
+		}
+	}
+}
+
+remove = function(f,notify){ 
+	if( !f ) error("字体参数不能为空值",2);
+	if( notify === null ) notify = true;
+	
+	var ret;
+	if( type(f) == type.string ){
+		ret = RemoveFontResource( ..io.fullpath(f) )
+	}
+	else {
+		ret = RemoveFontMemResourceEx(f);
+	} 
+	if( ret ){
+		if(notify)::SendMessage( 0xFFFF/*_HWND_BROADCAST*/,0x1D/*_WM_FONTCHANGE*/);  
+		return true; 
+	}
+}
+
+sendChange = function(){
+	::SendMessage( 0xFFFF/*_HWND_BROADCAST*/,0x1D/*_WM_FONTCHANGE*/); 
+}
+
+/**intellisense(win.font)
+add(.(字体) = 添加字体,参数可以是字体文件路径,资源文件路径,或内存数据\n参数2省略或为真删除成功后调用sendChange函数通知所有窗体\n返回值1为字体路径或字体句柄,返回值为添加数目\n失败返回空值
+remove(.(字体) = 移除字体,参数必须是add函数的第一个非空返回值\n参数2省略或为真删除成功后调用sendChange函数通知所有窗体
+sendChange() = 字体增删后可选使用此函数通知所有顶层窗口
+end intellisense**/

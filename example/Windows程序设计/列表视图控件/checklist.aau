@@ -1,0 +1,35 @@
+//checklist响应点选
+
+import win.ui;
+/*DSG{{*/
+var winform = win.form( text="复选列表框 响应通知消息演示";bottom=249;parent=...;right=349;max=false )
+winform.add( 
+static={ bottom=45;right=268;left=22;text="请点选项目";top=21;transparent=1;z=2;cls="static" };
+checklist={ bgcolor=16777215;bottom=224;right=326;left=20;top=45;z=1;
+items={  };edge=1;cls="checklist" }
+)
+/*}}*/
+
+winform.checklist.items = { "测试项目";"测试项目2";"测试项目3" }   
+winform.checklist.addItem("测试项目4")  
+winform.checklist.addItem("测试项目5")  
+
+winform.checklist.onnotify = function(id,code,ptr){  
+ 	 if( code == 0xFFFFFF9B/*_LVN_ITEMCHANGED*/ ){ 
+ 	 	var nmListView = winform.checklist.getNotifyMessage(code,ptr);
+ 	 	if( !nmListView )
+ 	 		return;
+ 	 		
+ 	 	if( nmListView.uNewState & 0xF000/*_LVIS_STATEIMAGEMASK*/){
+ 	 		var selIndex = nmListView.iItem;
+ 	 		if( winform.checklist.getChecked( selIndex ) )
+ 	 			winform.static.text = "选中:" + selIndex
+ 	 		else {
+ 	 			winform.static.text = "取消选中:" + selIndex
+ 	 		} 
+ 	 	}  
+ 	 } 
+}
+ 
+winform.show() 
+win.loopMessage();

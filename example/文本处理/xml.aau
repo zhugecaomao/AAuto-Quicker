@@ -1,0 +1,63 @@
+//简单xml解析
+
+import string.xml
+
+//example
+xmlstr =  /* 
+<?xml version="1.0" encoding="gb2312"?>
+<project ver="0.60" name="快手工程3" libEmbed="true" icon="...">
+<file name="main.aau" path="main.aau" > 
+</file>
+<folder name="资源文件" path="res" embed="true">
+<![CDATA[ 
+<folder name="资源文件" path="res" embed="true">
+]]>
+</folder>
+<folder name="库" path="lib">
+</folder>
+<abc />
+</project> 
+*/
+
+io.open()
+xmlDoc = string.xml( xmlstr )
+ 
+/*
+上面的xmlDoc表示根节点,
+xmlDoc包含一个所有子节点的数组，
+例如 xmlDoc[1] 表录第一个子节点.
+
+xmlDoc还包含所有以XML标记归类的子节点数组;
+例如: xmlDoc.project[1] 表示第一个project子节点
+
+而所有的子节点又可以按上述规则再包含其他的子节点.
+
+===========================================
+
+普通节点使用 tagName 属性表示XML标签名
+文本节点使用 text 属性表示文本,无tagName
+CDATA节点使用 cdata 属性表示数据, 无tagName
+根节点无tagName;
+xml声明节点的tagName为"?xml"
+*/
+
+var project = xmlDoc.queryEles( tagName = "project");
+for(index,tagName,childCount,xNode in project[1].eachChild() ){
+	io.print( index,tagName,childCount,xNode.outerXml() ) 
+}
+  
+io.print("
+---------------分析百度RSS----------------
+")
+
+import inet.http
+str = inet.http().get("http://news.baidu.com/n?cmd=1&class=civilnews&tn=rss")
+
+xmlDoc = string.xml(str)  
+io.print( xmlDoc.innerText() )
+
+for(i,item in xmlDoc.rss[1].channel[1].item ){
+	io.print( item.title[1][1].cdata )
+}
+
+io.print( '\r\n按 CTRL + C 关闭此窗口' )

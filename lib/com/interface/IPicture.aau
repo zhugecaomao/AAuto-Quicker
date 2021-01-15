@@ -1,0 +1,24 @@
+
+import com.interface;
+namespace  com.interface;
+
+class IPicture{
+	ctor(  ){
+		this = ..com.interface.IUnknown(); 
+	}; 
+	pointer get_Handle = "int(pointer &pHandle)"; 
+	pointer get_hPal = "int(pointer &phPal)"; 
+	pointer get_Type = "int(word &pType)"; 
+	pointer get_Width = "int(int &pWidth)"; 
+	pointer get_Height = "int(INT &pHeight)"; 
+	pointer Render = "int(int hDC,int x,int y, int cx,int cy, int xSrc, int ySrc, int cxSrc,int cySrc,struct pRcWBounds)"; 
+	pointer set_hPal = "int(INT hPal)"; 
+	pointer get_CurDC = "int(pointer &phDC)"; 
+	pointer SelectPicture = "int(pointer hDCIn,pointer &phDCOut,pointer &phBmpOut)"; 
+	pointer get_KeepOriginalFormat = "int(bool &pKeep)"; 
+	pointer put_KeepOriginalFormat = "int(bool keep)"; 
+	pointer PictureChanged = "int()"; 
+	pointer SaveAsFile = "int(pointer pStream,bool fSaveMemCopy,int &pCbSize)"; 
+	pointer get_Attributes = "int(INT &pDwAttr)"; 
+}
+IPicture.IID = "{7BF80980-BF32-101A-8BBB-00AA00300CAB}";

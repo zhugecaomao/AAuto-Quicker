@@ -1,0 +1,46 @@
+//使用replace语句
+import sqlite
+
+//打开控制台
+io.open();
+
+//打开数据库连接
+var sqlConnection = sqlite("/dbReplace.db")  
+if( not sqlConnection.existsTable("tableName2") ){ 
+
+    //创建单主键表 
+    sqlConnection.exec( "create table tableName(
+        title primary key, 
+        length, 
+        tm 
+        );"
+    ) 
+    
+    //创建双主键表
+    sqlConnection.exec( "create table tableName2(
+        title, 
+        length, 
+        tm,  
+        constraint pk_tableName2 primary key (title,length) 
+        );"
+    ) 
+}
+
+//replace语句根据主键查询,不存在相同数据则插入新的,否则更新已存在的数据
+sqlConnection.exec( "replace into tableName values ('Silence of the Lambs, The', 11.8, datetime('now','localtime')  );")
+sqlConnection.exec( "replace into tableName2 values ('Contact', 32, datetime('now','localtime') );") 
+sqlConnection.exec( "replace into tableName2 values ('Contact', 16, datetime('now','localtime') );") 
+
+
+io.open()
+for title,length,tm in sqlConnection.each("select * from tableName") {
+    io.print( title,length,tm )
+}
+
+for title,length,tm in sqlConnection.each("select * from tableName2") {
+    io.print( title,length,tm )
+}
+ 
+sqlConnection.close()
+
+

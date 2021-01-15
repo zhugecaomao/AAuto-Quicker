@@ -1,0 +1,52 @@
+//sortableGrid 排序网格
+import web.layout.behavior.grid;
+
+namespace web.layout.behavior;
+
+var super = grid; 
+namespace sortableGrid;
+ 
+onKeyDown =  super.onKeyDown;
+onMouseDblClick = super.onMouseDblClick;
+
+var sortableGrid = self;
+namespace sinking {
+	//鼠标以SINKING(捕获模式)向下传递下,使用sinking名字空间响应事件
+	
+	onMouseDown = function (ltTarget,ltEle,x,y,mouseParams) {
+	
+		//sortableGrid传给onMouseDblClick的owner参数,使之可以通过owner对象调用重写后的owner.onColumnClick
+		return sortableGrid.onMouseDblClick(ltTarget,ltEle, x,y,mouseParams,true)
+	}
+}
+
+onColumnClick = function(ltEle, ltTarget ){
+    super.onColumnClick(ltEle, ltTarget); 
+    var current = ltEle.queryElement("th:checked");
+    if( current == ltTarget )
+		return; // already here, nothing to do.
+
+    if( current )
+    	ltEle.state.checked = false;
+    	
+    ltTarget.state.checked = true; 
+    
+    var elTrCurrent = super.getCurrentRow( ltEle );
+    
+    var columnNo = ltTarget.index();
+    ltEle.sort(
+    	function(ltEle,ltEle2){ 
+    		return ltEle.child(columnNo).innerText > ltEle2.child(columnNo).innerText
+    			? -1 : 1;
+    		return 1;/*-1,0,1*/
+    	},super.fixedRows(ltEle)
+    ) 
+    
+	if( elTrCurrent )
+    	elTrCurrent.scrollToView();
+} 
+
+ /*
+修正智能提示
+ elTrCurrent = ltEle
+ */

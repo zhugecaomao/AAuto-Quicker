@@ -1,0 +1,15 @@
+io.open();//打开控制台
+execute("title  自定义控制台颜色")
+
+for(i=0;0xF;1){
+
+        execute("color " + string.format("%x%x",0xF-i, i)) 
+        io.stdout.write("哈哈")
+
+        sleep(100)
+
+}
+io.print("");
+
+execute("pause") //按任意键继续
+io.close();//关闭控制台

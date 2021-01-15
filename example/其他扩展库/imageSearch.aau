@@ -1,0 +1,30 @@
+//找图
+import win.ui;
+/*DSG{{*/
+var winform = win.form( right=335;bottom=205;parent=...;text="imageSearch 找图范例";max=false )
+winform.add( 
+lbTip={ bottom=157;right=309;left=38;text="注意样本尽可能小,尽可能不要包含不必要的背景";top=141;z=5;transparent=1;cls="static" };
+button={ bottom=69;text="找到右侧图标";left=35;top=27;z=1;right=182;cls="button" };
+static={ bottom=131;text="容差";left=269;right=325;top=114;z=4;transparent=1;cls="static" };
+trackbar={ bottom=130;max=255;right=260;left=31;top=100;z=3;min=0;cls="trackbar" };
+picturebox={ bottom=97;right=270;left=213;autosize=1;top=21;image=$"\.res\find.bmp";z=2;edge=1;cls="picturebox" }
+)
+/*}}*/
+
+//用于调整找图容差的滑块
+winform.trackbar.pos = 100;
+winform.trackbar.onnotify = function(id,code,ptr){
+	winform.static.text = "容差 " +  winform.trackbar.pos; //显示滑块当前刻度
+}
+
+import mouse
+import imageSearch;
+winform.button.oncommand = function(id,event){ 
+	search = imageSearch( "/.res/find.bmp" ) //支持嵌入资源图像，支持用$操作符内存加载图像
+	search.setTolerance( winform.trackbar.pos ); //设定容差(0~255)，反复调整此值能有较好效果
+	x,y = search.search(true);//找图 
+	mouse.moveTo(x,y,true,10,1) //鼠标移动到发现的坐标
+}
+
+winform.show() 
+win.loopMessage();

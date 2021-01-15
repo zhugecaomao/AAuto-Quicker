@@ -1,0 +1,34 @@
+//断点续传演示
+
+import fsys;
+import inet.http
+import inet.httpFile;
+
+io.open()
+fsys.createDir("~/download/lib")
+var remoteFile = inet.httpFile(
+	"http://www.ecranesoft.com/public/aauto/lib/tcc.cab" ,"~/download/lib"
+	)
+	
+io.print( "文件在上次下载后是否修改过?",remoteFile.isModified() )
+
+remoteFile.onReciveBegin = function(statusCode,contentLength,fileSize){
+	if( statusCode == 206/*断点续传*/ ){
+		io.print("正在断点续传")
+	}
+	elseif(fileSize){
+		io.print("正在重新下载")
+	}
+	
+	io.print("未下载长度",contentLength,"已下载长度",fileSize, "HTTP状态码", statusCode )
+}
+
+remoteFile.onRecive = function(str,size,contentLength){
+	io.print("总长度",contentLength , "下载", size )
+	//return false; //返回false停止下载
+}
+
+//下载文件
+var ok,err,fileSize = remoteFile.download() 
+
+io.print( ok,fileSize,err,inet.lastResponse() )

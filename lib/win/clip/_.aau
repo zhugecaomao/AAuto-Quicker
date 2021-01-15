@@ -1,0 +1,78 @@
+//.. 剪贴板操作
+import win;
+
+namespace win.clip;
+
+/*intellisense(win.clip)*/ 
+OpenClipboard  = ::User32.api("OpenClipboard","int(int hwnd)" ) ;
+EmptyClipboard = User32.api("EmptyClipboard","int()" ) ;
+GetClipboardData = User32.api("GetClipboardData","pointer (int)" ) ;
+SetClipboardData = User32.api("SetClipboardData","int (int wFormat ,pointer hMem )" ) ;
+CloseClipboard = User32.api("CloseClipboard","int()" ) 
+RegisterClipboardFormat = ::User32.api("RegisterClipboardFormat","INT(str format)")
+/*end intellisense*/
+
+read = function(){ 
+	var txt;
+	if(!OpenClipboard(0))
+		return;	
+
+	var hClip =  GetClipboardData(1/*_CF_TEXT*/);
+	if(hClip){
+		var p = ::GlobalLock(hClip)
+		if(p){
+			txt = ..raw.tostring( p )
+			::GlobalUnlock(hClip)
+		}
+	} 
+	CloseClipboard();  
+
+	return txt;
+}
+write = function(str){ 
+	if(!OpenClipboard(0))
+		return;	
+			
+	EmptyClipboard();
+		
+	str = tostring(str);
+	var clipbuffer = ::GlobalAlloc(0x2000/*_GMEM_DDESHARE*/, #str + 1);
+    var buffer =  ::GlobalLock(clipbuffer);
+    
+    ::CopyMemory(buffer,str,#str); 
+	::GlobalUnlock(clipbuffer);
+
+	var hdl =  SetClipboardData(1/*_CF_TEXT*/,clipbuffer);
+	CloseClipboard();
+	return hdl;
+	 
+}
+writeBitmap = function(hBmp){ 
+	if(!OpenClipboard(0))
+		return;	
+			
+	EmptyClipboard();  
+	var hdl =  SetClipboardData (0x2/*_CF_BITMAP*/,::CopyImage(hBmp,0x0/*_IMAGE_BITMAP*/,0,0,0x4/*_LR_COPYRETURNORG*/) )
+	CloseClipboard();
+	return hdl;
+	 
+}
+readBitmap = function(){ 
+	if(!OpenClipboard(0))
+		return;	
+
+	var hBmp = GetClipboardData(0x2/*_CF_BITMAP*/)   
+	//if(hBmp)
+		//hBmp = CopyImage(hBmp,0x0/*_IMAGE_BITMAP*/,0,0,0x4/*_LR_COPYRETURNORG*/);
+		
+	CloseClipboard();  
+	return hBmp;
+}
+ 
+
+/**intellisense(win.clip)
+read() = 读取剪贴板文本
+write(__) = 写入文本到剪贴板
+writeBitmap(__/*位图句柄*/) = 写入位图到剪贴板
+readBitmap() = 读取剪贴板位图句柄
+end intellisense**/

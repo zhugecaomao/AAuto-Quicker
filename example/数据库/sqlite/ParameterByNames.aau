@@ -1,0 +1,38 @@
+//使用命名参数
+import sqlite
+
+//打开数据库连接
+var sqlConnection = sqlite("/testParameters.db")
+
+//创建表 
+if( not sqlConnection.existsTable("film") ){  
+	sqlConnection.exec( "create table film(title, length, year, starring);")  
+}  
+ 
+//用@表示命名参数
+var command = sqlConnection.prepare("insert into film values (@title,@length,@year, 'Jodie Foster');" )
+command.bind.parameterByNames( 
+	["@title"] = "标题";
+	["@length"] = 4;
+	["@year"] = time.now();
+);
+command.step();
+command.finalize();//释放命令对象,这句如果忘记写会在内存回收时自动调用
+
+//上面的代码也可以简写为一句，如下：
+sqlConnection.prepare("insert into film values (@title,@length,@year, 'Jodie Foster');" ).step(
+ 	title = "标题11111";
+	length = 4;
+	year = time.now();	
+ )
+ 
+//迭代方式查询数据 
+io.open();
+for title, length, year, starring in sqlConnection.each("select * from film") {
+	io.print( title, length, year, starring  ) 
+}
+
+//删除表 
+sqlConnection.exec("drop table film" );
+execute("pause") //按任意键继续
+io.close();//关闭控制台

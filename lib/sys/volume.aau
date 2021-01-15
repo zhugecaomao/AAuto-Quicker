@@ -1,0 +1,167 @@
+//volume 分区管理函数
+//Volume Management Functions
+
+namespace sys.volume;
+
+ 
+GetVolumeInformation = ::Kernel32.api("GetVolumeInformationA","int(string root,str &lable,INT lableSize,INT& serialNum,INT& maxlen,INT& fsysFlags,str& fsys,INT fsysSize)");
+QueryDosDevice = ::Kernel32.api("QueryDosDeviceA","int(string device,string &path,INT max)")
+GetDriveType = ::Kernel32.api("GetDriveTypeA","int(string drv)")
+GetLogicalDrives = ::Kernel32.api("GetLogicalDrives","int()")
+SetVolumeLabel = ::Kernel32.api("SetVolumeLabelA","int(string drv,string lable)")
+DefineDosDevice = ::Kernel32.api("DefineDosDeviceA","int(INT flag,string device,string path)")
+
+deviceDefine  = function(path,device){
+	device := getFreeDrive();
+	if( DefineDosDevice(0,device,..io.fullpath(path) ) )
+		return device
+} 
+
+deviceRemove = function(device,path){
+	return DefineDosDevice(2,device,path )
+}
+
+
+setLable = function(drv,lable){
+	return SetVolumeLabel(drv[[1]]+":\",lable)
+}
+
+
+getDriveType = function(drv){
+	return GetDriveType( drv[[1]] + ":" )
+}
+
+getFreeDrive = function(){
+	var dr = GetLogicalDrives();
+	var tab = {}; 
+	for(i=2;31){ 
+		if( !( dr & (1<<i) ) ){ 
+			return ..string.pack('A'# + i) + ":"  
+		}
+	}	
+} 
+  
+getLogicalDrives = function(dr){
+	dr := GetLogicalDrives();
+	var tab = {}; 
+	for(i=0;31){ 
+		if( dr & (1<<i) ){ 
+			..table.push(tab, ..string.pack('A'# + i) + ":" )
+		}
+	}
+	return tab;
+}
+
+getInfo = function(drive){
+	var ok,lable,serialNum,maxlen,flag,fsys = GetVolumeInformation(drive[[1]] + ":\",255,255,0,0,0,255,255) ;	
+	if(ok)
+		return  { drive =drive[[1]] + ":"; serialNum=serialNum;serial =..string.format("%08X",serialNum ); lable=lable;flag=flag;fsys=fsys;maxlen=maxlen }
+}
+
+getAllDevice = function(){
+	var len,device = QueryDosDevice(  , 0x5000, 0x5000 ) 
+	if(len){
+		return ..string.split( ..string.left(device,len-2) ,'\0');
+	}
+}
+ 
+//路径转为设备名
+getDeviceName = function( filepath ) {  
+	var drive= ..string.left(filepath,2); 
+	var ok,device = QueryDosDevice( drive, 0x1000, 0x1000 ) 
+ 	var note;
+	if ( ok) { 
+		device = ..string.str(device)
+		if ( ..string.cmp( "\??\" , device, 4 ) == 0 ) {
+			device =  ..string.sub(device,5)
+			
+			return device + ..string.sub(filepath,3),"subst"; 
+		}
+		else 
+			if (  ..string.cmp( "\Device\LanmanRedirector\" , device, 25 ) == 0 ) {  
+				var letter,param,sharename = string.match(device,"\\Device\\LanmanRedirector\\;(.):(\d)\(.+)")
+	
+				if (! ( letter && param && sharename  ) )
+						return;
+	
+				device = "\Device\LanmanRedirector\" + sharename ; 
+				note = "share"
+			} 
+			return device ++ ..string.sub(filepath,3),note
+	} 
+}
+
+//设备名转为路径
+getPathName = function(device){
+	var drv;
+	for(chr='A'#;'Z'# ){
+		drv =  ..string.pack(chr)  + ":";
+		deviceDrv = getDeviceName( drv ) 
+		if ( deviceDrv &&  ( ..string.cmp( deviceDrv, device, #deviceDrv ) == 0) ) 
+			return drv ++ ..string.sub(device,#deviceDrv+1);  
+	}
+	
+}
+ 
+class LARGE_INTEGER{
+	INT lowPart;
+	INT highPart;
+}       
+GetDiskFreeSpaceEx = ::Kernel32.api( "GetDiskFreeSpaceExA", "bool(STRING dirName,struct &avaliable,struct &total,struct &free)");
+ 
+import fsys.size; 
+var formatSize = function(longInt,unit,p){
+	longInt.size,longInt.unitSize,longInt.unitName = fsys.size.format( longInt.lowPart,longInt.highPart,unit,p );
+	longInt.formatSize = ..string.concat( longInt.size,longInt.unitName);
+	return longInt;
+}
+
+getSpaceInfo = function(dirName,unit,p=2){ 
+	var ok,avaliable,total,free = GetDiskFreeSpaceEx(dirName,LARGE_INTEGER(),LARGE_INTEGER(),LARGE_INTEGER() );
+	if(ok){
+		return {
+			avaliable = formatSize(avaliable,unit,p);
+			total =  formatSize(total,unit,p);
+			free = formatSize(free,unit,p);
+		}	
+	}
+}
+
+/**intellisense()
+sys.volume.getSpaceInfo("C:\") = 获取分区空间大小, 剩余大小等信息
+sys.volume.getSpaceInfo() = !volumespaceinfo.
+!volumespaceinfo.avaliable = 剩余有效配额大小\n!volumesizeinfo.
+!volumespaceinfo.total = 分区大小\n!volumesizeinfo.
+!volumespaceinfo.free = 剩余大小\n!volumesizeinfo.
+!volumesizeinfo.formatSize = 格式化后表示大小的文本
+!volumesizeinfo.size = 空间大小(unitSize指定单位大小)
+!volumesizeinfo.unitSize = 单位大小
+!volumesizeinfo.unitName = 单位名称
+!volumesizeinfo.lowPart = 字节长度低位 
+!volumesizeinfo.highPart = 字节长度高位
+
+!volumeinfo.drive = 分区路径
+!volumeinfo.serial = 序列号
+!volumeinfo.serialNum = 序列号(数值)
+!volumeinfo.lable = 卷名
+!volumeinfo.flag = 标志位
+!volumeinfo.fsys = 文件系统
+!volumeinfo.maxlen = 文件路径最大长度
+?sys.volume.getInfo = !volumeinfo.
+sys.volume.getInfo(__/*分区或完整路径*/) = 返回分区信息
+end intellisense**/
+
+/**intellisense(sys.volume)
+getDeviceName(__/*文件路径*/) = 文件路径转换为设备名
+getPathName(__/*设备名*/) = 设备名转换为文件路径
+getAllDevice() = 返回所有设备名
+getDriveType(__/*驱动器路径*/) = 返回驱动器类型\n以_DRIVE_为前缀的常量表示不同类型
+getLogicalDrives() = 返回一个table对象\n包含所可用的逻辑分区路径
+setLable("__/*驱动器路径*/","卷标") = 设置区分卷标
+deviceDefine(__/*文件路径*/) = 将指定的目录映射为虚拟分区\n成功返回分区路径
+deviceDefine(__/*文件路径*/,"Z:") = 将指定的目录映射为虚拟分区\n成功返回分区路径
+deviceRemove("__/*驱动器路径*/") = 移除分区
+getFreeDrive() = 获取未使用的盘符(自"C:"开始)
+end intellisense**/
+
+ 

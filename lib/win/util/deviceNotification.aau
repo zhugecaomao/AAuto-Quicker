@@ -1,0 +1,110 @@
+//deviceNotification 设备监视
+import win.guid;
+import sys.volume;
+namespace win.util; 
+
+//可以把下面的类放到库里面
+class deviceNotification {
+
+    ctor( winform,deviceType =   5/*_DBT_DEVTYP_DEVICEINTERFACE*/ ){
+        this = winform;
+        var dbcc = DEV_BROADCAST_DEVICEINTERFACE();
+        dbcc.dbcc_size =  ..raw.sizeof(dbcc) 
+        dbcc.dbcc_devicetype = deviceType
+        this._hDevNotify = RegisterDeviceNotification(winform.hwnd, dbcc,0/*_DEVICE_NOTIFY_WINDOW_HANDLE*/ ) 
+        
+        this.wndproc = function(hwnd,message,wParam,lParam){
+    		if(message == 0x0219/*_WM_DEVICECHANGE*/) {//判断消息类型 
+    			if( this[mapProcName[wParam]] ){
+    				var dbcv = ..raw.convert( topointer(lParam),DEV_BROADCAST_VOLUME());
+    				var drive = ..sys.volume.getLogicalDrives(dbcv.dbcv_unitmask)[[1]]
+    				var driveType = ..sys.volume.getDriveType(drive);
+    				..io.print( drive,driveType)
+    				invoke(this[mapProcName[wParam]],this,drive
+           				,driveType, ..sys.volume.getDeviceName(drive), dbcv.dbcv_devicetype,dbcv.dbcv_flags  )
+           		} 
+    		}
+    	} 
+    	winform._onDestroy = function(){
+        	UnregisterDeviceNotification(this._hDevNotify);
+		}
+    } 
+} 
+
+namespace deviceNotification{
+	mapProcName = {
+		[0x8000/*_DBT_DEVICEARRIVAL*/] = "onDeviceArrival";
+		[0x8001/*_DBT_DEVICEQUERYREMOVE*/] = "onDeviceQueryRemove";
+		[0x8002/*_DBT_DEVICEQUERYREMOVEFAILED*/] = "onDeviceQueryRemoveFailed";
+		[0x8003/*_DBT_DEVICEREMOVEPENDING*/] = "onDeviceRemovePending";
+		[0x8004/*_DBT_DEVICEREMOVECOMPLETE*/] = "onDeviceRemoveComplete";
+		[0x8005/*_DBT_DEVICETYPESPECIFIC*/] = "onDeviceTypeSpecific"; 
+	}
+	class DEV_BROADCAST_DEVICEINTERFACE {
+ 		INT dbcc_size;
+ 		INT dbcc_devicetype;
+ 		INT dbcc_reserved;
+ 		struct dbcc_classguid = ..win.guid();
+ 		byte dbcc_name[1];
+	};
+	
+	class DEV_BROADCAST_VOLUME { 
+ 		INT dbcv_size;
+ 		INT dbcv_devicetype;
+ 		INT dbcv_reserved;
+ 		INT dbcv_unitmask;
+ 		WORD dbcv_flags;
+	};
+	
+	RegisterDeviceNotification  = ::User32.api( "RegisterDeviceNotificationA", "pointer(int hRecipient,struct NotificationFilter,INT Flags)");
+	UnregisterDeviceNotification  = ::User32.api( "UnregisterDeviceNotification", "bool(POINTER Handle)");
+	GetDriveType = ::Kernel32.api( "GetDriveTypeA", "int(string lpRootPathName)"); 
+} 
+
+/**intellisense()
+win.util.deviceNotification = 设备检测
+win.util.deviceNotification() = !win_deviceNotification.
+win.util.deviceNotification(__/*输入winform对象*/) = 创建一个设备通知窗口\n在添加或移除设备时可响应通知消息
+!win_deviceNotification.onDeviceArrival = @.onDeviceArrival = function(drive,driveType,deviceName,deviceType,flags){
+	if( driveType == 0x2/*_DRIVE_REMOVABLE*/ ){
+		..io.print("插入移动磁盘",drive,driveType,deviceName,deviceType,flags )
+	}
+	elseif( driveType == 0x5/*_DRIVE_CDROM*/ ){
+		..io.print("插入光盘",drive,driveType,deviceName,deviceType,flags )
+	}
+}
+!win_deviceNotification.onDeviceRemoveComplete = @.onDeviceRemoveComplete = function(drive,driveType,deviceName,deviceType,flags){
+ 
+}
+!win_deviceNotification.onDeviceQueryRemove = @.onDeviceQueryRemove = function(drive,driveType,deviceName,deviceType,flags){
+ 
+}
+!win_deviceNotification.onDeviceQueryRemoveFailed = @.onDeviceQueryRemoveFailed = function(drive,driveType,deviceName,deviceType,flags){
+ 
+}
+!win_deviceNotification.onDeviceRemovePending = @.onDeviceRemovePending = function(drive,driveType,deviceName,deviceType,flags){
+ 
+}
+!win_deviceNotification.onDeviceTypeSpecific = @.onDeviceTypeSpecific = function(drive,driveType,deviceName,deviceType,flags){
+ 
+}
+end intellisense**/
+
+ /**intellisense()
+_DBT_DEVTYP_OEM=@0/*_DBT_DEVTYP_OEM*/
+_DBT_DEVTYP_DEVNODE=@1/*_DBT_DEVTYP_DEVNODE*/
+_DBT_DEVTYP_VOLUME=@2/*_DBT_DEVTYP_VOLUME*/
+_DBT_DEVTYP_PORT=@3/*_DBT_DEVTYP_PORT*/
+_DBT_DEVTYP_NET=@4/*_DBT_DEVTYP_NET*/
+_DBT_DEVTYP_DEVICEINTERFACE=@5/*_DBT_DEVTYP_DEVICEINTERFACE*/
+_DBT_DEVTYP_HANDLE=@6/*_DBT_DEVTYP_HANDLE*/
+_DBT_DEVTYP_DEVINST=@7/*_DBT_DEVTYP_DEVINST*/
+_WM_DEVICECHANGE=@0x0219/*_WM_DEVICECHANGE*/ 
+_DBT_DEVICEARRIVAL=@0x8000/*_DBT_DEVICEARRIVAL*/
+_DBT_DEVICEQUERYREMOVE=@0x8001/*_DBT_DEVICEQUERYREMOVE*/
+_DBT_DEVICEQUERYREMOVEFAILED=@0x8002/*_DBT_DEVICEQUERYREMOVEFAILED*/
+_DBT_DEVICEREMOVEPENDING=@0x8003/*_DBT_DEVICEREMOVEPENDING*/
+_DBT_DEVICEREMOVECOMPLETE=@0x8004/*_DBT_DEVICEREMOVECOMPLETE*/
+_DBT_DEVICETYPESPECIFIC=@0x8005/*_DBT_DEVICETYPESPECIFIC*/
+_BROADCAST_QUERY_DENY=@0x424D5144/*BROADCAST_QUERY_DENY*/
+end intellisense**/

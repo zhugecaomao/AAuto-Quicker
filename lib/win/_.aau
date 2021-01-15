@@ -1,0 +1,717 @@
+//.. 窗口库 
+//注释//注释描述 
+var u = ::User32;
+var k = ::Kernel32;
+
+//取高位、低位、合并
+/*intellisense(::)*/
+::LOWORD = function(l) {return l & 0xffff }
+::HIWORD = function(l) {return  (l >> 16) & 0xffff }
+::MAKELONG = function(a,b){ return ( ( (b & 0xFFFF) << 16) | (a & 0xFFFF) ) & 0xFFFFFFFF } 
+::LOBYTE = function(l) {return l  & 0xff }
+::HIBYTE = function(l) {return   (l   >> 8) & 0xff  }
+::MAKEWORD = function (a,b){ return ( ( ( b & 0xFF) << 8) | ( a & 0xFF) ) & 0xFFFF  } 
+/*end intellisense*/ 
+ 
+ 
+ /*intellisense(::)*/ 
+::MSG = class{ 
+	addr hwnd;
+	INT message;
+	ADDR wParam;
+	addr lParam;
+	INT time;
+	int x;
+	int y;
+}   
+
+::RECT = class{
+	ctor(left=0,top=0,right=0,bottom=0){
+  		this.left = left;
+  		this.top = top;
+  		this.right = right;
+  		this.bottom = bottom;
+	} 
+	int left;
+	int top;
+	int right;
+	int bottom;
+}
+
+::POINT = class{
+   ctor(x=0,y=0){
+      this.x = x;
+      this.y = y;
+   } 
+   int x ; 
+   int y ;
+}
+
+::SIZE = class{
+	int cx=0;
+	int cy=0;
+}
+
+::WNDCLASSEX = class{ 
+    INT cbSize = 48; 
+    INT style = 0xB;//_CS_HREDRAW | _CS_VREDRAW | _CS_DBLCLKS;
+    pointer lpfnWndProc;
+    int cbClsExtra;
+    int cbWndExtra;
+    pointer hInstance;
+    pointer hIcon;
+    pointer hCursor;
+    pointer hbrBackground;
+    string   lpszMenuName;
+    string   lpszClassName;
+    pointer hIconSm;
+} 
+   
+::GetSystemMetrics = u.api("GetSystemMetrics","int(int)") 
+::CreateWindowEx = u.api( "CreateWindowExA", " int(INT dwExStle,string IpClassName,string lpWindowName,INT dwStyle,int x,int y,int nWidth,
+					int nHeight,addr hwndParent,int hMenu,pointer hlnstance,pointer lpParam)" )  
+::DestroyWindow = u.api( "DestroyWindow", "int(addr hwnd )" );	
+			 
+::CallWindowProc = u.api("CallWindowProcA","int(pointer lpPrevWndFunc,addr hwnd,INT Msg,ADDR wParam,addr lParam)" )
+::SetWindowPointer = u.api("SetWindowLongA","pointer(addr hwnd,int nIndex,pointer ptrNew)" ) 
+::SetWindowLong = u.api("SetWindowLongA","int(addr hwnd,int nIndex,int dwNewLong)" )
+::GetWindowLong = u.api("GetWindowLongA","int(addr hwnd,int nIndex)" ) 
+::UpdateWindow = u.api( "UpdateWindow", " int(int) " ) 
+::InvalidateRect = u.api( "InvalidateRect", " int(addr hwnd,struct lpRect,int bErase) " )  
+::RedrawWindow = u.api("RedrawWindow","int(addr hwnd,struct lprcUpdate,pointer hrgnUpdate,INT flags)");
+::GetWindowRect = u.api( "GetWindowRect", " int(addr hwnd,struct &lpRect ) " )
+::GetClientRect = u.api( "GetClientRect", " int(addr hwnd,struct &lpRect ) " )
+::ScreenToClient = u.api( "ScreenToClient", " int(addr hwnd,struct &lpPoint ) " )
+::ClientToScreen = u.api( "ClientToScreen", " int(addr hwnd,struct &lpPoint ) " )
+::OffsetRect = u.api( "OffsetRect", "int( struct &lprc, int dx, int dy )" );
+::PtInRect = u.api( "PtInRect", "int(struct, int, int)" );
+::MoveWindow = u.api( "MoveWindow", "int( addr hwnd, int x,int y,int w,int h,bool repaint)" )  
+::SetWindowPos = u.api("SetWindowPos","boolean(addr hwnd,addr hwndlnsertAfter,int X,int Y,int cx,int cy,int Flags)")
+ 
+::RegisterWindowMessage = u.api("RegisterWindowMessageA","INT(string)");
+::PostMessage = u.api("PostMessageA","addr(addr hwnd,INT msg,ADDR wParam,addr lParam)")
+::PostThreadMessage = u.api("PostThreadMessageA","addr(int idThread,INT msg,ADDR wParam,addr lParam)"); 
+::SendMessage = u.api("SendMessageA","addr(addr hwnd,INT msg,pointer wParam,pointer lParam)")
+::SendMessageInt = u.api("SendMessageA","addr(addr hwnd,INT msg,ADDR wParam,addr lParam)")
+::SendMessageByInt = u.api("SendMessageA","addr(addr hwnd,INT msg,int &wParam,int &lParam)")
+::SendMessageByString = u.api("SendMessageA","addr(int,INT,int,string &lParam)")
+::SendMessageByStr = u.api("SendMessageA","addr(int,INT,int,str &lParam)")
+::SendMessageByStruct = u.api("SendMessageA","addr(int,INT,int,struct &lParam)") 
+::SendMessageTimeout = u.api("SendMessageTimeoutA","addr(addr hwnd,INT msg,pointer wParam,pointer lParam,INT flags,INT timeout,int & resultult)") 
+ 
+::LoadImage = u.api(  "LoadImage", "ptr(ptr,string,INT uType,int cxDesired,int CyDesire,INT fuLoad)") 
+::CopyImage = u.api(  "CopyImage", "ptr(ptr handle, INT uType,int cx,int cy,INT flags)") 
+::LoadBitmap = u.api(  "LoadBitmap", "ptr(ptr,string)")  
+::LoadIcon = u.api(  "LoadIconA", "ptr(ptr,string)")      
+::LoadCursor = u.api(  "LoadCursorA", "pointer(pointer,string)") 
+
+::GetClassInfoEx = u.api("GetClassInfoExA", "int(pointer,string,struct&)")
+::RegisterClassEx = u.api( "RegisterClassEx", " word(struct wc) " )   
+/*end intellisense*/
+
+namespace win 
+
+/*intellisense(win)*/
+GetWindow = u.api( "GetWindow", "int( addr hwnd,INT uCmd)" )
+/*end intellisense*/
+
+//样式
+getStyle = function(hwnd,style=~0,nStyle=0 ){  
+	var s = ::GetWindowLong(hwnd,0xFFFFFFF0/*_GWL_STYLE*/) & style;
+	if ( s & nStyle)
+		return 0; 
+	return s; 
+}
+getStyleEx = function(hwnd,style=~0,nStyle=0 ){
+	var s = ::GetWindowLong(hwnd,0xFFFFFFEC/*_GWL_EXSTYLE*/) & style;
+	if ( s & nStyle)
+		return 0;
+	return s; 	
+} 
+modifyStyle = function(hwnd,remove=0,add=0,flags,gwl=0xFFFFFFF0/*_GWL_STYLE*/ ){
+	var style = ( ::GetWindowLong(hwnd,gwl) & ~remove ) | add ; 
+	::SetWindowLong(hwnd,gwl,style )
+	if(flags!==null)
+		::SetWindowPos(hwnd,0,0,0,0,0,flags | 0x1/*_SWP_NOSIZE*/ | 0x2/*_SWP_NOMOVE*/ | 0x4/*_SWP_NOZORDER*/ | 0x10/*_SWP_NOACTIVATE*/)
+	return style
+}
+modifyStyleEx = function(hwnd,remove,add,flags){
+	return modifyStyle( hwnd,remove,add,flags,0xFFFFFFEC/*_GWL_EXSTYLE*/)
+}
+
+getParent = u.api( "GetParent", "int(addr hwnd)" )   
+setParent = u.api("SetParent","int(addr hwndChild,addr hwndNewParent)");
+
+//获取设置窗口文本
+getText = function(hwnd,len){
+	//返回窗体文本
+	len := ::SendMessage(hwnd,0xE/*_WM_GETTEXTLENGTH*/ ) + 1; 
+	var re, textBuf = ::SendMessageByStr(hwnd,0xD/*_WM_GETTEXT*/,len,len);  
+	return textBuf;  
+	
+} 
+setText = u.api( "SetWindowText", "INT(addr hwnd,string lpString )" ) 
+
+//根据控件ID读取或设置文本
+var getDlgItemText = u.api( "GetDlgItemTextA", "INT(int hDlg,int nIDDlgItem, str& lpString, int cchMax)" )  
+getTextById = function(hwnd,id,len=256){  
+	var re, textBuf = getDlgItemText(hwnd,id,len,len);
+	return textBuf ;  
+}
+setTextById = u.api( "SetDlgItemTextA", "INT(int hDlg,int nIDDlgItem, string lpString )" )  
+  
+//返回窗口ID
+getId = function(hwnd){ 
+	return ::GetWindowLong(hwnd,0xFFFFFFF4/*_GWL_ID*/ )
+}
+
+//返回窗口类名
+var getClassName = u.api( "GetClassNameA", "int( addr hwnd,str  &lpClassName,int nMaxCount )" )  
+getClass = function(hwnd){
+	var re,classname　= getClassName(hwnd,0x64,0x64/*_MAX_CLASS*/); 
+	return classname ;
+}
+ 
+//返回顶层窗口句柄
+getRoot = function(hwnd){ 
+
+    var result;
+    do{
+    	result = hwnd; 
+    	if( getStyle(result,0x80000000/*_WS_POPUP*/) ){  
+    		break;
+    	}
+    	
+    	hwnd = getParent(hwnd) 
+    }while(hwnd) 
+    
+    return result; 
+} 
+
+
+getLeaf = function(hwnd){
+	var result;
+    do{
+    	result = hwnd;
+    	hwnd = GetWindow(hwnd,0x5/*_GW_CHILD*/)
+    }while(hwnd) 
+    
+    return result;
+}
+getChild = function(hwnd){
+	return GetWindow(hwnd,0x5/*_GW_CHILD*/);
+}
+
+
+var getThreadProcessId_c = u.api( "GetWindowThreadProcessId", "INT(addr hwnd,INT & processId)" ) ;
+getThreadProcessId = function(hwnd){ 
+	return getThreadProcessId_c(hwnd,0);
+}
+
+setenv = k.api( "SetEnvironmentVariableA", "INT(str name,str v)"); 
+var getEnvironmentVariable = k.api( "GetEnvironmentVariableA", "INT(str name,str &v,INT size)");
+getenv = function( name){ //读取环境变量
+	var len,val =  getEnvironmentVariable(name, 256,256);
+	if (len > 256)
+		len,val =  getEnvironmentVariable(name, len,len); 
+	return val;
+} 
+
+try{
+	uxTheme = ..raw.loadDll("UxTheme.dll")
+	setWindowTheme = uxTheme.api("SetWindowTheme","void(addr hwnd,string subApp,str suId)" )
+} 
+
+/**intellisense(win) 
+getStyle(.(窗口句柄,限定样式,不允许包含的样式) = 获取指定窗口样式,除句柄外其他参数可选
+getStyleEx(.(窗口句柄,限定样式,不允许包含的样式) = 获取窗口扩展样式,除句柄外其他参数可选 
+modifyStyle(.(窗口句柄,移除样式,添加样式) = 如果指定第三个参数，则使用此参数调用::SetWidnowPos 
+modifyStyleEx(.(窗口句柄,移除样式,添加样式) = 如果指定第三个参数，则使用此参数调用::SetWidnowPos
+getClass(__/*输入窗口句柄*/) = 获取窗口类名
+getId(__/*输入窗口句柄*/) = 获取控件ID
+getRoot(__/*输入窗口句柄*/) = 获取最顶层父窗口、或具有_WS_POPUP样式的父窗口
+getLeaf(__/*输入窗口句柄*/) =　窗口的最梢节子窗口(没有子窗口的控件窗口)
+getRoot(__/*输入窗口句柄*/) = 获取顶层窗口句柄
+getParent(__/*输入窗口句柄*/) = 获取父窗口句柄
+setParent(.(子窗口句柄,父窗口句柄)=设置父窗口
+getChild(__/*输入窗口句柄*/) = 获取子窗口句柄 
+getText(__/*输入窗口句柄*/,20) = 获取窗口文本,并指定缓冲区大小\n外部进程窗口请使用winex.getText()函数替代
+getText(__/*输入窗口句柄*/) = 获取窗口文本\n外部进程窗口请使用winex.getText()函数替代
+setText(.(hwnd,lpString) = 参数(窗口句柄,要设置的文本)\n外部进程窗口请使用winex.setText()函数替代
+getThreadProcessId(__/*输入窗口句柄*/) = 返回线程ID,进程ID\nvar tid,pid=win.getThreadProcessId(hwnd)
+getTextById(.(hwnd,id,len=256) = 获取窗口上控件的文本\n参数(窗口句柄,控件ID，缓冲区大小)
+setTextById(.(hwnd,id,str) = 设置窗口上控件的文本\n参数(窗口句柄,控件ID，文本)
+getenv("__") = 读取进程环璋变量
+setenv("__","") = 设置进程环境变量
+setWindowTheme(.(hwnd,SubAppName,SubIdList) = 设置主题样式
+end intellisense**/
+   
+//窗口查找
+getDesktop = u.api( "GetDesktopWindow", "addr()" ) 
+setTop = u.api("BringWindowToTop","bool(addr hwnd)")  
+getActive = u.api("GetActiveWindow","addr()") 
+setActive = u.api("SetActiveWindow","addr(addr hwnd)") 
+getFocus = u.api("GetFocus","addr()");
+setFocus = u.api("SetFocus","addr(addr hwnd)");
+enable = u.api("EnableWindow","bool(addr hwnd,bool enable)") 
+close = function(hwnd){
+	::PostMessage(hwnd,0x10/*_WM_CLOSE*/,0,0);
+} 
+var showWindow = u.api( "ShowWindow", "bool(addr hwnd,int cmd)" )  
+show = function(hwnd,flag=true) {   
+	showWindow( hwnd,flag===true ? 0x5/*_SW_SHOW*/ : tonumber(flag) ); 
+}
+findEx = u.api( "FindWindowExA", "addr(addr hwndParent,addr hwndChildAfter,string lpszClass,string lpszWindow)" )  
+find = u.api( "FindWindowA", "addr( string lpszClass,string lpszWindow)" ) 
+
+setTopmost = function(hwnd,top=true){
+	 ::SetWindowPos(hwnd,(top)?-1/*_HWND_TOPMOST*/:-2/*_HWND_NOTOPMOST*/,0,0,0,0,0x2/*_SWP_NOMOVE*/|0x1/*_SWP_NOSIZE*/) 
+} 
+
+SwitchToThisWindow = u.api( "SwitchToThisWindow", "void(addr hwnd,bool bRestore)" )  
+setForeground = function(hwnd,restore=1){
+	SwitchToThisWindow(hwnd,restore);
+}
+	
+getForeground = u.api( "GetForegroundWindow", "addr()" )
+
+showForeground = function(hwnd,x,y,cx,cy){
+	if( isIconic(hwnd) ) show(hwnd,0x1/*_SW_NORMAL*/ );
+	setPos(hwnd,x,y,cx,cy,-1/*_HWND_TOPMOST*/) 
+	setPos(hwnd, , , , ,-2/*_HWND_NOTOPMOST*/)
+} 
+		
+isVisible = u.api("IsWindowVisible","bool(addr hwnd)")
+isWindow = u.api( "IsWindow", "bool(addr hwnd)" )    
+isIconic = u.api( "IsIconic", "bool(addr hwnd)" )  
+isZoomed = u.api("IsZoomed","bool(addr hwnd)") 	
+isEnable = function(hwnd){
+	return ! getStyle(hwnd,0x8000000/*_WS_DISABLED*/ )
+} 
+isChild = ::User32.api("IsChild","int(addr parent,addr hwnd)")
+
+setCapture = ::User32.api("SetCapture", "addr(addr hwnd)");
+releaseCapture = User32.api("ReleaseCapture", "bool()")
+
+/**intellisense(win)   
+isChild(.(父窗口句柄,子窗口句柄) = 判断参数二指定的窗口是否参数一指定窗口的子窗口或隶属子窗口
+isVisible(__/*输入窗口句柄*/) = 判断窗口是否可见
+isWindow(__/*输入窗口句柄*/) = 判断是否有效窗口
+isIconic(__/*输入窗口句柄*/) = 判断窗口是否最小化为任务栏图标
+isZoomed(__/*输入窗口句柄*/) = 判断窗口是否最大化
+isEnable(__/*输入窗口句柄*/) = 判断窗口是否启用状态
+show(hwnd,__/*可选输入显示参数*/) = 显示窗口,可选输入以_SW_为前缀的显示参数
+show(hwnd,false) = 隐藏窗口
+close(__/*输入窗口句柄*/) = 关闭窗口\n关闭外部进程窗口请使用winex.close()替代
+enable(__/*输入窗口句柄*/,true) = 启用窗口
+enable(__/*输入窗口句柄*/,false) = 禁用窗口
+setTop(__/*输入窗口句柄*/)=前置窗口到当前线程Z序顶部
+setForeground(__/*输入窗口句柄*/) = 前置窗口并获取输入焦点,\n当前程序是背景窗口时,win7以上系统令在任务栏闪烁,
+showForeground(.(窗口句柄,x,y,cx,cy) = 把窗口显示在屏幕最前面,最小化窗口自动还原\n类似setForeground但不会改变输入焦点,\n除句柄外,其他参数为可选参数
+getForeground()=获取前台窗口句柄
+getActive()=获取当前线程激活窗口句柄,如果要获取全局激活窗口请使用win.getForeground()
+setActive(__/*输入窗口句柄*/)=设置激活窗口
+getFocus()=获取输入焦点所在窗口句柄
+setFocus(__/*输入窗口句柄*/)=设置输入焦点
+getDesktop()=获取桌面句柄
+setTopmost(__/*输入窗口句柄*/)=置顶窗口
+setTopmost(__/*输入窗口句柄*/,false)=取消置顶窗口
+find(.(类名,标题)=查找顶层窗口，参数都是可选参数
+findEx(.(父窗口句柄,上一个窗口句柄,类名,标题)=查找子窗口\n除父窗口句柄以外，其他参数都是可选参数 
+setCapture(.(窗口句柄) = 开始捕获鼠标消息,返回上次调用该函数的窗口句柄
+releaseCapture() = 释放鼠标捕获,成功返回true
+end intellisense**/ 
+
+setPos = function(hwnd,x,y,cx,cy,after,flag=0){
+	if( (x===null) || (y===null) ){
+	   flag |= 0x2/*_SWP_NOMOVE*/
+	   x,y = 0,0;
+	}
+	   
+	if( (cx===null) || (cy===null) ){
+	   flag |= 0x1/*_SWP_NOSIZE*/
+	   cx,cy = 0,0;
+	}
+	  
+	if( after === null ){
+	   flag |= 0x4/*_SWP_NOZORDER*/
+	   after = 0;
+	} 
+	SetWindowPos(hwnd,after,x,y,cx,cy,flag);
+}
+
+//ptConv不得传出外部
+var ptConv = POINT();
+toScreen = function(hwnd,x,y){
+	ptConv.x = x;
+	ptConv.y = y;
+	ClientToScreen(hwnd,ptConv);
+	return ptConv.x,ptConv.y;
+}
+toClient = function(hwnd,x,y){
+	ptConv.x = x;
+	ptConv.y = y;
+	ScreenToClient(hwnd,ptConv);
+	return ptConv.x,ptConv.y;
+}
+var converRect = function(conv,parent,rc){ 
+	ptConv.x = rc.right; 
+	ptConv.y = rc.bottom;
+	conv( parent,rc );
+	conv( parent,ptConv );
+	rc.right = ptConv.x;
+	rc.bottom = ptConv.y;
+	return rc;
+}
+toScreenRect = function(parent,rc){
+	return converRect( ClientToScreen,parent,rc );
+}
+toClientRect = function(parent,rc){
+	return converRect( ScreenToClient,parent,rc );
+}
+getRect  = function(hwnd,scr){  
+	var rc = RECT();
+	GetWindowRect( hwnd,rc); 
+	if( scr ) 
+		return rc;
+	  
+	var parent = ..win.getParent(hwnd) 
+	if( parent ) 
+		toClientRect( parent,rc ); 
+	 
+	return rc; 
+}
+getClientRect = function(hwnd){
+	var rc = RECT();
+	GetClientRect( hwnd,rc); 
+	return rc;
+}
+setRect = function(hwnd,rc,src){
+	if(src){
+		var parent = ..win.getParent(hwnd)
+		if( parent ) 
+			toClientRect( parent,rc ); 	
+	}
+	setPos(hwnd,rc.left,rc.top,rc.right-rc.left,rc.bottom-rc.top)
+}
+getPos = function(hwnd,scr){
+	var rc = getRect(hwnd,scr);
+	return rc.left, rc.top, rc.right - rc.left ,rc.bottom - rc.top 
+}
+getScreen = function(){ 
+	return ::GetSystemMetrics( 0x0 ),::GetSystemMetrics( 0x1 )
+}  
+
+/**intellisense()
+?.getClientRect = !rect.
+?.getRect = !rect.
+!rect.left = 左
+!rect.top = 上
+!rect.right = 右
+!rect.bottom = 下
+!point.x = x坐标
+!point.y = y坐标
+?::RECT = !rect.
+?::POINT = !point.
+?::SIZE = !size.
+!size.cx = 宽
+!size.cy = 高
+?MSG = !msg.
+!msg.hwnd = 窗口句柄
+!msg.message = 消息ID
+!msg.wParam = 附加参数
+!msg.lParam = 附加参数
+!msg.time = 时间
+!msg.pt = !point.
+end intellisense**/
+
+/**intellisense(win)
+toScreen(__/*输入窗口句柄*/,x,y) = 将坐标转换为屏幕坐标\n::POINT结构体请直接使用::ClientToScreen
+toClient(__/*输入窗口句柄*/,x,y) = 将坐标转换为客户坐标\n::POINT结构体请直接使用::ScreenToClient
+toScreenRect(__/*输入窗口句柄*/,rc) = 将::RECT结构体转换为屏幕坐标
+toClientRect(__/*输入窗口句柄*/,rc) = 将::RECT结构体转换为客户坐标
+getRect(__/*输入窗口句柄*/) = 返回窗体相对坐标位置\n对于顶层窗口则等同于屏幕绝对坐标位置 
+getRect(__/*输入窗口句柄*/,true) = 返回窗体屏幕坐标位置\n返回值为::RECT结构体
+setRect(__/*输入窗口句柄*/,rc) = 设置窗口相对坐标位置
+setRect(__/*输入窗口句柄*/,rc,true) = 设置窗口屏幕绝对坐标位置
+getClientRect(__/*输入窗口句柄*/) = 获取窗口客户区的坐标\n不包括边框等
+setPos(.(窗口句柄,x坐标,y坐标,宽,高,插入位置,参数) = 调整窗口位置或排序,除句柄外所有参数可选\n同时指定x,y坐标则移动位置\n同时指定宽高则改变大小\n指定插入位置(句柄或_HWND前缀常量)则调整Z序
+getPos(__/*输入窗口句柄*/) = 返回相对坐标,宽,高\nx,y,cx,cy=win.getPos(hwnd)
+getPos(__/*输入窗口句柄*/,true) = 返回屏幕坐标,宽,高\nx,y,cx,cy=win.getPos(hwnd)
+getScreen() = 返回屏幕宽度、高度
+end intellisense**/
+
+var messageBox = u.api( "MessageBoxA", " int ( addr hwnd, string lpText,string lpCaption ,INT uType )" )  
+var messageBoxTimeout = u.api("MessageBoxTimeoutA","int(addr hwnd,string lpText,string lpCaption,int uType,int wlange,int dwTimeout)","stdcall") ;
+
+msgbox = function(str,title = "AAuto" ,style ,parenthwnd=0 ){ 
+   style := 0x40 // _MB_OK|_MB_ICONINFORMATION;
+    
+   if(!parenthwnd)
+    	style |= 0x2000/*_MB_TASKMODAL*/
+    	
+   return  messageBox( parenthwnd,tostring( str ) ,title,style | 0x10000/*_MB_SETFOREGROUND*/ );
+}
+msgboxErr = function(str,title = "错误" ,parenthwnd=0 ){
+	return  msgbox( str,title,0x10/*_MB_ICONHAND*/);
+}
+msgboxTest = function(str,title ,parenthwnd=0){
+	return msgbox(str,title,0x1 | 0x20 /*_MB_OKCANCEL|_MB_ICONQUESTION*/ ,parenthwnd ) == 1;	
+}
+msgboxTimeout = function(str,title="AAuto" ,timeout=2000,style ,parenthwnd=0 ){
+	style := 0x40 // _MB_OK|_MB_ICONINFORMATION;
+	if(!parenthwnd)
+    	style |= 0x2000/*_MB_TASKMODAL*/
+	return  messageBoxTimeout( parenthwnd,tostring( str ) ,title,style | 0x10000/*_MB_SETFOREGROUND*/ ,0,timeout );
+}
+
+var _id_invoke = "win.invoke()" + ..thread.getId() 
+self.invoke = function( func,... ){
+	var h = ..thread.create(
+		function(func,id,...){ 
+			var ret = { func(...) }
+			..thread.set(id, ret)
+		},func,_id_invoke,...); 
+	..thread.waitOne(h); 
+	..raw.closehandle(h);  
+	
+	var ret = ..thread.get(_id_invoke)
+	if(ret){
+		var _,ubound = ..table.range(ret);
+		return ..table.unpack(ret,1,ubound);
+	}
+} 		
+  
+/*消息循环函数{{*/  
+::DefWindowProc  = u.api( "DefWindowProc", "int(addr hwnd,INT msg,ADDR wParam,addr lParam) " );
+
+var getMessagePos = u.api( "GetMessagePos", "INT() " )   
+self.getMessagePos = function(lParam){
+	lParam := getMessagePos();
+	var pos = ..raw.convert( {INT lParam=lParam},{word x;word y} )
+	return pos.x,pos.y;
+} 
+
+isDialogMessage  = u.api("IsDialogMessage","INT(int hDlg,struct IpMsgc)"); 
+
+var peekMessage = .. __messagePeek;    
+var getMessage = .. __messageGet; 
+var messageTranslateDispatch = .. __messageTranslateDispatch;  
+
+var cachForms = { //键为控件名任意窗口句柄,值为容器form
+	@{ _weak = "kv"}  //在元表中指定为弱引用，以自动清除不使用的元素
+} 
+var msg_observer; 
+_parseMessage = function(msg){
+	if( msg_observer ){
+		var ret;
+		for(k,v in msg_observer ){
+			ret = v(msg);
+			if(  ret !== null ) return ret; 
+		} 
+	}
+
+	var hwnd = msg.hwnd; 
+	if( hwnd &&  _form ){
+		var frm = cachForms[[hwnd]] 
+		if(  frm === null  ){
+		    frm = _form.getForm(hwnd) 
+		    if( frm)
+		        cachForms[[hwnd]] = frm; 
+		    else 
+		    	cachForms[[hwnd]] = false;
+		} 
+
+		if( frm  ){   
+		    var message = msg.message; 
+		    if( (message <= 0x108/*_WM_KEYLAST*/) && (message >= 0x100/*_WM_KEYFIRST*/) ){ 
+		    	var ctrl = frm;
+		    	if( msg.hwnd != frm.hwnd ){
+		    		ctrl = frm.getCtrl(msg.hwnd) : frm; 
+		    	}
+		    	if( ctrl[["translateAccelerator"]] && ctrl.translateAccelerator(msg) )
+		    			return true; 
+		    	
+		        if( frm[["isDialogMessage"]] && frm.isDialogMessage( frm.hwnd,msg ) )
+		        	return true;
+		    } 
+
+		    if( frm[["pretranslate"]] && frm.pretranslate(msg) )
+		        return true;
+		} 
+	}
+	messageTranslateDispatch(msg); 
+}; 
+parseMessage = _parseMessage;
+	
+hookMessage = function(observer,attach=true){
+	if(type(observer) == type.function ){
+		if( !attach ){
+			if( !msg_observer )return false;
+			for(i=#msg_observer;1){
+				if( msg_observer[i] == observer){
+					..table.remove(msg_observer,i);
+					if( #msg_observer === 0 )
+						msg_observer = null;
+					return true;
+				}
+			}
+			return false;
+		}
+		if( !msg_observer ) msg_observer = {};
+		..table.push(msg_observer,observer);
+	} 	
+}
+
+var looping;
+loopMessage = function(observer,attach=true){    
+	if(type(observer) == type.function ){
+		hookMessage( observer,attach );
+	}
+		
+	if(!looping){
+		looping = true; 
+		..win.closed = false;
+		
+		var msg = ::MSG();
+		while( getMessage( msg ) ) { 
+			parseMessage(msg);  
+		}  
+		cachForms = {}; 
+		
+		..win.closed = true;
+		looping = false;
+		return  true; 
+	}
+}
+_loopMessage = loopMessage;
+
+quitMessage = function() {
+	::PostThreadMessage(..thread.getId(),0x12/*_WM_QUIT*/ ,0,0);
+	closed = true;  
+};
+
+isClosed = function(){
+	return closed;
+};
+
+resetMessage = function(){
+	var msg = {};
+	var ret = peekMessage(msg); 
+	if(ret) { 
+		parseMessage(msg);
+	} 
+	closed = null;
+}
+	
+pumpMessage = function(){
+	var msg = MSG(); 
+	if( getMessage(msg) ) { 
+		parseMessage(msg); 
+		return true;
+	}
+	quitMessage(); 
+};
+
+peekPumpMessage = function(msg){  
+	var ret = peekMessage(msg); 
+	if( ret ){
+		parseMessage(ret) 
+		return msg;
+	}
+	else return ret;  
+};
+  
+var time_tick = ..time.tick;
+delay = function ( msDelay = 0,msSleep = 1 ) { 
+	var msg = {}; 
+	var endTick = msDelay ? ( time_tick() + msDelay ) ;
+	var ret;
+	do{   
+		ret = peekMessage(msg); 
+		if(ret) { 
+			parseMessage(msg);
+		}  
+		elseif( ret === null ){
+			quitMessage();
+			return;
+		}
+		
+		if( (!msDelay) || ( time_tick() > endTick ) ){ 
+			return true;
+		}
+		sleep(msSleep)
+	}while( !closed  )  
+} 
+ 
+wait = function(func,hwnd,timeout,interval=100){  
+	var ret; 
+	var tkBegin = time_tick();
+	while( delay(interval) && ( (!hwnd) || isWindow(hwnd) )  ){   
+		ret,err = func();
+		if( (ret !== null) || err )
+			return ret,err; 
+			
+		if( timeout ) { 
+			if( ( time_tick() - tkBegin) > timeout )
+				return null,"Timeout!"  
+		}
+	}  
+}	
+
+/*}}*/ 
+
+sendCopyData = function(hwnd,data,number){
+	if( type(data) == "table"){
+		data = ..table.tostring(data);
+		number = 0xffffffff;
+	};
+	
+    ::SendMessageByStruct(hwnd,0x4A/*_WM_COPYDATA*/,0, {
+        ADDR number = number;
+        INT cbData = #data;
+        pointer lpData = data;
+    }  )
+}  
+
+/**intellisense(win)  
+_form = 常量对象,可用于替换表示原始 win.form 对象,\n并禁止用户修改其定义.
+invoke = @.invoke(\n	function(){\n		import win;\n		/*执行耗时函数、并正常处理窗口消息*/__\n	} \n)
+msgbox(.("文本","标题",样式,父窗口句柄) = 弹出对话框\n除参数一以外,所有参数可选
+msgboxErr(.("文本","标题",父窗口) = 弹出错误对话框\n父窗口参数可选
+msgboxTimeout(.("文本","标题",超时值,样式,父窗口句柄) = 弹出对话框，超时自动关闭\n超时值以毫秒为单位（可选参数)，\n除参数一以外,其他所有参数可选
+msgboxTest(.("文本","标题",父窗口)  = 返回布尔值表示用户是否按了“确定”按钮。\n标题,父窗口参数可选 
+isClosed() = 用户是否关闭了全部窗口
+loopMessage() = 如果当前消息循环未启动则启动消息循环
+hookMessage(消息钩子函数) = @.hookMessage( \n	function(msg){\n		__	\n	} \n)
+hookMessage(消息钩子函数,false) = 移除消息钩子函数\n消息钩子在分发窗口消息以前触发\n可返回值以阻止消息处理
+quitMessage() = 退出消息循环
+resetMessage() = 自消息队列中移除_WM_QUIT消息,\n使消息循环重置为未退出状态
+pumpMessage() = 处理消息
+peekPumpMessage( MSG()__ ) = 必须在参数中指定MSG结构体,\n检测消息队列,如果有消息则处理消息并返回传入的消息对象,\n如果程序退出返回null,如果无消息返回false,\n\n可用于在循环运行中替代win.delay(0)处理消息,\n以获取最快的处理速度
+isDialogMessage(hwnd,msg) = 处理对话框控制键消息
+delay(__) = 第一个可选参数指定延时值(毫秒),\n该参数如果为0则忽略第二个参数(此时处理速度最快),默认值为0,\n\n第二个可选参数指定插入的休眠时间(毫秒),\n休眠时间越小则处理速度越快,休眠时间越大则占用CPU就越少\n\n如果不需要消息循环时(例如控制台程序),建议使用sleep函数延时,\n如果程序退出返回null,否则返回true
+wait(.(等待函数,窗口句柄,超时,延时间隔) = 循环执行等待函数,\n直到该函数返回非空值,或存在第二个返回值,或指定的窗口关闭\n除等待函数以外,所有参数可选
+getMessagePos(lParam) = 返回鼠标所在窗口坐标,\nlParam必须是窗口回调函数中的lParam参数
+getMessagePos() = 返回鼠标所在屏幕坐标,\n表示上一次获取的窗口消息时鼠标占用的点
+_parseMessage(.(MSG结构体) = 处理消息函数原始版本,慎用 
+parseMessage_lite = @.parseMessage = __messageTranslateDispatch;__
+parseMessage = @.parseMessage = ??._parseMessage
+getDropFile(wParam) = 用于消息回调函数中获取拖放文件列表
+sendCopyData(.(窗口句柄,发送数据) = 使用 _WM_COPYDATA 消息发送字符串到其他进程窗口\n发送数据可以是字符串,或table对象
+end intellisense**/
+
+::Shell32 := ..raw.loadDll("Shell32") 
+dragQueryFile = Shell32.api("DragQueryFile","INT(pointer hDrop,INT iFile,str& lpszFile,INT cch)");
+dragFinish = Shell32.api("DragFinish","INT(pointer hDrop)"); 
+
+getDropFile = function(hDrop,finish=true){ 
+	hDrop = topointer(hDrop)
+	var tFiles = {}; 
+    var len = dragQueryFile(hDrop,0xFFFFFFFF,0x104/*_MAX_PATH*/,0x104/*_MAX_PATH*/); 
+    for(i=1;len)
+        re,tFiles[i] = dragQueryFile(hDrop,i-1,0x104/*_MAX_PATH*/,0x104/*_MAX_PATH*/);
+   
+    if(finish)dragFinish( hDrop );
+    return tFiles;
+}

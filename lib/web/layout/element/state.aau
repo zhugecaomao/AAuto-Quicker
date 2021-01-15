@@ -1,0 +1,136 @@
+
+assert(web.layout.element);
+var dll = ..web.layout._dll;
+
+namespace web.layout.element;
+
+class state{
+	ctor(element){
+		this.element = element;
+	}
+	@_meta;
+}
+namespace state{ 
+	bits = {  
+		link = 0x1;
+		hover = 0x2;
+		active = 0x4;
+		focus = 0x8;
+		visited = 0x10;
+		current = 0x20;
+		checked = 0x40;
+		disabled = 0x80;
+		readonly = 0x100;
+		expanded = 0x200;
+		collapsed = 0x400;
+		incomplete = 0x800;
+		animating = 0x1000;
+		focusable = 0x2000;
+		anchor = 0x4000;
+		synthetic = 0x8000;
+		owns_popup = 0x10000;
+		tabfocus = 0x20000;
+		empty = 0x40000;
+		busy = 0x80000;
+		drag_over = 0x100000;
+		drop_target = 0x200000;
+		moving = 0x400000;
+		copying = 0x800000;
+		drag_source = 0x1000000;
+		drop_marker = 0x2000000;
+		pressed = 0x4000000;
+		popup = 0x8000000;
+		isltr = 0x10000000;
+		isrtl = 0x20000000; 
+	}
+	var bits = bits;
+	
+	_meta = {
+		_get = function(k){
+			state = bits[k];
+			if(!state){
+				error("´íÎóµÄ×´Ì¬Ãû",2)
+			}
+			return !!owner.element.getState(state)
+		}
+		_set = function(k,v){
+			state = bits[k];
+			if(!state){
+				error("´íÎóµÄ×´Ì¬Ãû",2)
+			}
+			if(v){
+				owner.element.modifyState(state)
+			}
+			else {
+				owner.element.modifyState(,state)
+			}
+			
+		};
+	}
+}
+
+/**intellisense(!htmlayout_state)
+link=link;
+hover=hover;
+active=active;
+focus=focus;
+visited=visited;
+current=current;
+checked=checked;
+disabled=disabled;
+readonly=readonly;
+expanded=expanded;
+collapsed=collapsed;
+incomplete=incomplete;
+animating=animating;
+focusable=focusable;
+anchor=anchor;
+synthetic=synthetic;
+owns_popup=owns_popup;
+tabfocus=tabfocus;
+empty=empty;
+busy=busy;
+drag_over=drag_over;
+drop_target=drop_target;
+moving=moving;
+copying=copying;
+drag_source=drag_source;
+drop_marker=rop_marker;
+pressed=pressed;
+popup=popup;
+isltr=isltr;
+isrtl=isrtl;
+end intellisense**/
+  
+ /**intellisense()
+_HL_STATE_LINK=@1/*_HL_STATE_LINK*/
+_HL_STATE_HOVER=@2/*_HL_STATE_HOVER*/
+_HL_STATE_ACTIVE=@4/*_HL_STATE_ACTIVE*/
+_HL_STATE_FOCUS=@8/*_HL_STATE_FOCUS*/
+_HL_STATE_VISITED=@0x10/*_HL_STATE_VISITED*/
+_HL_STATE_CURRENT=@0x20/*_HL_STATE_CURRENT*/
+_HL_STATE_CHECKED=@0x40/*_HL_STATE_CHECKED*/
+_HL_STATE_DISABLED=@0x80/*_HL_STATE_DISABLED*/
+_HL_STATE_READONLY=@0x100/*_HL_STATE_READONLY*/
+_HL_STATE_EXPANDED=@0x200/*_HL_STATE_EXPANDED*/
+_HL_STATE_COLLAPSED=@0x400/*_HL_STATE_COLLAPSED*/
+_HL_STATE_INCOMPLETE=@0x800/*_HL_STATE_INCOMPLETE*/
+_HL_STATE_ANIMATING=@0x1000/*_HL_STATE_ANIMATING*/
+_HL_STATE_FOCUSABLE=@0x2000/*_HL_STATE_FOCUSABLE*/
+_HL_STATE_ANCHOR=@0x4000/*_HL_STATE_ANCHOR*/
+_HL_STATE_SYNTHETIC=@0x8000/*_HL_STATE_SYNTHETIC*/
+_HL_STATE_OWNS_POPUP=@0x10000/*_HL_STATE_OWNS_POPUP*/
+_HL_STATE_TABFOCUS=@0x20000/*_HL_STATE_TABFOCUS*/
+_HL_STATE_EMPTY=@0x40000/*_HL_STATE_EMPTY*/
+_HL_STATE_BUSY=@0x80000/*_HL_STATE_BUSY*/
+_HL_STATE_DRAG_OVER=@0x100000/*_HL_STATE_DRAG_OVER*/
+_HL_STATE_DROP_TARGET=@0x200000/*_HL_STATE_DROP_TARGET*/
+_HL_STATE_MOVING=@0x400000/*_HL_STATE_MOVING*/
+_HL_STATE_COPYING=@0x800000/*_HL_STATE_COPYING*/
+_HL_STATE_DRAG_SOURCE=@0x1000000/*_HL_STATE_DRAG_SOURCE*/
+_HL_STATE_DROP_MARKER=@0x2000000/*_HL_STATE_DROP_MARKER*/
+_HL_STATE_PRESSED=@0x4000000/*_HL_STATE_PRESSED*/
+_HL_STATE_POPUP=@0x8000000/*_HL_STATE_POPUP*/
+_HL_STATE_IS_LTR=@0x10000000/*_HL_STATE_IS_LTR*/
+_HL_STATE_IS_RTL=@0x20000000/*_HL_STATE_IS_RTL*/
+end intellisense**/
